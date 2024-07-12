@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -46,17 +46,17 @@ a sequence length of :math:`n_s = 2^{19} \approx 0.5M` and a ``config.hidden_siz
 would result in a position encoding matrix:
 
 .. math::
-    X_{i,j}, \text{ with } i \in \left[1,\ldots, d\right] \text{ and } j \in \left[1,\ldots, n_s\right] 
+    X_{i,j}, \text{ with } i \in \left[1,\ldots, d\right] \text{ and } j \in \left[1,\ldots, n_s\right]
 
 which alone has over 500M parameters to store. Axial positional encodings factorize :math:`X_{i,j}` into two matrices:
 
 .. math::
-    X^{1}_{i,j}, \text{ with } i \in \left[1,\ldots, d^1\right] \text{ and } j \in \left[1,\ldots, n_s^1\right] 
+    X^{1}_{i,j}, \text{ with } i \in \left[1,\ldots, d^1\right] \text{ and } j \in \left[1,\ldots, n_s^1\right]
 
 and
 
 .. math::
-    X^{2}_{i,j}, \text{ with } i \in \left[1,\ldots, d^2\right] \text{ and } j \in \left[1,\ldots, n_s^2\right] 
+    X^{2}_{i,j}, \text{ with } i \in \left[1,\ldots, d^2\right] \text{ and } j \in \left[1,\ldots, n_s^2\right]
 
 with:
 

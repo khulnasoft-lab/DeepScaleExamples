@@ -35,4 +35,3 @@ RUN pip uninstall -y apex && \
 git clone https://github.com/NVIDIA/apex.git ~/apex && \
 cd ~/apex && \
 pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" .
-

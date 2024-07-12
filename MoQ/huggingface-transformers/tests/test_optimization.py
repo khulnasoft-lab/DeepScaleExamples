@@ -13,14 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 import tempfile
 import unittest
 
 from transformers import is_torch_available
 from transformers.testing_utils import require_torch
-
 
 if is_torch_available():
     import torch
@@ -77,7 +75,8 @@ class OptimizationTest(unittest.TestCase):
             loss = criterion(w, target)
             loss.backward()
             optimizer.step()
-            w.grad.detach_()  # No zero_grad() function on simple tensors. we do it ourselves.
+            w.grad.detach_(
+            )  # No zero_grad() function on simple tensors. we do it ourselves.
             w.grad.zero_()
         self.assertListAlmostEqual(w.tolist(), [0.4, 0.2, -0.5], tol=1e-2)
 
@@ -102,7 +101,8 @@ class OptimizationTest(unittest.TestCase):
             loss = criterion(w, target)
             loss.backward()
             optimizer.step()
-            w.grad.detach_()  # No zero_grad() function on simple tensors. we do it ourselves.
+            w.grad.detach_(
+            )  # No zero_grad() function on simple tensors. we do it ourselves.
             w.grad.zero_()
         self.assertListAlmostEqual(w.tolist(), [0.4, 0.2, -0.5], tol=1e-2)
 
@@ -110,7 +110,8 @@ class OptimizationTest(unittest.TestCase):
 @require_torch
 class ScheduleInitTest(unittest.TestCase):
     m = torch.nn.Linear(50, 50) if is_torch_available() else None
-    optimizer = AdamW(m.parameters(), lr=10.0) if is_torch_available() else None
+    optimizer = AdamW(m.parameters(),
+                      lr=10.0) if is_torch_available() else None
     num_steps = 10
 
     def assertListAlmostEqual(self, list1, list2, tol, msg=None):
@@ -126,24 +127,38 @@ class ScheduleInitTest(unittest.TestCase):
         scheds = {
             get_constant_schedule: ({}, [10.0] * self.num_steps),
             get_constant_schedule_with_warmup: (
-                {"num_warmup_steps": 4},
+                {
+                    "num_warmup_steps": 4
+                },
                 [0.0, 2.5, 5.0, 7.5, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
             ),
             get_linear_schedule_with_warmup: (
-                {**common_kwargs},
+                {
+                    **common_kwargs
+                },
                 [0.0, 5.0, 10.0, 8.75, 7.5, 6.25, 5.0, 3.75, 2.5, 1.25],
             ),
             get_cosine_schedule_with_warmup: (
-                {**common_kwargs},
+                {
+                    **common_kwargs
+                },
                 [0.0, 5.0, 10.0, 9.61, 8.53, 6.91, 5.0, 3.08, 1.46, 0.38],
             ),
             get_cosine_with_hard_restarts_schedule_with_warmup: (
-                {**common_kwargs, "num_cycles": 2},
+                {
+                    **common_kwargs, "num_cycles": 2
+                },
                 [0.0, 5.0, 10.0, 8.53, 5.0, 1.46, 10.0, 8.53, 5.0, 1.46],
             ),
             get_polynomial_decay_schedule_with_warmup: (
-                {**common_kwargs, "power": 2.0, "lr_end": 1e-7},
-                [0.0, 5.0, 10.0, 7.656, 5.625, 3.906, 2.5, 1.406, 0.625, 0.156],
+                {
+                    **common_kwargs, "power": 2.0,
+                    "lr_end": 1e-7
+                },
+                [
+                    0.0, 5.0, 10.0, 7.656, 5.625, 3.906, 2.5, 1.406, 0.625,
+                    0.156
+                ],
             ),
         }
 
@@ -162,4 +177,7 @@ class ScheduleInitTest(unittest.TestCase):
 
             scheduler = scheduler_func(self.optimizer, **kwargs)
             lrs_2 = unwrap_and_save_reload_schedule(scheduler, self.num_steps)
-            self.assertListEqual(lrs_1, lrs_2, msg=f"failed for {scheduler_func} in save and reload")
+            self.assertListEqual(
+                lrs_1,
+                lrs_2,
+                msg=f"failed for {scheduler_func} in save and reload")

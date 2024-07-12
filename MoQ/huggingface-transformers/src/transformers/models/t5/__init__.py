@@ -26,7 +26,6 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
     "configuration_t5": ["T5_PRETRAINED_CONFIG_ARCHIVE_MAP", "T5Config"],
 }
@@ -55,7 +54,6 @@ if is_tf_available():
         "TFT5Model",
         "TFT5PreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_t5 import T5_PRETRAINED_CONFIG_ARCHIVE_MAP, T5Config

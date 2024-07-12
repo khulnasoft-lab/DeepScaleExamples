@@ -39,14 +39,30 @@ from .base import (
 from .conversational import Conversation, ConversationalPipeline
 from .feature_extraction import FeatureExtractionPipeline
 from .fill_mask import FillMaskPipeline
-from .question_answering import QuestionAnsweringArgumentHandler, QuestionAnsweringPipeline
-from .table_question_answering import TableQuestionAnsweringArgumentHandler, TableQuestionAnsweringPipeline
-from .text2text_generation import SummarizationPipeline, Text2TextGenerationPipeline, TranslationPipeline
+from .question_answering import (
+    QuestionAnsweringArgumentHandler,
+    QuestionAnsweringPipeline,
+)
+from .table_question_answering import (
+    TableQuestionAnsweringArgumentHandler,
+    TableQuestionAnsweringPipeline,
+)
+from .text2text_generation import (
+    SummarizationPipeline,
+    Text2TextGenerationPipeline,
+    TranslationPipeline,
+)
 from .text_classification import TextClassificationPipeline
 from .text_generation import TextGenerationPipeline
-from .token_classification import NerPipeline, TokenClassificationArgumentHandler, TokenClassificationPipeline
-from .zero_shot_classification import ZeroShotClassificationArgumentHandler, ZeroShotClassificationPipeline
-
+from .token_classification import (
+    NerPipeline,
+    TokenClassificationArgumentHandler,
+    TokenClassificationPipeline,
+)
+from .zero_shot_classification import (
+    ZeroShotClassificationArgumentHandler,
+    ZeroShotClassificationPipeline,
+)
 
 if is_tf_available():
     import tensorflow as tf
@@ -91,19 +107,25 @@ if TYPE_CHECKING:
 
 logger = logging.get_logger(__name__)
 
-
 # Register all the supported tasks here
 SUPPORTED_TASKS = {
     "feature-extraction": {
         "impl": FeatureExtractionPipeline,
         "tf": TFAutoModel if is_tf_available() else None,
         "pt": AutoModel if is_torch_available() else None,
-        "default": {"model": {"pt": "distilbert-base-cased", "tf": "distilbert-base-cased"}},
+        "default": {
+            "model": {
+                "pt": "distilbert-base-cased",
+                "tf": "distilbert-base-cased"
+            }
+        },
     },
     "sentiment-analysis": {
         "impl": TextClassificationPipeline,
-        "tf": TFAutoModelForSequenceClassification if is_tf_available() else None,
-        "pt": AutoModelForSequenceClassification if is_torch_available() else None,
+        "tf":
+        TFAutoModelForSequenceClassification if is_tf_available() else None,
+        "pt":
+        AutoModelForSequenceClassification if is_torch_available() else None,
         "default": {
             "model": {
                 "pt": "distilbert-base-uncased-finetuned-sst-2-english",
@@ -114,7 +136,8 @@ SUPPORTED_TASKS = {
     "ner": {
         "impl": TokenClassificationPipeline,
         "tf": TFAutoModelForTokenClassification if is_tf_available() else None,
-        "pt": AutoModelForTokenClassification if is_torch_available() else None,
+        "pt":
+        AutoModelForTokenClassification if is_torch_available() else None,
         "default": {
             "model": {
                 "pt": "dbmdz/bert-large-cased-finetuned-conll03-english",
@@ -127,12 +150,16 @@ SUPPORTED_TASKS = {
         "tf": TFAutoModelForQuestionAnswering if is_tf_available() else None,
         "pt": AutoModelForQuestionAnswering if is_torch_available() else None,
         "default": {
-            "model": {"pt": "distilbert-base-cased-distilled-squad", "tf": "distilbert-base-cased-distilled-squad"},
+            "model": {
+                "pt": "distilbert-base-cased-distilled-squad",
+                "tf": "distilbert-base-cased-distilled-squad",
+            },
         },
     },
     "table-question-answering": {
         "impl": TableQuestionAnsweringPipeline,
-        "pt": AutoModelForTableQuestionAnswering if is_torch_available() else None,
+        "pt":
+        AutoModelForTableQuestionAnswering if is_torch_available() else None,
         "tf": None,
         "default": {
             "model": {
@@ -146,13 +173,23 @@ SUPPORTED_TASKS = {
         "impl": FillMaskPipeline,
         "tf": TFAutoModelForMaskedLM if is_tf_available() else None,
         "pt": AutoModelForMaskedLM if is_torch_available() else None,
-        "default": {"model": {"pt": "distilroberta-base", "tf": "distilroberta-base"}},
+        "default": {
+            "model": {
+                "pt": "distilroberta-base",
+                "tf": "distilroberta-base"
+            }
+        },
     },
     "summarization": {
         "impl": SummarizationPipeline,
         "tf": TFAutoModelForSeq2SeqLM if is_tf_available() else None,
         "pt": AutoModelForSeq2SeqLM if is_torch_available() else None,
-        "default": {"model": {"pt": "sshleifer/distilbart-cnn-12-6", "tf": "t5-small"}},
+        "default": {
+            "model": {
+                "pt": "sshleifer/distilbart-cnn-12-6",
+                "tf": "t5-small"
+            }
+        },
     },
     # This task is a special case as it's parametrized by SRC, TGT languages.
     "translation": {
@@ -160,38 +197,79 @@ SUPPORTED_TASKS = {
         "tf": TFAutoModelForSeq2SeqLM if is_tf_available() else None,
         "pt": AutoModelForSeq2SeqLM if is_torch_available() else None,
         "default": {
-            ("en", "fr"): {"model": {"pt": "t5-base", "tf": "t5-base"}},
-            ("en", "de"): {"model": {"pt": "t5-base", "tf": "t5-base"}},
-            ("en", "ro"): {"model": {"pt": "t5-base", "tf": "t5-base"}},
+            ("en", "fr"): {
+                "model": {
+                    "pt": "t5-base",
+                    "tf": "t5-base"
+                }
+            },
+            ("en", "de"): {
+                "model": {
+                    "pt": "t5-base",
+                    "tf": "t5-base"
+                }
+            },
+            ("en", "ro"): {
+                "model": {
+                    "pt": "t5-base",
+                    "tf": "t5-base"
+                }
+            },
         },
     },
     "text2text-generation": {
         "impl": Text2TextGenerationPipeline,
         "tf": TFAutoModelForSeq2SeqLM if is_tf_available() else None,
         "pt": AutoModelForSeq2SeqLM if is_torch_available() else None,
-        "default": {"model": {"pt": "t5-base", "tf": "t5-base"}},
+        "default": {
+            "model": {
+                "pt": "t5-base",
+                "tf": "t5-base"
+            }
+        },
     },
     "text-generation": {
         "impl": TextGenerationPipeline,
         "tf": TFAutoModelForCausalLM if is_tf_available() else None,
         "pt": AutoModelForCausalLM if is_torch_available() else None,
-        "default": {"model": {"pt": "gpt2", "tf": "gpt2"}},
+        "default": {
+            "model": {
+                "pt": "gpt2",
+                "tf": "gpt2"
+            }
+        },
     },
     "zero-shot-classification": {
         "impl": ZeroShotClassificationPipeline,
-        "tf": TFAutoModelForSequenceClassification if is_tf_available() else None,
-        "pt": AutoModelForSequenceClassification if is_torch_available() else None,
+        "tf":
+        TFAutoModelForSequenceClassification if is_tf_available() else None,
+        "pt":
+        AutoModelForSequenceClassification if is_torch_available() else None,
         "default": {
-            "model": {"pt": "facebook/bart-large-mnli", "tf": "roberta-large-mnli"},
-            "config": {"pt": "facebook/bart-large-mnli", "tf": "roberta-large-mnli"},
-            "tokenizer": {"pt": "facebook/bart-large-mnli", "tf": "roberta-large-mnli"},
+            "model": {
+                "pt": "facebook/bart-large-mnli",
+                "tf": "roberta-large-mnli"
+            },
+            "config": {
+                "pt": "facebook/bart-large-mnli",
+                "tf": "roberta-large-mnli"
+            },
+            "tokenizer": {
+                "pt": "facebook/bart-large-mnli",
+                "tf": "roberta-large-mnli"
+            },
         },
     },
     "conversational": {
         "impl": ConversationalPipeline,
         "tf": TFAutoModelForCausalLM if is_tf_available() else None,
         "pt": AutoModelForCausalLM if is_torch_available() else None,
-        "default": {"model": {"pt": "microsoft/DialoGPT-medium", "tf": "microsoft/DialoGPT-medium"}},
+        "default": {
+            "model": {
+                "pt": "microsoft/DialoGPT-medium",
+                "tf": "microsoft/DialoGPT-medium",
+            }
+        },
     },
 }
 
@@ -228,14 +306,17 @@ def check_task(task: str) -> Tuple[Dict, Any]:
 
     if task.startswith("translation"):
         tokens = task.split("_")
-        if len(tokens) == 4 and tokens[0] == "translation" and tokens[2] == "to":
+        if len(tokens
+               ) == 4 and tokens[0] == "translation" and tokens[2] == "to":
             targeted_task = SUPPORTED_TASKS["translation"]
             return targeted_task, (tokens[1], tokens[3])
-        raise KeyError("Invalid translation task {}, use 'translation_XX_to_YY' format".format(task))
+        raise KeyError(
+            "Invalid translation task {}, use 'translation_XX_to_YY' format".
+            format(task))
 
-    raise KeyError(
-        "Unknown task {}, available tasks are {}".format(task, list(SUPPORTED_TASKS.keys()) + ["translation_XX_to_YY"])
-    )
+    raise KeyError("Unknown task {}, available tasks are {}".format(
+        task,
+        list(SUPPORTED_TASKS.keys()) + ["translation_XX_to_YY"]))
 
 
 def pipeline(
@@ -246,7 +327,7 @@ def pipeline(
     framework: Optional[str] = None,
     revision: Optional[str] = None,
     use_fast: bool = True,
-    **kwargs
+    **kwargs,
 ) -> Pipeline:
     """
     Utility factory method to build a :class:`~transformers.Pipeline`.
@@ -366,11 +447,14 @@ def pipeline(
         if isinstance(tokenizer, tuple):
             # For tuple we have (tokenizer name, {kwargs})
             use_fast = tokenizer[1].pop("use_fast", use_fast)
-            tokenizer = AutoTokenizer.from_pretrained(
-                tokenizer[0], use_fast=use_fast, revision=revision, **tokenizer[1]
-            )
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer[0],
+                                                      use_fast=use_fast,
+                                                      revision=revision,
+                                                      **tokenizer[1])
         else:
-            tokenizer = AutoTokenizer.from_pretrained(tokenizer, revision=revision, use_fast=use_fast)
+            tokenizer = AutoTokenizer.from_pretrained(tokenizer,
+                                                      revision=revision,
+                                                      use_fast=use_fast)
 
     # Instantiate config if needed
     if isinstance(config, str):
@@ -388,31 +472,38 @@ def pipeline(
             model_kwargs["from_tf"] = True
             logger.warning(
                 "Model might be a TensorFlow model (ending with `.h5`) but TensorFlow is not available. "
-                "Trying to load the model with PyTorch."
-            )
+                "Trying to load the model with PyTorch.")
         elif framework == "tf" and model.endswith(".bin"):
             model_kwargs["from_pt"] = True
             logger.warning(
                 "Model might be a PyTorch model (ending with `.bin`) but PyTorch is not available. "
-                "Trying to load the model with Tensorflow."
-            )
+                "Trying to load the model with Tensorflow.")
 
         if model_class is None:
             raise ValueError(
                 f"Pipeline using {framework} framework, but this framework is not supported by this pipeline."
             )
 
-        model = model_class.from_pretrained(model, config=config, revision=revision, **model_kwargs)
+        model = model_class.from_pretrained(model,
+                                            config=config,
+                                            revision=revision,
+                                            **model_kwargs)
         if task == "translation" and model.config.task_specific_params:
             for key in model.config.task_specific_params:
                 if key.startswith("translation"):
                     task = key
                     warnings.warn(
-                        '"translation" task was used, instead of "translation_XX_to_YY", defaulting to "{}"'.format(
-                            task
-                        ),
+                        '"translation" task was used, instead of "translation_XX_to_YY", defaulting to "{}"'
+                        .format(task),
                         UserWarning,
                     )
                     break
 
-    return task_class(model=model, tokenizer=tokenizer, modelcard=modelcard, framework=framework, task=task, **kwargs)
+    return task_class(
+        model=model,
+        tokenizer=tokenizer,
+        modelcard=modelcard,
+        framework=framework,
+        task=task,
+        **kwargs,
+    )

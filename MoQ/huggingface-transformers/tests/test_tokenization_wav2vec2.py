@@ -28,7 +28,6 @@ from transformers.models.wav2vec2 import Wav2Vec2Config, Wav2Vec2Tokenizer
 from transformers.models.wav2vec2.tokenization_wav2vec2 import VOCAB_FILES_NAMES
 from transformers.testing_utils import slow
 
-
 global_rng = random.Random()
 
 
@@ -52,13 +51,20 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
     def setUp(self):
         super().setUp()
 
-        vocab = "<pad> <s> </s> <unk> | E T A O N I H S R D L U M W C F G Y P B V K ' X J Q Z".split(" ")
+        vocab = "<pad> <s> </s> <unk> | E T A O N I H S R D L U M W C F G Y P B V K ' X J Q Z".split(
+            " ")
         vocab_tokens = dict(zip(vocab, range(len(vocab))))
 
-        self.special_tokens_map = {"pad_token": "<pad>", "unk_token": "<unk>", "bos_token": "<s>", "eos_token": "</s>"}
+        self.special_tokens_map = {
+            "pad_token": "<pad>",
+            "unk_token": "<unk>",
+            "bos_token": "<s>",
+            "eos_token": "</s>",
+        }
 
         self.tmpdirname = tempfile.mkdtemp()
-        self.vocab_file = os.path.join(self.tmpdirname, VOCAB_FILES_NAMES["vocab_file"])
+        self.vocab_file = os.path.join(self.tmpdirname,
+                                       VOCAB_FILES_NAMES["vocab_file"])
         with open(self.vocab_file, "w", encoding="utf-8") as fp:
             fp.write(json.dumps(vocab_tokens) + "\n")
 
@@ -68,7 +74,8 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
 
     def test_tokenizer_decode(self):
         # TODO(PVP) - change to facebook
-        tokenizer = Wav2Vec2Tokenizer.from_pretrained("facebook/wav2vec2-base-960h")
+        tokenizer = Wav2Vec2Tokenizer.from_pretrained(
+            "facebook/wav2vec2-base-960h")
 
         sample_ids = [
             [11, 5, 15, tokenizer.pad_token_id, 15, 8, 98],
@@ -81,7 +88,8 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
 
     def test_tokenizer_decode_special(self):
         # TODO(PVP) - change to facebook
-        tokenizer = Wav2Vec2Tokenizer.from_pretrained("facebook/wav2vec2-base-960h")
+        tokenizer = Wav2Vec2Tokenizer.from_pretrained(
+            "facebook/wav2vec2-base-960h")
 
         sample_ids = [
             [11, 5, 15, tokenizer.pad_token_id, 15, 8, 98],
@@ -111,7 +119,8 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         self.assertEqual(batch_tokens, ["HELLO<unk>", "BYE BYE<unk>"])
 
     def test_tokenizer_decode_added_tokens(self):
-        tokenizer = Wav2Vec2Tokenizer.from_pretrained("facebook/wav2vec2-base-960h")
+        tokenizer = Wav2Vec2Tokenizer.from_pretrained(
+            "facebook/wav2vec2-base-960h")
         tokenizer.add_tokens(["!", "?"])
         tokenizer.add_special_tokens({"cls_token": "$$$"})
 
@@ -134,28 +143,49 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
                 34,
                 34,
             ],
-            [24, 22, 5, tokenizer.word_delimiter_token_id, 24, 22, 5, 77, tokenizer.pad_token_id, 34, 34],
+            [
+                24,
+                22,
+                5,
+                tokenizer.word_delimiter_token_id,
+                24,
+                22,
+                5,
+                77,
+                tokenizer.pad_token_id,
+                34,
+                34,
+            ],
         ]
         batch_tokens = tokenizer.batch_decode(sample_ids)
 
-        self.assertEqual(batch_tokens, ["HELLO<unk>!?!?$$$", "BYE BYE<unk>$$$"])
+        self.assertEqual(batch_tokens,
+                         ["HELLO<unk>!?!?$$$", "BYE BYE<unk>$$$"])
 
     def test_call(self):
         # Tests that all call wrap to encode_plus and batch_encode_plus
         tokenizer = self.get_tokenizer()
         # create three inputs of length 800, 1000, and 1200
         speech_inputs = [floats_list((1, x))[0] for x in range(800, 1400, 200)]
-        np_speech_inputs = [np.asarray(speech_input) for speech_input in speech_inputs]
+        np_speech_inputs = [
+            np.asarray(speech_input) for speech_input in speech_inputs
+        ]
 
         # Test not batched input
-        encoded_sequences_1 = tokenizer(speech_inputs[0], return_tensors="np").input_values
-        encoded_sequences_2 = tokenizer(np_speech_inputs[0], return_tensors="np").input_values
-        self.assertTrue(np.allclose(encoded_sequences_1, encoded_sequences_2, atol=1e-3))
+        encoded_sequences_1 = tokenizer(speech_inputs[0],
+                                        return_tensors="np").input_values
+        encoded_sequences_2 = tokenizer(np_speech_inputs[0],
+                                        return_tensors="np").input_values
+        self.assertTrue(
+            np.allclose(encoded_sequences_1, encoded_sequences_2, atol=1e-3))
 
         # Test batched
-        encoded_sequences_1 = tokenizer(speech_inputs, return_tensors="np").input_values
-        encoded_sequences_2 = tokenizer(np_speech_inputs, return_tensors="np").input_values
-        for enc_seq_1, enc_seq_2 in zip(encoded_sequences_1, encoded_sequences_2):
+        encoded_sequences_1 = tokenizer(speech_inputs,
+                                        return_tensors="np").input_values
+        encoded_sequences_2 = tokenizer(np_speech_inputs,
+                                        return_tensors="np").input_values
+        for enc_seq_1, enc_seq_2 in zip(encoded_sequences_1,
+                                        encoded_sequences_2):
             self.assertTrue(np.allclose(enc_seq_1, enc_seq_2, atol=1e-3))
 
     def test_padding(self, max_length=50):
@@ -170,8 +200,13 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
             if len(input_values_1) != len(input_values_2):
                 return False
 
-            for input_values_slice_1, input_values_slice_2 in zip(input_values_1, input_values_2):
-                if not np.allclose(np.asarray(input_values_slice_1), np.asarray(input_values_slice_2), atol=1e-3):
+            for input_values_slice_1, input_values_slice_2 in zip(
+                    input_values_1, input_values_2):
+                if not np.allclose(
+                        np.asarray(input_values_slice_1),
+                        np.asarray(input_values_slice_2),
+                        atol=1e-3,
+                ):
                     return False
             return True
 
@@ -179,34 +214,48 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         speech_inputs = [floats_list((1, x))[0] for x in range(800, 1400, 200)]
 
         input_values_1 = tokenizer(speech_inputs).input_values
-        input_values_2 = tokenizer(speech_inputs, padding="longest").input_values
-        input_values_3 = tokenizer(speech_inputs, padding="longest", max_length=1600).input_values
+        input_values_2 = tokenizer(speech_inputs,
+                                   padding="longest").input_values
+        input_values_3 = tokenizer(speech_inputs,
+                                   padding="longest",
+                                   max_length=1600).input_values
 
         self.assertFalse(_input_values_have_equal_length(input_values_1))
         self.assertTrue(_input_values_have_equal_length(input_values_2))
         self.assertTrue(_input_values_have_equal_length(input_values_3))
-        self.assertTrue(_input_values_are_equal(input_values_2, input_values_3))
+        self.assertTrue(_input_values_are_equal(input_values_2,
+                                                input_values_3))
         self.assertTrue(len(input_values_1[0]) == 800)
         self.assertTrue(len(input_values_2[0]) == 1200)
         # padding should be 0.0
         self.assertTrue(abs(sum(np.asarray(input_values_2[0])[800:])) < 1e-3)
         self.assertTrue(abs(sum(np.asarray(input_values_2[1])[1000:])) < 1e-3)
 
-        input_values_4 = tokenizer(speech_inputs, padding="max_length").input_values
-        input_values_5 = tokenizer(speech_inputs, padding="max_length", max_length=1600).input_values
+        input_values_4 = tokenizer(speech_inputs,
+                                   padding="max_length").input_values
+        input_values_5 = tokenizer(speech_inputs,
+                                   padding="max_length",
+                                   max_length=1600).input_values
 
-        self.assertTrue(_input_values_are_equal(input_values_1, input_values_4))
+        self.assertTrue(_input_values_are_equal(input_values_1,
+                                                input_values_4))
         self.assertTrue(input_values_5.shape, (3, 1600))
         # padding should be 0.0
-        self.assertTrue(abs(sum(np.asarray(input_values_5[0])[800:1200])) < 1e-3)
+        self.assertTrue(
+            abs(sum(np.asarray(input_values_5[0])[800:1200])) < 1e-3)
 
-        input_values_6 = tokenizer(speech_inputs, pad_to_multiple_of=500).input_values
-        input_values_7 = tokenizer(speech_inputs, padding="longest", pad_to_multiple_of=500).input_values
-        input_values_8 = tokenizer(
-            speech_inputs, padding="max_length", pad_to_multiple_of=500, max_length=2400
-        ).input_values
+        input_values_6 = tokenizer(speech_inputs,
+                                   pad_to_multiple_of=500).input_values
+        input_values_7 = tokenizer(speech_inputs,
+                                   padding="longest",
+                                   pad_to_multiple_of=500).input_values
+        input_values_8 = tokenizer(speech_inputs,
+                                   padding="max_length",
+                                   pad_to_multiple_of=500,
+                                   max_length=2400).input_values
 
-        self.assertTrue(_input_values_are_equal(input_values_1, input_values_6))
+        self.assertTrue(_input_values_are_equal(input_values_1,
+                                                input_values_6))
         self.assertTrue(input_values_7.shape, (3, 1500))
         self.assertTrue(input_values_8.shape, (3, 2500))
         # padding should be 0.0
@@ -218,13 +267,17 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         self.assertTrue(abs(sum(np.asarray(input_values_8[2])[1200:])) < 1e-3)
 
     def test_save_pretrained(self):
-        pretrained_name = list(self.tokenizer_class.pretrained_vocab_files_map["vocab_file"].keys())[0]
+        pretrained_name = list(
+            self.tokenizer_class.pretrained_vocab_files_map["vocab_file"].keys(
+            ))[0]
         tokenizer = self.tokenizer_class.from_pretrained(pretrained_name)
         tmpdirname2 = tempfile.mkdtemp()
 
         tokenizer_files = tokenizer.save_pretrained(tmpdirname2)
         self.assertSequenceEqual(
-            sorted(tuple(VOCAB_FILES_NAMES.values()) + ("special_tokens_map.json", "added_tokens.json")),
+            sorted(
+                tuple(VOCAB_FILES_NAMES.values()) +
+                ("special_tokens_map.json", "added_tokens.json")),
             sorted(tuple(x.split("/")[-1] for x in tokenizer_files)),
         )
 
@@ -243,11 +296,15 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         self.assertIsInstance(vocab_dict, dict)
         self.assertGreaterEqual(len(tokenizer), len(vocab_dict))
 
-        vocab = [tokenizer.convert_ids_to_tokens(i) for i in range(len(tokenizer))]
+        vocab = [
+            tokenizer.convert_ids_to_tokens(i) for i in range(len(tokenizer))
+        ]
         self.assertEqual(len(vocab), len(tokenizer))
 
         tokenizer.add_tokens(["asdfasdfasdfasdf"])
-        vocab = [tokenizer.convert_ids_to_tokens(i) for i in range(len(tokenizer))]
+        vocab = [
+            tokenizer.convert_ids_to_tokens(i) for i in range(len(tokenizer))
+        ]
         self.assertEqual(len(vocab), len(tokenizer))
 
     def test_save_and_load_tokenizer(self):
@@ -275,11 +332,14 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         tmpdirname = tempfile.mkdtemp()
 
         before_len = len(tokenizer)
-        sample_ids = [0, 1, 4, 8, 9, 0, 12, before_len, before_len + 1, before_len + 2]
+        sample_ids = [
+            0, 1, 4, 8, 9, 0, 12, before_len, before_len + 1, before_len + 2
+        ]
         tokenizer.add_tokens(["?", "!"])
         additional_special_tokens = tokenizer.additional_special_tokens
         additional_special_tokens.append("&")
-        tokenizer.add_special_tokens({"additional_special_tokens": additional_special_tokens})
+        tokenizer.add_special_tokens(
+            {"additional_special_tokens": additional_special_tokens})
         before_tokens = tokenizer.decode(sample_ids)
         before_vocab = tokenizer.get_vocab()
         tokenizer.save_pretrained(tmpdirname)
@@ -330,8 +390,10 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
         processed = tokenizer(speech_inputs, padding="longest")
 
         self.assertIn("attention_mask", processed)
-        self.assertListEqual(list(processed.attention_mask.shape), list(processed.input_values.shape))
-        self.assertListEqual(processed.attention_mask.sum(-1).tolist(), [800, 1000, 1200])
+        self.assertListEqual(list(processed.attention_mask.shape),
+                             list(processed.input_values.shape))
+        self.assertListEqual(
+            processed.attention_mask.sum(-1).tolist(), [800, 1000, 1200])
 
     @slow
     def test_pretrained_checkpoints_are_set_correctly(self):
@@ -344,4 +406,5 @@ class Wav2Vec2TokenizerTest(unittest.TestCase):
 
             # only "layer" feature extraction norm should make use of
             # attention_mask
-            self.assertEqual(tokenizer.return_attention_mask, config.feat_extract_norm == "layer")
+            self.assertEqual(tokenizer.return_attention_mask,
+                             config.feat_extract_norm == "layer")

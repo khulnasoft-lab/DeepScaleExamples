@@ -14,15 +14,14 @@
 # limitations under the License.
 """ ProphetNet model configuration """
 
-
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
 PROPHETNET_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "microsoft/prophetnet-large-uncased": "https://huggingface.co/microsoft/prophetnet-large-uncased/resolve/main/config.json",
+    "microsoft/prophetnet-large-uncased":
+    "https://huggingface.co/microsoft/prophetnet-large-uncased/resolve/main/config.json",
 }
 
 
@@ -93,39 +92,38 @@ class ProphetNetConfig(PretrainedConfig):
         use_cache (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether or not the model should return the last key/values attentions (not used by all models).
     """
+
     model_type = "prophetnet"
     keys_to_ignore_at_inference = ["past_key_values"]
 
-    def __init__(
-        self,
-        activation_dropout=0.1,
-        activation_function="gelu",
-        vocab_size=30522,
-        hidden_size=1024,
-        encoder_ffn_dim=4096,
-        num_encoder_layers=12,
-        num_encoder_attention_heads=16,
-        decoder_ffn_dim=4096,
-        num_decoder_layers=12,
-        num_decoder_attention_heads=16,
-        attention_dropout=0.1,
-        dropout=0.1,
-        max_position_embeddings=512,
-        init_std=0.02,
-        is_encoder_decoder=True,
-        add_cross_attention=True,
-        decoder_start_token_id=0,
-        ngram=2,
-        num_buckets=32,
-        relative_max_distance=128,
-        disable_ngram_loss=False,
-        eps=0.0,
-        use_cache=True,
-        pad_token_id=0,
-        bos_token_id=1,
-        eos_token_id=2,
-        **kwargs
-    ):
+    def __init__(self,
+                 activation_dropout=0.1,
+                 activation_function="gelu",
+                 vocab_size=30522,
+                 hidden_size=1024,
+                 encoder_ffn_dim=4096,
+                 num_encoder_layers=12,
+                 num_encoder_attention_heads=16,
+                 decoder_ffn_dim=4096,
+                 num_decoder_layers=12,
+                 num_decoder_attention_heads=16,
+                 attention_dropout=0.1,
+                 dropout=0.1,
+                 max_position_embeddings=512,
+                 init_std=0.02,
+                 is_encoder_decoder=True,
+                 add_cross_attention=True,
+                 decoder_start_token_id=0,
+                 ngram=2,
+                 num_buckets=32,
+                 relative_max_distance=128,
+                 disable_ngram_loss=False,
+                 eps=0.0,
+                 use_cache=True,
+                 pad_token_id=0,
+                 bos_token_id=1,
+                 eos_token_id=2,
+                 **kwargs):
         super().__init__(
             pad_token_id=pad_token_id,
             bos_token_id=bos_token_id,

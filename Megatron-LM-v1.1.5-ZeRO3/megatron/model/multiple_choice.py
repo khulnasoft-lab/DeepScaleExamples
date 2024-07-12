@@ -12,13 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Multiple choice model."""
 
 import torch
 
 from megatron import get_args, print_rank_0
-from megatron.model.bert_model import bert_attention_mask_func, bert_extended_attention_mask, bert_position_ids
+from megatron.model.bert_model import (
+    bert_attention_mask_func,
+    bert_extended_attention_mask,
+    bert_position_ids,
+)
 from megatron.model.language_model import get_language_model
 from megatron.model.utils import get_linear_layer
 from megatron.model.utils import init_method_normal
@@ -27,7 +30,6 @@ from megatron.module import MegatronModule
 
 
 class MultipleChoice(MegatronModule):
-
     def __init__(self, num_tokentypes=2):
         super(MultipleChoice, self).__init__()
         args = get_args()
@@ -39,14 +41,15 @@ class MultipleChoice(MegatronModule):
             num_tokentypes=num_tokentypes,
             add_pooler=True,
             init_method=init_method,
-            scaled_init_method=scaled_init_method_normal(args.init_method_std,
-                                                         args.num_layers))
+            scaled_init_method=scaled_init_method_normal(
+                args.init_method_std, args.num_layers),
+        )
 
         # Multi-choice head.
         self.multichoice_dropout = torch.nn.Dropout(args.hidden_dropout)
         self.multichoice_head = get_linear_layer(args.hidden_size, 1,
                                                  init_method)
-        self._multichoice_head_key = 'multichoice_head'
+        self._multichoice_head_key = "multichoice_head"
 
     def forward(self, input_ids, attention_mask, tokentype_ids):
 
@@ -65,13 +68,16 @@ class MultipleChoice(MegatronModule):
         tokentype_ids = tokentype_ids.view(-1, tokentype_ids.size(-1))
 
         extended_attention_mask = bert_extended_attention_mask(
-            attention_mask, next(self.language_model.parameters()).dtype)
+            attention_mask,
+            next(self.language_model.parameters()).dtype)
         position_ids = bert_position_ids(input_ids)
 
-        _, pooled_output = self.language_model(input_ids,
-                                               position_ids,
-                                               extended_attention_mask,
-                                               tokentype_ids=tokentype_ids)
+        _, pooled_output = self.language_model(
+            input_ids,
+            position_ids,
+            extended_attention_mask,
+            tokentype_ids=tokentype_ids,
+        )
 
         # Output.
         multichoice_output = self.multichoice_dropout(pooled_output)
@@ -82,17 +88,19 @@ class MultipleChoice(MegatronModule):
 
         return multichoice_logits
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
+    def state_dict_for_save_checkpoint(self,
+                                       destination=None,
+                                       prefix="",
                                        keep_vars=False):
         """For easy load when model is combined with other heads,
         add an extra key."""
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-                destination, prefix, keep_vars)
-        state_dict_[self._multichoice_head_key] \
-            = self.multichoice_head.state_dict(
+        state_dict_[self._language_model_key] = (
+            self.language_model.state_dict_for_save_checkpoint(
+                destination, prefix, keep_vars))
+        state_dict_[
+            self._multichoice_head_key] = self.multichoice_head.state_dict(
                 destination, prefix, keep_vars)
         return state_dict_
 
@@ -105,6 +113,6 @@ class MultipleChoice(MegatronModule):
             self.multichoice_head.load_state_dict(
                 state_dict[self._multichoice_head_key], strict=strict)
         else:
-            print_rank_0('***WARNING*** could not find {} in the checkpoint, '
-                         'initializing to random'.format(
+            print_rank_0("***WARNING*** could not find {} in the checkpoint, "
+                         "initializing to random".format(
                              self._multichoice_head_key))

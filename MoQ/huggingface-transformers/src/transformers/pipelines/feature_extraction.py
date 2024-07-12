@@ -4,7 +4,6 @@ from ..modelcard import ModelCard
 from ..tokenization_utils import PreTrainedTokenizer
 from .base import ArgumentHandler, Pipeline
 
-
 if TYPE_CHECKING:
     from ..modeling_tf_utils import TFPreTrainedModel
     from ..modeling_utils import PreTrainedModel
@@ -47,7 +46,6 @@ class FeatureExtractionPipeline(Pipeline):
             Device ordinal for CPU/GPU supports. Setting this to -1 will leverage CPU, a positive will run the model on
             the associated CUDA device id.
     """
-
     def __init__(
         self,
         model: Union["PreTrainedModel", "TFPreTrainedModel"],

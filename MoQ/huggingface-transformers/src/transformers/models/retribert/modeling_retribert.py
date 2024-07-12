@@ -16,7 +16,6 @@
 RetriBERT model
 """
 
-
 import math
 
 import torch
@@ -28,7 +27,6 @@ from ...modeling_utils import PreTrainedModel
 from ...utils import logging
 from ..bert.modeling_bert import BertModel
 from .configuration_retribert import RetriBertConfig
-
 
 logger = logging.get_logger(__name__)
 
@@ -50,9 +48,10 @@ class RetriBertPreTrainedModel(PreTrainedModel):
     base_model_prefix = "retribert"
 
     def _init_weights(self, module):
-        """ Initialize the weights """
+        """Initialize the weights"""
         if isinstance(module, (nn.Linear, nn.Embedding)):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0,
+                                       std=self.config.initializer_range)
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
@@ -90,8 +89,12 @@ class RetriBertModel(RetriBertPreTrainedModel):
         self.bert_query = BertModel(config)
         self.bert_doc = None if config.share_encoders else BertModel(config)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.project_query = nn.Linear(config.hidden_size, config.projection_dim, bias=False)
-        self.project_doc = nn.Linear(config.hidden_size, config.projection_dim, bias=False)
+        self.project_query = nn.Linear(config.hidden_size,
+                                       config.projection_dim,
+                                       bias=False)
+        self.project_doc = nn.Linear(config.hidden_size,
+                                     config.projection_dim,
+                                     bias=False)
 
         self.ce_loss = nn.CrossEntropyLoss(reduction="mean")
 
@@ -105,17 +108,20 @@ class RetriBertModel(RetriBertPreTrainedModel):
         checkpoint_batch_size=-1,
     ):
         # reproduces BERT forward pass with checkpointing
-        if checkpoint_batch_size < 0 or input_ids.shape[0] < checkpoint_batch_size:
+        if checkpoint_batch_size < 0 or input_ids.shape[
+                0] < checkpoint_batch_size:
             return sent_encoder(input_ids, attention_mask=attention_mask)[1]
         else:
             # prepare implicit variables
             device = input_ids.device
             input_shape = input_ids.size()
-            token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
+            token_type_ids = torch.zeros(input_shape,
+                                         dtype=torch.long,
+                                         device=device)
             head_mask = [None] * sent_encoder.config.num_hidden_layers
-            extended_attention_mask: torch.Tensor = sent_encoder.get_extended_attention_mask(
-                attention_mask, input_shape, device
-            )
+            extended_attention_mask: torch.Tensor = (
+                sent_encoder.get_extended_attention_mask(
+                    attention_mask, input_shape, device))
 
             # define function for checkpointing
             def partial_encode(*inputs):
@@ -130,14 +136,24 @@ class RetriBertModel(RetriBertPreTrainedModel):
 
             # run embedding layer on everything at once
             embedding_output = sent_encoder.embeddings(
-                input_ids=input_ids, position_ids=None, token_type_ids=token_type_ids, inputs_embeds=None
+                input_ids=input_ids,
+                position_ids=None,
+                token_type_ids=token_type_ids,
+                inputs_embeds=None,
             )
             # run encoding and pooling on one mini-batch at a time
             pooled_output_list = []
-            for b in range(math.ceil(input_ids.shape[0] / checkpoint_batch_size)):
-                b_embedding_output = embedding_output[b * checkpoint_batch_size : (b + 1) * checkpoint_batch_size]
-                b_attention_mask = extended_attention_mask[b * checkpoint_batch_size : (b + 1) * checkpoint_batch_size]
-                pooled_output = checkpoint.checkpoint(partial_encode, b_embedding_output, b_attention_mask)
+            for b in range(
+                    math.ceil(input_ids.shape[0] / checkpoint_batch_size)):
+                b_embedding_output = embedding_output[b *
+                                                      checkpoint_batch_size:
+                                                      (b + 1) *
+                                                      checkpoint_batch_size]
+                b_attention_mask = extended_attention_mask[
+                    b * checkpoint_batch_size:(b + 1) * checkpoint_batch_size]
+                pooled_output = checkpoint.checkpoint(partial_encode,
+                                                      b_embedding_output,
+                                                      b_attention_mask)
                 pooled_output_list.append(pooled_output)
             return torch.cat(pooled_output_list, dim=0)
 
@@ -170,7 +186,12 @@ class RetriBertModel(RetriBertPreTrainedModel):
         return self.project_doc(a_reps)
 
     def forward(
-        self, input_ids_query, attention_mask_query, input_ids_doc, attention_mask_doc, checkpoint_batch_size=-1
+        self,
+        input_ids_query,
+        attention_mask_query,
+        input_ids_doc,
+        attention_mask_doc,
+        checkpoint_batch_size=-1,
     ):
         r"""
         Args:
@@ -203,10 +224,16 @@ class RetriBertModel(RetriBertPreTrainedModel):
             its corresponding document and each document to its corresponding query in the batch
         """
         device = input_ids_query.device
-        q_reps = self.embed_questions(input_ids_query, attention_mask_query, checkpoint_batch_size)
-        a_reps = self.embed_answers(input_ids_doc, attention_mask_doc, checkpoint_batch_size)
+        q_reps = self.embed_questions(input_ids_query, attention_mask_query,
+                                      checkpoint_batch_size)
+        a_reps = self.embed_answers(input_ids_doc, attention_mask_doc,
+                                    checkpoint_batch_size)
         compare_scores = torch.mm(q_reps, a_reps.t())
-        loss_qa = self.ce_loss(compare_scores, torch.arange(compare_scores.shape[1]).to(device))
-        loss_aq = self.ce_loss(compare_scores.t(), torch.arange(compare_scores.shape[0]).to(device))
+        loss_qa = self.ce_loss(
+            compare_scores,
+            torch.arange(compare_scores.shape[1]).to(device))
+        loss_aq = self.ce_loss(
+            compare_scores.t(),
+            torch.arange(compare_scores.shape[0]).to(device))
         loss = (loss_qa + loss_aq) / 2
         return loss

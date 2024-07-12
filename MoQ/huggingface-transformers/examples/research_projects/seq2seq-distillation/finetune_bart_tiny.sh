@@ -27,6 +27,3 @@ python finetune.py \
 
 rm -rf cnn_tiny
 rm -rf $OUTPUT_DIR
-
-
-

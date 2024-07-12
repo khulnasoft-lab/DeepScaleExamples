@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -117,7 +117,7 @@ Additionally, if you want to change multiple repos at once, the `change_config.p
 Make your model work on all frameworks
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. 
+..
     TODO Sylvain: make this automatic during the upload
 
 You probably have your favorite framework, but so will other users! That's why it's best to upload your model with both

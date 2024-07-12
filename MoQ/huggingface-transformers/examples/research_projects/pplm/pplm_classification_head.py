@@ -3,7 +3,6 @@ import torch
 
 class ClassificationHead(torch.nn.Module):
     """Classification Head for  transformer encoders"""
-
     def __init__(self, class_size, embed_size):
         super().__init__()
         self.class_size = class_size

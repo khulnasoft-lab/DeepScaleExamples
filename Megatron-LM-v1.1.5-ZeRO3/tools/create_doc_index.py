@@ -1,5 +1,6 @@
 import sys
-sys.path.append('../')
+
+sys.path.append("../")
 
 from megatron.indexer import IndexBuilder
 from megatron.initialize import initialize_megatron
@@ -19,12 +20,13 @@ def main():
     Check README.md for example script
     """
 
-    initialize_megatron(extra_args_provider=None,
-                        args_defaults={'tokenizer_type': 'BertWordPieceLowerCase'})
+    initialize_megatron(
+        extra_args_provider=None,
+        args_defaults={"tokenizer_type": "BertWordPieceLowerCase"},
+    )
     index_builder = IndexBuilder()
     index_builder.build_and_save_index()
 
 
 if __name__ == "__main__":
     main()
-

@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization classes for ALBERT model."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -24,35 +23,53 @@ from ...tokenization_utils import AddedToken
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 
-
 if is_sentencepiece_available():
     from .tokenization_albert import AlbertTokenizer
 else:
     AlbertTokenizer = None
 
 logger = logging.get_logger(__name__)
-VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "spiece.model",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "albert-base-v1": "https://huggingface.co/albert-base-v1/resolve/main/spiece.model",
-        "albert-large-v1": "https://huggingface.co/albert-large-v1/resolve/main/spiece.model",
-        "albert-xlarge-v1": "https://huggingface.co/albert-xlarge-v1/resolve/main/spiece.model",
-        "albert-xxlarge-v1": "https://huggingface.co/albert-xxlarge-v1/resolve/main/spiece.model",
-        "albert-base-v2": "https://huggingface.co/albert-base-v2/resolve/main/spiece.model",
-        "albert-large-v2": "https://huggingface.co/albert-large-v2/resolve/main/spiece.model",
-        "albert-xlarge-v2": "https://huggingface.co/albert-xlarge-v2/resolve/main/spiece.model",
-        "albert-xxlarge-v2": "https://huggingface.co/albert-xxlarge-v2/resolve/main/spiece.model",
+        "albert-base-v1":
+        "https://huggingface.co/albert-base-v1/resolve/main/spiece.model",
+        "albert-large-v1":
+        "https://huggingface.co/albert-large-v1/resolve/main/spiece.model",
+        "albert-xlarge-v1":
+        "https://huggingface.co/albert-xlarge-v1/resolve/main/spiece.model",
+        "albert-xxlarge-v1":
+        "https://huggingface.co/albert-xxlarge-v1/resolve/main/spiece.model",
+        "albert-base-v2":
+        "https://huggingface.co/albert-base-v2/resolve/main/spiece.model",
+        "albert-large-v2":
+        "https://huggingface.co/albert-large-v2/resolve/main/spiece.model",
+        "albert-xlarge-v2":
+        "https://huggingface.co/albert-xlarge-v2/resolve/main/spiece.model",
+        "albert-xxlarge-v2":
+        "https://huggingface.co/albert-xxlarge-v2/resolve/main/spiece.model",
     },
     "tokenizer_file": {
-        "albert-base-v1": "https://huggingface.co/albert-base-v1/resolve/main/tokenizer.json",
-        "albert-large-v1": "https://huggingface.co/albert-large-v1/resolve/main/tokenizer.json",
-        "albert-xlarge-v1": "https://huggingface.co/albert-xlarge-v1/resolve/main/tokenizer.json",
-        "albert-xxlarge-v1": "https://huggingface.co/albert-xxlarge-v1/resolve/main/tokenizer.json",
-        "albert-base-v2": "https://huggingface.co/albert-base-v2/resolve/main/tokenizer.json",
-        "albert-large-v2": "https://huggingface.co/albert-large-v2/resolve/main/tokenizer.json",
-        "albert-xlarge-v2": "https://huggingface.co/albert-xlarge-v2/resolve/main/tokenizer.json",
-        "albert-xxlarge-v2": "https://huggingface.co/albert-xxlarge-v2/resolve/main/tokenizer.json",
+        "albert-base-v1":
+        "https://huggingface.co/albert-base-v1/resolve/main/tokenizer.json",
+        "albert-large-v1":
+        "https://huggingface.co/albert-large-v1/resolve/main/tokenizer.json",
+        "albert-xlarge-v1":
+        "https://huggingface.co/albert-xlarge-v1/resolve/main/tokenizer.json",
+        "albert-xxlarge-v1":
+        "https://huggingface.co/albert-xxlarge-v1/resolve/main/tokenizer.json",
+        "albert-base-v2":
+        "https://huggingface.co/albert-base-v2/resolve/main/tokenizer.json",
+        "albert-large-v2":
+        "https://huggingface.co/albert-large-v2/resolve/main/tokenizer.json",
+        "albert-xlarge-v2":
+        "https://huggingface.co/albert-xlarge-v2/resolve/main/tokenizer.json",
+        "albert-xxlarge-v2":
+        "https://huggingface.co/albert-xxlarge-v2/resolve/main/tokenizer.json",
     },
 }
 
@@ -119,24 +136,23 @@ class AlbertTokenizerFast(PreTrainedTokenizerFast):
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     slow_tokenizer_class = AlbertTokenizer
 
-    def __init__(
-        self,
-        vocab_file,
-        tokenizer_file=None,
-        do_lower_case=True,
-        remove_space=True,
-        keep_accents=False,
-        bos_token="[CLS]",
-        eos_token="[SEP]",
-        unk_token="<unk>",
-        sep_token="[SEP]",
-        pad_token="<pad>",
-        cls_token="[CLS]",
-        mask_token="[MASK]",
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 tokenizer_file=None,
+                 do_lower_case=True,
+                 remove_space=True,
+                 keep_accents=False,
+                 bos_token="[CLS]",
+                 eos_token="[SEP]",
+                 unk_token="<unk>",
+                 sep_token="[SEP]",
+                 pad_token="<pad>",
+                 cls_token="[CLS]",
+                 mask_token="[MASK]",
+                 **kwargs):
         # Mask token behave like a normal word, i.e. include the space before it
-        mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
+        mask_token = (AddedToken(mask_token, lstrip=True, rstrip=False)
+                      if isinstance(mask_token, str) else mask_token)
 
         super().__init__(
             vocab_file,
@@ -160,8 +176,9 @@ class AlbertTokenizerFast(PreTrainedTokenizerFast):
         self.vocab_file = vocab_file
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. An ALBERT sequence has the following format:
@@ -185,7 +202,10 @@ class AlbertTokenizerFast(PreTrainedTokenizerFast):
         return cls + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -209,15 +229,22 @@ class AlbertTokenizerFast(PreTrainedTokenizerFast):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is not None:
-            return [1] + ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
+            return [1] + ([0] * len(token_ids_0)) + [1] + (
+                [0] * len(token_ids_1)) + [1]
         return [1] + ([0] * len(token_ids_0)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Creates a mask from the two sequences passed to be used in a sequence-pair classification task. An ALBERT
         sequence pair mask has the following format:
@@ -244,17 +271,23 @@ class AlbertTokenizerFast(PreTrainedTokenizerFast):
 
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
-        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
+        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 +
+                                                        sep) * [1]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

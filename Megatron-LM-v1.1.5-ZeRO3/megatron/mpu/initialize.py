@@ -12,14 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 """Model and data parallel groups."""
 
 import torch
 
 from .utils import ensure_divisibility
-
 
 # Model parallel group that the current rank belongs to.
 _MODEL_PARALLEL_GROUP = None
@@ -56,7 +53,7 @@ def initialize_model_parallel(model_parallel_size_):
     ranks 8 to 15 belong to the second box.
     """
     if torch.distributed.get_rank() == 0:
-        print('> initializing model parallel with size {}'.format(
+        print("> initializing model parallel with size {}".format(
             model_parallel_size_))
     # Get world size and rank. Ensure some consistencies.
     assert torch.distributed.is_initialized()
@@ -67,8 +64,7 @@ def initialize_model_parallel(model_parallel_size_):
 
     # Build the data parallel groups.
     global _DATA_PARALLEL_GROUP
-    assert _DATA_PARALLEL_GROUP is None, \
-        'data parallel group is already initialized'
+    assert _DATA_PARALLEL_GROUP is None, "data parallel group is already initialized"
     for i in range(model_parallel_size):
         ranks = range(i, world_size, model_parallel_size)
         group = torch.distributed.new_group(ranks)
@@ -77,11 +73,9 @@ def initialize_model_parallel(model_parallel_size_):
 
     # Build the model parallel groups.
     global _MODEL_PARALLEL_GROUP
-    assert _MODEL_PARALLEL_GROUP is None, \
-        'model parallel group is already initialized'
+    assert _MODEL_PARALLEL_GROUP is None, "model parallel group is already initialized"
     for i in range(world_size // model_parallel_size):
-        ranks = range(i * model_parallel_size,
-                      (i + 1) * model_parallel_size)
+        ranks = range(i * model_parallel_size, (i + 1) * model_parallel_size)
         group = torch.distributed.new_group(ranks)
         if i == (rank // model_parallel_size):
             _MODEL_PARALLEL_GROUP = group
@@ -96,15 +90,13 @@ def model_parallel_is_initialized():
 
 def get_model_parallel_group():
     """Get the model parallel group the caller rank belongs to."""
-    assert _MODEL_PARALLEL_GROUP is not None, \
-        'model parallel group is not initialized'
+    assert _MODEL_PARALLEL_GROUP is not None, "model parallel group is not initialized"
     return _MODEL_PARALLEL_GROUP
 
 
 def get_data_parallel_group():
     """Get the data parallel group the caller rank belongs to."""
-    assert _DATA_PARALLEL_GROUP is not None, \
-        'data parallel group is not initialized'
+    assert _DATA_PARALLEL_GROUP is not None, "data parallel group is not initialized"
     return _DATA_PARALLEL_GROUP
 
 

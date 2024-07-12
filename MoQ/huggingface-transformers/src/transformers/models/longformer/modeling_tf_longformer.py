@@ -43,7 +43,6 @@ from ...modeling_tf_utils import (
 from ...utils import logging
 from .configuration_longformer import LongformerConfig
 
-
 logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "LongformerConfig"
@@ -385,31 +384,35 @@ class TFLongformerTokenClassifierOutput(ModelOutput):
     global_attentions: Optional[Tuple[tf.Tensor]] = None
 
 
-def _compute_global_attention_mask(input_ids_shape, sep_token_indices, before_sep_token=True):
+def _compute_global_attention_mask(input_ids_shape,
+                                   sep_token_indices,
+                                   before_sep_token=True):
     """
     Computes global attention mask by putting attention on all tokens before `sep_token_id` if `before_sep_token is
     True` else after `sep_token_id`.
     """
 
-    assert shape_list(sep_token_indices)[1] == 2, "`input_ids` should have two dimensions"
-    question_end_index = tf.reshape(sep_token_indices, (input_ids_shape[0], 3, 2))[:, 0, 1]
-    question_end_index = tf.cast(question_end_index[:, None], tf.dtypes.int32)  # size: batch_size x 1
+    assert (shape_list(sep_token_indices)[1] == 2
+            ), "`input_ids` should have two dimensions"
+    question_end_index = tf.reshape(sep_token_indices,
+                                    (input_ids_shape[0], 3, 2))[:, 0, 1]
+    question_end_index = tf.cast(question_end_index[:, None],
+                                 tf.dtypes.int32)  # size: batch_size x 1
     # bool attention mask with True in locations of global attention
     attention_mask = tf.range(input_ids_shape[1])[tf.newaxis, :]
     attention_mask = tf.tile(attention_mask, (input_ids_shape[0], 1))
     if before_sep_token is True:
-        question_end_index = tf.tile(question_end_index, (1, input_ids_shape[1]))
+        question_end_index = tf.tile(question_end_index,
+                                     (1, input_ids_shape[1]))
         attention_mask = tf.cast(attention_mask < question_end_index, tf.int32)
     else:
         # last token is separation token and should not be counted and in the middle are two separation tokens
-        question_end_index = tf.tile(question_end_index + 1, (1, input_ids_shape[1]))
-        attention_mask = (
-            tf.cast(
-                attention_mask > question_end_index,
-                tf.dtypes.int32,
-            )
-            * tf.cast(attention_mask < input_ids_shape[-1], tf.dtypes.int32)
-        )
+        question_end_index = tf.tile(question_end_index + 1,
+                                     (1, input_ids_shape[1]))
+        attention_mask = tf.cast(
+            attention_mask > question_end_index,
+            tf.dtypes.int32,
+        ) * tf.cast(attention_mask < input_ids_shape[-1], tf.dtypes.int32)
 
     return attention_mask
 
@@ -417,16 +420,18 @@ def _compute_global_attention_mask(input_ids_shape, sep_token_indices, before_se
 # Copied from transformers.models.roberta.modeling_tf_roberta.TFRobertaLMHead with Roberta->Longformer
 class TFLongformerLMHead(tf.keras.layers.Layer):
     """Longformer Head for masked language modeling."""
-
     def __init__(self, config, input_embeddings, **kwargs):
         super().__init__(**kwargs)
 
         self.vocab_size = config.vocab_size
         self.hidden_size = config.hidden_size
         self.dense = tf.keras.layers.Dense(
-            config.hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            config.hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
-        self.layer_norm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="layer_norm")
+        self.layer_norm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="layer_norm")
         self.act = get_tf_activation("gelu")
 
         # The output weights are the same as the input embeddings, but there is
@@ -434,7 +439,10 @@ class TFLongformerLMHead(tf.keras.layers.Layer):
         self.decoder = input_embeddings
 
     def build(self, input_shape):
-        self.bias = self.add_weight(shape=(self.vocab_size,), initializer="zeros", trainable=True, name="bias")
+        self.bias = self.add_weight(shape=(self.vocab_size, ),
+                                    initializer="zeros",
+                                    trainable=True,
+                                    name="bias")
 
         super().build(input_shape)
 
@@ -459,9 +467,13 @@ class TFLongformerLMHead(tf.keras.layers.Layer):
 
         # project back to size of vocabulary with bias
         seq_length = shape_list(tensor=hidden_states)[1]
-        hidden_states = tf.reshape(tensor=hidden_states, shape=[-1, self.hidden_size])
-        hidden_states = tf.matmul(a=hidden_states, b=self.decoder.weight, transpose_b=True)
-        hidden_states = tf.reshape(tensor=hidden_states, shape=[-1, seq_length, self.vocab_size])
+        hidden_states = tf.reshape(tensor=hidden_states,
+                                   shape=[-1, self.hidden_size])
+        hidden_states = tf.matmul(a=hidden_states,
+                                  b=self.decoder.weight,
+                                  transpose_b=True)
+        hidden_states = tf.reshape(tensor=hidden_states,
+                                   shape=[-1, seq_length, self.vocab_size])
         hidden_states = tf.nn.bias_add(value=hidden_states, bias=self.bias)
 
         return hidden_states
@@ -472,7 +484,6 @@ class TFLongformerEmbeddings(tf.keras.layers.Layer):
     """
     Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
     """
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
 
@@ -483,7 +494,8 @@ class TFLongformerEmbeddings(tf.keras.layers.Layer):
         self.max_position_embeddings = config.max_position_embeddings
         self.initializer_range = config.initializer_range
         self.embeddings_sum = tf.keras.layers.Add()
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm")
         self.dropout = tf.keras.layers.Dropout(rate=config.hidden_dropout_prob)
 
     def build(self, input_shape: tf.TensorShape):
@@ -519,12 +531,20 @@ class TFLongformerEmbeddings(tf.keras.layers.Layer):
             input_ids: tf.Tensor
         Returns: tf.Tensor
         """
-        mask = tf.cast(tf.math.not_equal(input_ids, self.padding_idx), dtype=input_ids.dtype)
+        mask = tf.cast(tf.math.not_equal(input_ids, self.padding_idx),
+                       dtype=input_ids.dtype)
         incremental_indices = tf.math.cumsum(mask, axis=1) * mask
 
         return incremental_indices + self.padding_idx
 
-    def call(self, input_ids=None, position_ids=None, token_type_ids=None, inputs_embeds=None, training=False):
+    def call(
+        self,
+        input_ids=None,
+        position_ids=None,
+        token_type_ids=None,
+        inputs_embeds=None,
+        training=False,
+    ):
         """
         Applies embedding based on inputs tensor.
 
@@ -544,18 +564,28 @@ class TFLongformerEmbeddings(tf.keras.layers.Layer):
         if position_ids is None:
             if input_ids is not None:
                 # Create the position ids from the input token ids. Any padded tokens remain padded.
-                position_ids = self.create_position_ids_from_input_ids(input_ids=input_ids)
+                position_ids = self.create_position_ids_from_input_ids(
+                    input_ids=input_ids)
             else:
                 position_ids = tf.expand_dims(
-                    tf.range(start=self.padding_idx + 1, limit=input_shape[-1] + self.padding_idx + 1), axis=0
+                    tf.range(
+                        start=self.padding_idx + 1,
+                        limit=input_shape[-1] + self.padding_idx + 1,
+                    ),
+                    axis=0,
                 )
-                position_ids = tf.tile(input=position_ids, multiples=(input_shape[0], 1))
+                position_ids = tf.tile(input=position_ids,
+                                       multiples=(input_shape[0], 1))
 
-        position_embeds = tf.gather(params=self.position_embeddings, indices=position_ids)
-        token_type_embeds = tf.gather(params=self.token_type_embeddings, indices=token_type_ids)
-        final_embeddings = self.embeddings_sum(inputs=[inputs_embeds, position_embeds, token_type_embeds])
+        position_embeds = tf.gather(params=self.position_embeddings,
+                                    indices=position_ids)
+        token_type_embeds = tf.gather(params=self.token_type_embeddings,
+                                      indices=token_type_ids)
+        final_embeddings = self.embeddings_sum(
+            inputs=[inputs_embeds, position_embeds, token_type_embeds])
         final_embeddings = self.LayerNorm(inputs=final_embeddings)
-        final_embeddings = self.dropout(inputs=final_embeddings, training=training)
+        final_embeddings = self.dropout(inputs=final_embeddings,
+                                        training=training)
 
         return final_embeddings
 
@@ -566,7 +596,9 @@ class TFLongformerIntermediate(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         self.dense = tf.keras.layers.Dense(
-            units=config.intermediate_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            units=config.intermediate_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
 
         if isinstance(config.hidden_act, str):
@@ -587,12 +619,18 @@ class TFLongformerOutput(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         self.dense = tf.keras.layers.Dense(
-            units=config.hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            units=config.hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm")
         self.dropout = tf.keras.layers.Dropout(rate=config.hidden_dropout_prob)
 
-    def call(self, hidden_states: tf.Tensor, input_tensor: tf.Tensor, training: bool = False) -> tf.Tensor:
+    def call(self,
+             hidden_states: tf.Tensor,
+             input_tensor: tf.Tensor,
+             training: bool = False) -> tf.Tensor:
         hidden_states = self.dense(inputs=hidden_states)
         hidden_states = self.dropout(inputs=hidden_states, training=training)
         hidden_states = self.LayerNorm(inputs=hidden_states + input_tensor)
@@ -627,12 +665,18 @@ class TFLongformerSelfOutput(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         self.dense = tf.keras.layers.Dense(
-            units=config.hidden_size, kernel_initializer=get_initializer(config.initializer_range), name="dense"
+            units=config.hidden_size,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="dense",
         )
-        self.LayerNorm = tf.keras.layers.LayerNormalization(epsilon=config.layer_norm_eps, name="LayerNorm")
+        self.LayerNorm = tf.keras.layers.LayerNormalization(
+            epsilon=config.layer_norm_eps, name="LayerNorm")
         self.dropout = tf.keras.layers.Dropout(rate=config.hidden_dropout_prob)
 
-    def call(self, hidden_states: tf.Tensor, input_tensor: tf.Tensor, training: bool = False) -> tf.Tensor:
+    def call(self,
+             hidden_states: tf.Tensor,
+             input_tensor: tf.Tensor,
+             training: bool = False) -> tf.Tensor:
         hidden_states = self.dense(inputs=hidden_states)
         hidden_states = self.dropout(inputs=hidden_states, training=training)
         hidden_states = self.LayerNorm(inputs=hidden_states + input_tensor)
@@ -647,8 +691,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         if config.hidden_size % config.num_attention_heads != 0:
             raise ValueError(
                 "The hidden size (%d) is not a multiple of the number of attention "
-                "heads (%d)" % (config.hidden_size, config.num_attention_heads)
-            )
+                "heads (%d)" %
+                (config.hidden_size, config.num_attention_heads))
 
         self.num_heads = config.num_attention_heads
         self.head_dim = int(config.hidden_size / config.num_attention_heads)
@@ -685,8 +729,10 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             kernel_initializer=get_initializer(config.initializer_range),
             name="value_global",
         )
-        self.dropout = tf.keras.layers.Dropout(config.attention_probs_dropout_prob)
-        self.global_dropout = tf.keras.layers.Dropout(config.attention_probs_dropout_prob)
+        self.dropout = tf.keras.layers.Dropout(
+            config.attention_probs_dropout_prob)
+        self.global_dropout = tf.keras.layers.Dropout(
+            config.attention_probs_dropout_prob)
         self.layer_id = layer_id
         attention_window = config.attention_window[self.layer_id]
 
@@ -733,18 +779,22 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         tf.debugging.assert_equal(
             embed_dim,
             self.embed_dim,
-            message=f"hidden_states should have embed_dim = {self.embed_dim}, but has {embed_dim}",
+            message=
+            f"hidden_states should have embed_dim = {self.embed_dim}, but has {embed_dim}",
         )
 
         # normalize query
-        query_vectors /= tf.math.sqrt(tf.convert_to_tensor(self.head_dim, dtype=tf.dtypes.float32))
-        query_vectors = tf.reshape(query_vectors, (batch_size, seq_len, self.num_heads, self.head_dim))
-        key_vectors = tf.reshape(key_vectors, (batch_size, seq_len, self.num_heads, self.head_dim))
+        query_vectors /= tf.math.sqrt(
+            tf.convert_to_tensor(self.head_dim, dtype=tf.dtypes.float32))
+        query_vectors = tf.reshape(
+            query_vectors,
+            (batch_size, seq_len, self.num_heads, self.head_dim))
+        key_vectors = tf.reshape(
+            key_vectors, (batch_size, seq_len, self.num_heads, self.head_dim))
 
         # attn_probs = (batch_size, seq_len, num_heads, window*2+1)
         attn_scores = self._sliding_chunks_query_key_matmul(
-            query_vectors, key_vectors, self.one_sided_attn_window_size
-        )
+            query_vectors, key_vectors, self.one_sided_attn_window_size)
 
         # diagonal mask with zeros everywhere and -inf inplace of padding
         diagonal_mask = self._sliding_chunks_query_key_matmul(
@@ -758,8 +808,14 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
 
         tf.debugging.assert_equal(
             shape_list(attn_scores),
-            [batch_size, seq_len, self.num_heads, self.one_sided_attn_window_size * 2 + 1],
-            message=f"attn_probs should be of size ({batch_size}, {seq_len}, {self.num_heads}, {self.one_sided_attn_window_size * 2 + 1}), but is of size {shape_list(attn_scores)}",
+            [
+                batch_size,
+                seq_len,
+                self.num_heads,
+                self.one_sided_attn_window_size * 2 + 1,
+            ],
+            message=
+            f"attn_probs should be of size ({batch_size}, {seq_len}, {self.num_heads}, {self.one_sided_attn_window_size * 2 + 1}), but is of size {shape_list(attn_scores)}",
         )
 
         # compute global attn indices required through out forward fn
@@ -779,8 +835,10 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
                 key_vectors=key_vectors,
                 max_num_global_attn_indices=max_num_global_attn_indices,
                 is_index_global_attn_nonzero=is_index_global_attn_nonzero,
-                is_local_index_global_attn_nonzero=is_local_index_global_attn_nonzero,
-                is_local_index_no_global_attn_nonzero=is_local_index_no_global_attn_nonzero,
+                is_local_index_global_attn_nonzero=
+                is_local_index_global_attn_nonzero,
+                is_local_index_no_global_attn_nonzero=
+                is_local_index_no_global_attn_nonzero,
             ),
             lambda: attn_scores,
         )
@@ -794,11 +852,18 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             is_global_attn,
             lambda: tf.tile(
                 is_index_masked[:, :, None, None],
-                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + max_num_global_attn_indices + 1),
+                (
+                    1,
+                    1,
+                    self.num_heads,
+                    self.one_sided_attn_window_size * 2 +
+                    max_num_global_attn_indices + 1,
+                ),
             ),
             lambda: tf.tile(
                 is_index_masked[:, :, None, None],
-                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + 1),
+                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + 1
+                 ),
             ),
         )
         attn_probs = tf.where(
@@ -811,13 +876,17 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             tf.debugging.assert_equal(
                 shape_list(layer_head_mask),
                 [self.num_heads],
-                message=f"Head mask for a single layer should be of size {(self.num_heads)}, but is {shape_list(layer_head_mask)}",
+                message=
+                f"Head mask for a single layer should be of size {(self.num_heads)}, but is {shape_list(layer_head_mask)}",
             )
-            attn_probs = tf.reshape(layer_head_mask, (1, 1, -1, 1)) * attn_probs
+            attn_probs = tf.reshape(layer_head_mask,
+                                    (1, 1, -1, 1)) * attn_probs
 
         # apply dropout
         attn_probs = self.dropout(attn_probs, training=training)
-        value_vectors = tf.reshape(value_vectors, (batch_size, seq_len, self.num_heads, self.head_dim))
+        value_vectors = tf.reshape(
+            value_vectors,
+            (batch_size, seq_len, self.num_heads, self.head_dim))
 
         # if global attention, compute sum of global and local attn
         attn_output = tf.cond(
@@ -827,11 +896,11 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
                 attn_probs=attn_probs,
                 max_num_global_attn_indices=max_num_global_attn_indices,
                 is_index_global_attn_nonzero=is_index_global_attn_nonzero,
-                is_local_index_global_attn_nonzero=is_local_index_global_attn_nonzero,
+                is_local_index_global_attn_nonzero=
+                is_local_index_global_attn_nonzero,
             ),
             lambda: self._sliding_chunks_matmul_attn_probs_value(
-                attn_probs, value_vectors, self.one_sided_attn_window_size
-            ),
+                attn_probs, value_vectors, self.one_sided_attn_window_size),
         )
 
         tf.debugging.assert_equal(
@@ -851,13 +920,19 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
                 hidden_states=hidden_states,
                 max_num_global_attn_indices=max_num_global_attn_indices,
                 layer_head_mask=layer_head_mask,
-                is_local_index_global_attn_nonzero=is_local_index_global_attn_nonzero,
+                is_local_index_global_attn_nonzero=
+                is_local_index_global_attn_nonzero,
                 is_index_global_attn_nonzero=is_index_global_attn_nonzero,
-                is_local_index_no_global_attn_nonzero=is_local_index_no_global_attn_nonzero,
+                is_local_index_no_global_attn_nonzero=
+                is_local_index_no_global_attn_nonzero,
                 is_index_masked=is_index_masked,
                 training=training,
             ),
-            lambda: (attn_output, tf.zeros((batch_size, self.num_heads, max_num_global_attn_indices, seq_len))),
+            lambda: (
+                attn_output,
+                tf.zeros((batch_size, self.num_heads,
+                          max_num_global_attn_indices, seq_len)),
+            ),
         )
 
         # make sure that local attention probabilities are set to 0 for indices of global attn
@@ -868,16 +943,24 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             is_global_attn,
             lambda: tf.tile(
                 is_index_global_attn[:, :, None, None],
-                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + max_num_global_attn_indices + 1),
+                (
+                    1,
+                    1,
+                    self.num_heads,
+                    self.one_sided_attn_window_size * 2 +
+                    max_num_global_attn_indices + 1,
+                ),
             ),
             lambda: tf.tile(
                 is_index_global_attn[:, :, None, None],
-                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + 1),
+                (1, 1, self.num_heads, self.one_sided_attn_window_size * 2 + 1
+                 ),
             ),
         )
         attn_probs = tf.where(
             masked_global_attn_index,
-            tf.zeros(shape_list(masked_global_attn_index), dtype=tf.dtypes.float32),
+            tf.zeros(shape_list(masked_global_attn_index),
+                     dtype=tf.dtypes.float32),
             attn_probs,
         )
 
@@ -896,12 +979,14 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         tf.debugging.assert_equal(
             seq_len % (window_overlap * 2),
             0,
-            message=f"Sequence length should be multiple of {window_overlap * 2}. Given {seq_len}",
+            message=
+            f"Sequence length should be multiple of {window_overlap * 2}. Given {seq_len}",
         )
         tf.debugging.assert_equal(
             shape_list(query),
             shape_list(key),
-            message=f"Shape of query and key should be equal, but got query: {shape_list(query)} and key: {shape_list(key)}",
+            message=
+            f"Shape of query and key should be equal, but got query: {shape_list(query)} and key: {shape_list(key)}",
         )
 
         chunks_count = seq_len // window_overlap - 1
@@ -911,7 +996,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             tf.transpose(query, (0, 2, 1, 3)),
             (batch_size * num_heads, seq_len, head_dim),
         )
-        key = tf.reshape(tf.transpose(key, (0, 2, 1, 3)), (batch_size * num_heads, seq_len, head_dim))
+        key = tf.reshape(tf.transpose(key, (0, 2, 1, 3)),
+                         (batch_size * num_heads, seq_len, head_dim))
         chunked_query = self._chunk(query, window_overlap)
         chunked_key = self._chunk(key, window_overlap)
 
@@ -919,11 +1005,14 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         # bcxd: batch_size * num_heads x chunks x 2window_overlap x head_dim
         # bcyd: batch_size * num_heads x chunks x 2window_overlap x head_dim
         # bcxy: batch_size * num_heads x chunks x 2window_overlap x 2window_overlap
-        chunked_attention_scores = tf.einsum("bcxd,bcyd->bcxy", chunked_query, chunked_key)  # multiply
+        chunked_attention_scores = tf.einsum("bcxd,bcyd->bcxy", chunked_query,
+                                             chunked_key)  # multiply
 
         # convert diagonals into columns
-        paddings = tf.convert_to_tensor([[0, 0], [0, 0], [0, 1], [0, 0]], dtype=tf.dtypes.int32)
-        diagonal_chunked_attention_scores = self._pad_and_transpose_last_two_dims(chunked_attention_scores, paddings)
+        paddings = tf.convert_to_tensor([[0, 0], [0, 0], [0, 1], [0, 0]],
+                                        dtype=tf.dtypes.int32)
+        diagonal_chunked_attention_scores = self._pad_and_transpose_last_two_dims(
+            chunked_attention_scores, paddings)
 
         # allocate space for the overall attention matrix where the chunks are combined. The last dimension
         # has (window_overlap * 2 + 1) columns. The first (window_overlap) columns are the window_overlap lower triangles (attention from a word to
@@ -935,8 +1024,10 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         # TODO: This code is most likely not very efficient and should be improved
         diagonal_attn_scores_up_triang = tf.concat(
             [
-                diagonal_chunked_attention_scores[:, :, :window_overlap, : window_overlap + 1],
-                diagonal_chunked_attention_scores[:, -1:, window_overlap:, : window_overlap + 1],
+                diagonal_chunked_attention_scores[:, :, :window_overlap, :
+                                                  window_overlap + 1],
+                diagonal_chunked_attention_scores[:, -1:, window_overlap:, :
+                                                  window_overlap + 1],
             ],
             axis=1,
         )
@@ -944,8 +1035,11 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         # - copying the lower triangle
         diagonal_attn_scores_low_triang = tf.concat(
             [
-                tf.zeros((batch_size * num_heads, 1, window_overlap, window_overlap)),
-                diagonal_chunked_attention_scores[:, :, -(window_overlap + 1) : -1, window_overlap + 1 :],
+                tf.zeros((batch_size * num_heads, 1, window_overlap,
+                          window_overlap)),
+                diagonal_chunked_attention_scores[:, :,
+                                                  -(window_overlap + 1):-1,
+                                                  window_overlap + 1:],
             ],
             axis=1,
         )
@@ -956,17 +1050,15 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
                     shift=[1, window_overlap],
                     axis=[2, 3],
                 )[:, :, :window_overlap, :window_overlap],
-                tf.zeros((batch_size * num_heads, 1, window_overlap, window_overlap)),
+                tf.zeros((batch_size * num_heads, 1, window_overlap,
+                          window_overlap)),
             ],
             axis=1,
         )
-        first_chunk_mask = (
-            tf.tile(
-                tf.range(chunks_count + 1)[None, :, None, None],
-                (batch_size * num_heads, 1, window_overlap, window_overlap),
-            )
-            < 1
-        )
+        first_chunk_mask = (tf.tile(
+            tf.range(chunks_count + 1)[None, :, None, None],
+            (batch_size * num_heads, 1, window_overlap, window_overlap),
+        ) < 1)
         diagonal_attn_scores_low_triang = tf.where(
             first_chunk_mask,
             diagonal_attn_scores_first_chunk,
@@ -975,8 +1067,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
 
         # merging upper and lower triangle
         diagonal_attention_scores = tf.concat(
-            [diagonal_attn_scores_low_triang, diagonal_attn_scores_up_triang], axis=-1
-        )
+            [diagonal_attn_scores_low_triang, diagonal_attn_scores_up_triang],
+            axis=-1)
 
         # separate batch_size and num_heads dimensions again
         diagonal_attention_scores = tf.transpose(
@@ -987,7 +1079,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             (0, 2, 1, 3),
         )
 
-        diagonal_attention_scores = self._mask_invalid_locations(diagonal_attention_scores, window_overlap)
+        diagonal_attention_scores = self._mask_invalid_locations(
+            diagonal_attention_scores, window_overlap)
 
         return diagonal_attention_scores
 
@@ -995,14 +1088,16 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
     def _mask_invalid_locations(input_tensor, window_overlap):
         # create correct upper triangle bool mask
         mask_2d_upper = tf.reverse(
-            tf.linalg.band_part(tf.ones(shape=(window_overlap, window_overlap + 1)), -1, 0),
+            tf.linalg.band_part(
+                tf.ones(shape=(window_overlap, window_overlap + 1)), -1, 0),
             axis=[0],
         )
 
         # pad to full matrix
-        padding = tf.convert_to_tensor(
-            [[0, shape_list(input_tensor)[1] - window_overlap], [0, shape_list(input_tensor)[3] - window_overlap - 1]]
-        )
+        padding = tf.convert_to_tensor([
+            [0, shape_list(input_tensor)[1] - window_overlap],
+            [0, shape_list(input_tensor)[3] - window_overlap - 1],
+        ])
 
         # create lower mask
         mask_2d = tf.pad(mask_2d_upper, padding)
@@ -1011,17 +1106,21 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         mask_2d = mask_2d + tf.reverse(mask_2d, axis=[0, 1])
 
         # broadcast to full matrix
-        mask_4d = tf.tile(mask_2d[None, :, None, :], (shape_list(input_tensor)[0], 1, 1, 1))
+        mask_4d = tf.tile(mask_2d[None, :, None, :],
+                          (shape_list(input_tensor)[0], 1, 1, 1))
 
         # inf tensor used for masking
-        inf_tensor = -float("inf") * tf.ones_like(input_tensor, dtype=tf.dtypes.float32)
+        inf_tensor = -float("inf") * tf.ones_like(input_tensor,
+                                                  dtype=tf.dtypes.float32)
 
         # mask
-        input_tensor = tf.where(tf.math.greater(mask_4d, 0), inf_tensor, input_tensor)
+        input_tensor = tf.where(tf.math.greater(mask_4d, 0), inf_tensor,
+                                input_tensor)
 
         return input_tensor
 
-    def _sliding_chunks_matmul_attn_probs_value(self, attn_probs, value, window_overlap):
+    def _sliding_chunks_matmul_attn_probs_value(self, attn_probs, value,
+                                                window_overlap):
         """
         Same as _sliding_chunks_query_key_matmul but for attn_probs and value tensors. Returned tensor will be of the
         same shape as `attn_probs`
@@ -1037,7 +1136,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         tf.debugging.assert_equal(
             shape_list(attn_probs)[:3],
             shape_list(value)[:3],
-            message="value and attn_probs must have same dims (except head_dim)",
+            message=
+            "value and attn_probs must have same dims (except head_dim)",
         )
         tf.debugging.assert_equal(
             shape_list(attn_probs)[3],
@@ -1065,12 +1165,15 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
 
         # pad seq_len with w at the beginning of the sequence and another window overlap at the end
-        paddings = tf.convert_to_tensor([[0, 0], [window_overlap, window_overlap], [0, 0]], dtype=tf.dtypes.int32)
+        paddings = tf.convert_to_tensor(
+            [[0, 0], [window_overlap, window_overlap], [0, 0]],
+            dtype=tf.dtypes.int32)
         padded_value = tf.pad(value, paddings, constant_values=-1)
 
         # chunk padded_value into chunks of size 3 window overlap and an overlap of size window overlap
         frame_size = 3 * window_overlap * head_dim
-        frame_hop_size = (shape_list(padded_value)[1] * head_dim - frame_size) // chunks_count
+        frame_hop_size = (shape_list(padded_value)[1] * head_dim -
+                          frame_size) // chunks_count
         chunked_value = tf.signal.frame(
             tf.reshape(padded_value, (batch_size * num_heads, -1)),
             frame_size,
@@ -1078,17 +1181,22 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
         chunked_value = tf.reshape(
             chunked_value,
-            (batch_size * num_heads, chunks_count + 1, 3 * window_overlap, head_dim),
+            (batch_size * num_heads, chunks_count + 1, 3 * window_overlap,
+             head_dim),
         )
 
         tf.debugging.assert_equal(
             shape_list(chunked_value),
-            [batch_size * num_heads, chunks_count + 1, 3 * window_overlap, head_dim],
+            [
+                batch_size * num_heads, chunks_count + 1, 3 * window_overlap,
+                head_dim
+            ],
             message="Chunked value has the wrong shape",
         )
 
         chunked_attn_probs = self._pad_and_diagonalize(chunked_attn_probs)
-        context = tf.einsum("bcwd,bcdh->bcwh", chunked_attn_probs, chunked_value)
+        context = tf.einsum("bcwd,bcdh->bcwh", chunked_attn_probs,
+                            chunked_value)
         context = tf.transpose(
             tf.reshape(context, (batch_size, num_heads, seq_len, head_dim)),
             (0, 2, 1, 3),
@@ -1102,8 +1210,11 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         hidden_states_padded = tf.pad(
             hidden_states_padded, paddings
         )  # padding value is not important because it will be overwritten
-        batch_size, chunk_size, seq_length, hidden_dim = shape_list(hidden_states_padded)
-        hidden_states_padded = tf.reshape(hidden_states_padded, (batch_size, chunk_size, hidden_dim, seq_length))
+        batch_size, chunk_size, seq_length, hidden_dim = shape_list(
+            hidden_states_padded)
+        hidden_states_padded = tf.reshape(
+            hidden_states_padded,
+            (batch_size, chunk_size, hidden_dim, seq_length))
 
         return hidden_states_padded
 
@@ -1125,20 +1236,22 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
                0.0000,  0.0000, -0.7584,  0.4206, -0.0405,  0.1599, 0.0000
                0.0000,  0.0000,  0.0000, 2.0514, -1.1600,  0.5372,  0.2629 ]
         """
-        total_num_heads, num_chunks, window_overlap, hidden_dim = shape_list(chunked_hidden_states)
-        paddings = tf.convert_to_tensor([[0, 0], [0, 0], [0, 0], [0, window_overlap + 1]])
+        total_num_heads, num_chunks, window_overlap, hidden_dim = shape_list(
+            chunked_hidden_states)
+        paddings = tf.convert_to_tensor([[0, 0], [0, 0], [0, 0],
+                                         [0, window_overlap + 1]])
         chunked_hidden_states = tf.pad(
             chunked_hidden_states, paddings
         )  # total_num_heads x num_chunks x window_overlap x (hidden_dim+window_overlap+1). Padding value is not important because it'll be overwritten
         chunked_hidden_states = tf.reshape(
             chunked_hidden_states, (total_num_heads, num_chunks, -1)
         )  # total_num_heads x num_chunks x window_overlapL+window_overlapwindow_overlap+window_overlap
-        chunked_hidden_states = chunked_hidden_states[
-            :, :, :-window_overlap
-        ]  # total_num_heads x num_chunks x window_overlapL+window_overlapwindow_overlap
+        chunked_hidden_states = chunked_hidden_states[:, :, :
+                                                      -window_overlap]  # total_num_heads x num_chunks x window_overlapL+window_overlapwindow_overlap
         chunked_hidden_states = tf.reshape(
             chunked_hidden_states,
-            (total_num_heads, num_chunks, window_overlap, window_overlap + hidden_dim),
+            (total_num_heads, num_chunks, window_overlap,
+             window_overlap + hidden_dim),
         )  # total_num_heads x num_chunks, window_overlap x hidden_dim+window_overlap
         chunked_hidden_states = chunked_hidden_states[:, :, :, :-1]
 
@@ -1153,15 +1266,18 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         # define frame size and frame stride (similar to convolution)
         frame_hop_size = window_overlap * hidden_dim
         frame_size = 2 * frame_hop_size
-        hidden_states = tf.reshape(hidden_states, (batch_size, seq_length * hidden_dim))
+        hidden_states = tf.reshape(hidden_states,
+                                   (batch_size, seq_length * hidden_dim))
 
         # chunk with overlap
-        chunked_hidden_states = tf.signal.frame(hidden_states, frame_size, frame_hop_size)
+        chunked_hidden_states = tf.signal.frame(hidden_states, frame_size,
+                                                frame_hop_size)
 
         tf.debugging.assert_equal(
             shape_list(chunked_hidden_states),
             [batch_size, num_output_chunks, frame_size],
-            message=f"Make sure chunking is correctly applied. `Chunked hidden states should have output  dimension {[batch_size, frame_size, num_output_chunks]}, but got {shape_list(chunked_hidden_states)}.",
+            message=
+            f"Make sure chunking is correctly applied. `Chunked hidden states should have output  dimension {[batch_size, frame_size, num_output_chunks]}, but got {shape_list(chunked_hidden_states)}.",
         )
 
         chunked_hidden_states = tf.reshape(
@@ -1173,9 +1289,11 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
 
     @staticmethod
     def _get_global_attn_indices(is_index_global_attn):
-        """ compute global attn indices required throughout forward pass """
+        """compute global attn indices required throughout forward pass"""
         # helper variable
-        num_global_attn_indices = tf.reduce_sum(tf.cast(is_index_global_attn, dtype=tf.dtypes.int32), axis=1)
+        num_global_attn_indices = tf.reduce_sum(tf.cast(is_index_global_attn,
+                                                        dtype=tf.dtypes.int32),
+                                                axis=1)
 
         # max number of global attn indices in batch
         max_num_global_attn_indices = tf.reduce_max(num_global_attn_indices)
@@ -1184,15 +1302,17 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         is_index_global_attn_nonzero = tf.where(is_index_global_attn)
 
         # helper variable
-        is_local_index_global_attn = tf.range(max_num_global_attn_indices) < tf.expand_dims(
-            num_global_attn_indices, axis=-1
-        )
+        is_local_index_global_attn = tf.range(
+            max_num_global_attn_indices) < tf.expand_dims(
+                num_global_attn_indices, axis=-1)
 
         # location of the non-padding values within global attention indices
-        is_local_index_global_attn_nonzero = tf.where(is_local_index_global_attn)
+        is_local_index_global_attn_nonzero = tf.where(
+            is_local_index_global_attn)
 
         # location of the padding values within global attention indices
-        is_local_index_no_global_attn_nonzero = tf.where(tf.math.logical_not(is_local_index_global_attn))
+        is_local_index_no_global_attn_nonzero = tf.where(
+            tf.math.logical_not(is_local_index_global_attn))
 
         return (
             max_num_global_attn_indices,
@@ -1214,7 +1334,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         batch_size = shape_list(key_vectors)[0]
 
         # select global key vectors
-        global_key_vectors = tf.gather_nd(key_vectors, is_index_global_attn_nonzero)
+        global_key_vectors = tf.gather_nd(key_vectors,
+                                          is_index_global_attn_nonzero)
 
         # create only global key vectors
         key_vectors_only_global = tf.scatter_nd(
@@ -1229,13 +1350,16 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
 
         # (batch_size, seq_len, num_heads, max_num_global_attn_indices)
-        attn_probs_from_global_key = tf.einsum("blhd,bshd->blhs", query_vectors, key_vectors_only_global)
+        attn_probs_from_global_key = tf.einsum("blhd,bshd->blhs",
+                                               query_vectors,
+                                               key_vectors_only_global)
 
         # (batch_size, max_num_global_attn_indices, seq_len, num_heads)
-        attn_probs_from_global_key_trans = tf.transpose(attn_probs_from_global_key, (0, 3, 1, 2))
-        mask_shape = (shape_list(is_local_index_no_global_attn_nonzero)[0],) + tuple(
-            shape_list(attn_probs_from_global_key_trans)[-2:]
-        )
+        attn_probs_from_global_key_trans = tf.transpose(
+            attn_probs_from_global_key, (0, 3, 1, 2))
+        mask_shape = (
+            shape_list(is_local_index_no_global_attn_nonzero)[0], ) + tuple(
+                shape_list(attn_probs_from_global_key_trans)[-2:])
         mask = tf.ones(mask_shape) * -10000.0
 
         # scatter mask
@@ -1246,11 +1370,13 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
 
         # (batch_size, seq_len, num_heads, max_num_global_attn_indices)
-        attn_probs_from_global_key = tf.transpose(attn_probs_from_global_key_trans, (0, 2, 3, 1))
+        attn_probs_from_global_key = tf.transpose(
+            attn_probs_from_global_key_trans, (0, 2, 3, 1))
 
         # concat to attn_probs
         # (batch_size, seq_len, num_heads, extra attention count + 2*window+1)
-        attn_scores = tf.concat((attn_probs_from_global_key, attn_scores), axis=-1)
+        attn_scores = tf.concat((attn_probs_from_global_key, attn_scores),
+                                axis=-1)
 
         return attn_scores
 
@@ -1265,10 +1391,12 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         batch_size = shape_list(attn_probs)[0]
 
         # cut local attn probs to global only
-        attn_probs_only_global = attn_probs[:, :, :, :max_num_global_attn_indices]
+        attn_probs_only_global = attn_probs[:, :, :, :
+                                            max_num_global_attn_indices]
 
         # select global value vectors
-        global_value_vectors = tf.gather_nd(value_vectors, is_index_global_attn_nonzero)
+        global_value_vectors = tf.gather_nd(value_vectors,
+                                            is_index_global_attn_nonzero)
 
         # create only global value vectors
         value_vectors_only_global = tf.scatter_nd(
@@ -1283,15 +1411,18 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
 
         # compute attn output only global
-        attn_output_only_global = tf.einsum("blhs,bshd->blhd", attn_probs_only_global, value_vectors_only_global)
+        attn_output_only_global = tf.einsum("blhs,bshd->blhd",
+                                            attn_probs_only_global,
+                                            value_vectors_only_global)
 
         # reshape attn probs
-        attn_probs_without_global = attn_probs[:, :, :, max_num_global_attn_indices:]
+        attn_probs_without_global = attn_probs[:, :, :,
+                                               max_num_global_attn_indices:]
 
         # compute attn output with global
         attn_output_without_global = self._sliding_chunks_matmul_attn_probs_value(
-            attn_probs_without_global, value_vectors, self.one_sided_attn_window_size
-        )
+            attn_probs_without_global, value_vectors,
+            self.one_sided_attn_window_size)
 
         return attn_output_only_global + attn_output_without_global
 
@@ -1310,7 +1441,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         batch_size, seq_len = shape_list(hidden_states)[:2]
 
         # prepare global hidden states
-        global_attn_hidden_states = tf.gather_nd(hidden_states, is_index_global_attn_nonzero)
+        global_attn_hidden_states = tf.gather_nd(hidden_states,
+                                                 is_index_global_attn_nonzero)
         global_attn_hidden_states = tf.scatter_nd(
             is_local_index_global_attn_nonzero,
             global_attn_hidden_states,
@@ -1318,33 +1450,44 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
         )
 
         # global key, query, value
-        global_query_vectors_only_global = self.query_global(global_attn_hidden_states)
+        global_query_vectors_only_global = self.query_global(
+            global_attn_hidden_states)
         global_key_vectors = self.key_global(hidden_states)
         global_value_vectors = self.value_global(hidden_states)
 
         # normalize
-        global_query_vectors_only_global /= tf.math.sqrt(tf.convert_to_tensor(self.head_dim, dtype=tf.dtypes.float32))
-        global_query_vectors_only_global = self.reshape_and_transpose(global_query_vectors_only_global, batch_size)
-        global_key_vectors = self.reshape_and_transpose(global_key_vectors, batch_size)
-        global_value_vectors = self.reshape_and_transpose(global_value_vectors, batch_size)
+        global_query_vectors_only_global /= tf.math.sqrt(
+            tf.convert_to_tensor(self.head_dim, dtype=tf.dtypes.float32))
+        global_query_vectors_only_global = self.reshape_and_transpose(
+            global_query_vectors_only_global, batch_size)
+        global_key_vectors = self.reshape_and_transpose(
+            global_key_vectors, batch_size)
+        global_value_vectors = self.reshape_and_transpose(
+            global_value_vectors, batch_size)
 
         # compute attn scores
-        global_attn_scores = tf.matmul(global_query_vectors_only_global, global_key_vectors, transpose_b=True)
+        global_attn_scores = tf.matmul(global_query_vectors_only_global,
+                                       global_key_vectors,
+                                       transpose_b=True)
 
         tf.debugging.assert_equal(
             shape_list(global_attn_scores),
-            [batch_size * self.num_heads, max_num_global_attn_indices, seq_len],
-            message=f"global_attn_scores have the wrong size. Size should be {(batch_size * self.num_heads, max_num_global_attn_indices, seq_len)}, but is {shape_list(global_attn_scores)}.",
+            [
+                batch_size * self.num_heads, max_num_global_attn_indices,
+                seq_len
+            ],
+            message=
+            f"global_attn_scores have the wrong size. Size should be {(batch_size * self.num_heads, max_num_global_attn_indices, seq_len)}, but is {shape_list(global_attn_scores)}.",
         )
 
         global_attn_scores = tf.reshape(
             global_attn_scores,
             (batch_size, self.num_heads, max_num_global_attn_indices, seq_len),
         )
-        global_attn_scores_trans = tf.transpose(global_attn_scores, (0, 2, 1, 3))
-        mask_shape = (shape_list(is_local_index_no_global_attn_nonzero)[0],) + tuple(
-            shape_list(global_attn_scores_trans)[-2:]
-        )
+        global_attn_scores_trans = tf.transpose(global_attn_scores,
+                                                (0, 2, 1, 3))
+        mask_shape = (shape_list(is_local_index_no_global_attn_nonzero)[0],
+                      ) + tuple(shape_list(global_attn_scores_trans)[-2:])
         global_attn_mask = tf.ones(mask_shape) * -10000.0
 
         # scatter mask
@@ -1353,14 +1496,19 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             is_local_index_no_global_attn_nonzero,
             global_attn_mask,
         )
-        global_attn_scores = tf.transpose(global_attn_scores_trans, (0, 2, 1, 3))
+        global_attn_scores = tf.transpose(global_attn_scores_trans,
+                                          (0, 2, 1, 3))
 
         # mask global attn scores
-        attn_mask = tf.tile(is_index_masked[:, None, None, :], (1, shape_list(global_attn_scores)[1], 1, 1))
+        attn_mask = tf.tile(
+            is_index_masked[:, None, None, :],
+            (1, shape_list(global_attn_scores)[1], 1, 1),
+        )
         global_attn_scores = tf.where(attn_mask, -10000.0, global_attn_scores)
         global_attn_scores = tf.reshape(
             global_attn_scores,
-            (batch_size * self.num_heads, max_num_global_attn_indices, seq_len),
+            (batch_size * self.num_heads, max_num_global_attn_indices,
+             seq_len),
         )
 
         # compute global attn probs
@@ -1371,30 +1519,42 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
             tf.debugging.assert_equal(
                 shape_list(layer_head_mask),
                 [self.num_heads],
-                message=f"Head mask for a single layer should be of size {(self.num_heads)}, but is {shape_list(layer_head_mask)}",
-            )
-            global_attn_probs_float = tf.reshape(layer_head_mask, (1, -1, 1, 1)) * tf.reshape(
-                global_attn_probs_float, (batch_size, self.num_heads, max_num_global_attn_indices, seq_len)
+                message=
+                f"Head mask for a single layer should be of size {(self.num_heads)}, but is {shape_list(layer_head_mask)}",
             )
             global_attn_probs_float = tf.reshape(
-                global_attn_probs_float, (batch_size * self.num_heads, max_num_global_attn_indices, seq_len)
+                layer_head_mask, (1, -1, 1, 1)) * tf.reshape(
+                    global_attn_probs_float,
+                    (batch_size, self.num_heads, max_num_global_attn_indices,
+                     seq_len),
+                )
+            global_attn_probs_float = tf.reshape(
+                global_attn_probs_float,
+                (batch_size * self.num_heads, max_num_global_attn_indices,
+                 seq_len),
             )
 
         # dropout
-        global_attn_probs = self.global_dropout(global_attn_probs_float, training=training)
+        global_attn_probs = self.global_dropout(global_attn_probs_float,
+                                                training=training)
 
         # global attn output
         global_attn_output = tf.matmul(global_attn_probs, global_value_vectors)
 
         tf.debugging.assert_equal(
             shape_list(global_attn_output),
-            [batch_size * self.num_heads, max_num_global_attn_indices, self.head_dim],
-            message=f"global_attn_output tensor has the wrong size. Size should be {(batch_size * self.num_heads, max_num_global_attn_indices, self.head_dim)}, but is {shape_list(global_attn_output)}.",
+            [
+                batch_size * self.num_heads, max_num_global_attn_indices,
+                self.head_dim
+            ],
+            message=
+            f"global_attn_output tensor has the wrong size. Size should be {(batch_size * self.num_heads, max_num_global_attn_indices, self.head_dim)}, but is {shape_list(global_attn_output)}.",
         )
 
         global_attn_output = tf.reshape(
             global_attn_output,
-            (batch_size, self.num_heads, max_num_global_attn_indices, self.head_dim),
+            (batch_size, self.num_heads, max_num_global_attn_indices,
+             self.head_dim),
         )
 
         # get only non zero global attn output
@@ -1409,11 +1569,12 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
 
         # overwrite values with global attention
         attn_output = tf.tensor_scatter_nd_update(
-            attn_output, is_index_global_attn_nonzero, nonzero_global_attn_output
-        )
+            attn_output, is_index_global_attn_nonzero,
+            nonzero_global_attn_output)
 
         global_attn_probs = tf.reshape(
-            global_attn_probs, (batch_size, self.num_heads, max_num_global_attn_indices, seq_len)
+            global_attn_probs,
+            (batch_size, self.num_heads, max_num_global_attn_indices, seq_len),
         )
 
         return attn_output, global_attn_probs
@@ -1421,7 +1582,8 @@ class TFLongformerSelfAttention(tf.keras.layers.Layer):
     def reshape_and_transpose(self, vector, batch_size):
         return tf.reshape(
             tf.transpose(
-                tf.reshape(vector, (batch_size, -1, self.num_heads, self.head_dim)),
+                tf.reshape(vector,
+                           (batch_size, -1, self.num_heads, self.head_dim)),
                 (0, 2, 1, 3),
             ),
             (batch_size * self.num_heads, -1, self.head_dim),
@@ -1432,7 +1594,9 @@ class TFLongformerAttention(tf.keras.layers.Layer):
     def __init__(self, config, layer_id=0, **kwargs):
         super().__init__(**kwargs)
 
-        self.self_attention = TFLongformerSelfAttention(config, layer_id, name="self")
+        self.self_attention = TFLongformerSelfAttention(config,
+                                                        layer_id,
+                                                        name="self")
         self.dense_output = TFLongformerSelfOutput(config, name="output")
 
     def prune_heads(self, heads):
@@ -1449,11 +1613,20 @@ class TFLongformerAttention(tf.keras.layers.Layer):
         ) = inputs
 
         self_outputs = self.self_attention(
-            [hidden_states, attention_mask, layer_head_mask, is_index_masked, is_index_global_attn, is_global_attn],
+            [
+                hidden_states,
+                attention_mask,
+                layer_head_mask,
+                is_index_masked,
+                is_index_global_attn,
+                is_global_attn,
+            ],
             training=training,
         )
-        attention_output = self.dense_output(self_outputs[0], hidden_states, training=training)
-        outputs = (attention_output,) + self_outputs[1:]
+        attention_output = self.dense_output(self_outputs[0],
+                                             hidden_states,
+                                             training=training)
+        outputs = (attention_output, ) + self_outputs[1:]
 
         return outputs
 
@@ -1462,8 +1635,11 @@ class TFLongformerLayer(tf.keras.layers.Layer):
     def __init__(self, config, layer_id=0, **kwargs):
         super().__init__(**kwargs)
 
-        self.attention = TFLongformerAttention(config, layer_id, name="attention")
-        self.intermediate = TFLongformerIntermediate(config, name="intermediate")
+        self.attention = TFLongformerAttention(config,
+                                               layer_id,
+                                               name="attention")
+        self.intermediate = TFLongformerIntermediate(config,
+                                                     name="intermediate")
         self.longformer_output = TFLongformerOutput(config, name="output")
 
     def call(self, inputs, training=False):
@@ -1477,13 +1653,23 @@ class TFLongformerLayer(tf.keras.layers.Layer):
         ) = inputs
 
         attention_outputs = self.attention(
-            [hidden_states, attention_mask, layer_head_mask, is_index_masked, is_index_global_attn, is_global_attn],
+            [
+                hidden_states,
+                attention_mask,
+                layer_head_mask,
+                is_index_masked,
+                is_index_global_attn,
+                is_global_attn,
+            ],
             training=training,
         )
         attention_output = attention_outputs[0]
         intermediate_output = self.intermediate(attention_output)
-        layer_output = self.longformer_output(intermediate_output, attention_output, training=training)
-        outputs = (layer_output,) + attention_outputs[1:]  # add attentions if we output them
+        layer_output = self.longformer_output(intermediate_output,
+                                              attention_output,
+                                              training=training)
+        outputs = (layer_output, ) + attention_outputs[
+            1:]  # add attentions if we output them
 
         return outputs
 
@@ -1495,7 +1681,8 @@ class TFLongformerEncoder(tf.keras.layers.Layer):
         self.output_hidden_states = config.output_hidden_states
         self.output_attentions = config.output_attentions
         self.layer = [
-            TFLongformerLayer(config, i, name="layer_._{}".format(i)) for i in range(config.num_hidden_layers)
+            TFLongformerLayer(config, i, name="layer_._{}".format(i))
+            for i in range(config.num_hidden_layers)
         ]
 
     def call(
@@ -1513,12 +1700,15 @@ class TFLongformerEncoder(tf.keras.layers.Layer):
         training=False,
     ):
         all_hidden_states = () if output_hidden_states else None
-        all_attentions = all_global_attentions = () if output_attentions else None
+        all_attentions = all_global_attentions = (
+        ) if output_attentions else None
 
         for idx, layer_module in enumerate(self.layer):
             if output_hidden_states:
-                hidden_states_to_add = hidden_states[:, :-padding_len] if padding_len > 0 else hidden_states
-                all_hidden_states = all_hidden_states + (hidden_states_to_add,)
+                hidden_states_to_add = (hidden_states[:, :-padding_len]
+                                        if padding_len > 0 else hidden_states)
+                all_hidden_states = all_hidden_states + (
+                    hidden_states_to_add, )
 
             layer_outputs = layer_module(
                 [
@@ -1535,20 +1725,26 @@ class TFLongformerEncoder(tf.keras.layers.Layer):
 
             if output_attentions:
                 # bzs x seq_len x num_attn_heads x (num_global_attn + attention_window_len + 1) => bzs x num_attn_heads x seq_len x (num_global_attn + attention_window_len + 1)
-                all_attentions = all_attentions + (tf.transpose(layer_outputs[1], (0, 2, 1, 3)),)
+                all_attentions = all_attentions + (tf.transpose(
+                    layer_outputs[1], (0, 2, 1, 3)), )
 
                 # bzs x num_attn_heads x num_global_attn x seq_len => bzs x num_attn_heads x seq_len x num_global_attn
-                all_global_attentions = all_global_attentions + (tf.transpose(layer_outputs[2], (0, 1, 3, 2)))
+                all_global_attentions = all_global_attentions + (tf.transpose(
+                    layer_outputs[2], (0, 1, 3, 2)))
 
         # Add last layer
         if output_hidden_states:
-            hidden_states_to_add = hidden_states[:, :-padding_len] if padding_len > 0 else hidden_states
-            all_hidden_states = all_hidden_states + (hidden_states_to_add,)
+            hidden_states_to_add = (hidden_states[:, :-padding_len]
+                                    if padding_len > 0 else hidden_states)
+            all_hidden_states = all_hidden_states + (hidden_states_to_add, )
 
         if not return_dict:
-            return tuple(
-                v for v in [hidden_states, all_hidden_states, all_attentions, all_global_attentions] if v is not None
-            )
+            return tuple(v for v in [
+                hidden_states,
+                all_hidden_states,
+                all_attentions,
+                all_global_attentions,
+            ] if v is not None)
 
         return TFLongformerBaseModelOutput(
             last_hidden_state=hidden_states,
@@ -1566,9 +1762,14 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         super().__init__(**kwargs)
 
         if isinstance(config.attention_window, int):
-            assert config.attention_window % 2 == 0, "`config.attention_window` has to be an even value"
-            assert config.attention_window > 0, "`config.attention_window` has to be positive"
-            config.attention_window = [config.attention_window] * config.num_hidden_layers  # one value per layer
+            assert (
+                config.attention_window %
+                2 == 0), "`config.attention_window` has to be an even value"
+            assert (config.attention_window >
+                    0), "`config.attention_window` has to be positive"
+            config.attention_window = [
+                config.attention_window
+            ] * config.num_hidden_layers  # one value per layer
         else:
             assert len(config.attention_window) == config.num_hidden_layers, (
                 "`len(config.attention_window)` should equal `config.num_hidden_layers`. "
@@ -1585,7 +1786,8 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         self.attention_window = config.attention_window
         self.embeddings = TFLongformerEmbeddings(config, name="embeddings")
         self.encoder = TFLongformerEncoder(config, name="encoder")
-        self.pooler = TFLongformerPooler(config, name="pooler") if add_pooling_layer else None
+        self.pooler = (TFLongformerPooler(config, name="pooler")
+                       if add_pooling_layer else None)
 
     def get_input_embeddings(self):
         return self.embeddings
@@ -1633,14 +1835,18 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
             kwargs_call=kwargs,
         )
 
-        if inputs["input_ids"] is not None and inputs["inputs_embeds"] is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+        if inputs["input_ids"] is not None and inputs[
+                "inputs_embeds"] is not None:
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif inputs["input_ids"] is not None:
             input_shape = shape_list(inputs["input_ids"])
         elif inputs["inputs_embeds"] is not None:
             input_shape = shape_list(inputs["inputs_embeds"])[:-1]
         else:
-            raise ValueError("You have to specify either input_ids or inputs_embeds")
+            raise ValueError(
+                "You have to specify either input_ids or inputs_embeds")
 
         if inputs["attention_mask"] is None:
             inputs["attention_mask"] = tf.fill(input_shape, 1)
@@ -1651,8 +1857,7 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         # merge `global_attention_mask` and `attention_mask`
         if inputs["global_attention_mask"] is not None:
             inputs["attention_mask"] = self._merge_to_attention_mask(
-                inputs["attention_mask"], inputs["global_attention_mask"]
-            )
+                inputs["attention_mask"], inputs["global_attention_mask"])
 
         (
             padding_len,
@@ -1682,7 +1887,8 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         # used in OpenAI GPT, we just need to prepare the broadcast dimension here.
         attention_mask_shape = shape_list(inputs["attention_mask"])
         extended_attention_mask = tf.reshape(
-            inputs["attention_mask"], (attention_mask_shape[0], attention_mask_shape[1], 1, 1)
+            inputs["attention_mask"],
+            (attention_mask_shape[0], attention_mask_shape[1], 1, 1),
         )
 
         # Since attention_mask is 1.0 for positions we want to locall attend locally and 0.0 for
@@ -1690,7 +1896,9 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         # positions we want to attend and -10000.0 for masked positions.
         # Since we are adding it to the raw scores before the softmax, this is
         # effectively the same as removing these entirely.
-        extended_attention_mask = tf.cast(tf.math.abs(1 - extended_attention_mask), tf.dtypes.float32) * -10000.0
+        extended_attention_mask = (tf.cast(
+            tf.math.abs(1 - extended_attention_mask), tf.dtypes.float32) *
+                                   -10000.0)
         embedding_output = self.embeddings(
             inputs["input_ids"],
             inputs["position_ids"],
@@ -1712,7 +1920,8 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
             training=inputs["training"],
         )
         sequence_output = encoder_outputs[0]
-        pooled_output = self.pooler(sequence_output) if self.pooler is not None else None
+        pooled_output = (self.pooler(sequence_output)
+                         if self.pooler is not None else None)
 
         # undo padding
         if padding_len > 0:
@@ -1744,43 +1953,55 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
     ):
         """A helper function to pad tokens and mask to work with implementation of Longformer selfattention."""
         # padding
-        attention_window = (
-            self.attention_window if isinstance(self.attention_window, int) else max(self.attention_window)
-        )
+        attention_window = (self.attention_window if isinstance(
+            self.attention_window, int) else max(self.attention_window))
 
-        assert attention_window % 2 == 0, f"`attention_window` should be an even value. Given {attention_window}"
+        assert (
+            attention_window % 2 == 0
+        ), f"`attention_window` should be an even value. Given {attention_window}"
 
-        input_shape = shape_list(input_ids) if input_ids is not None else shape_list(inputs_embeds)
+        input_shape = (shape_list(input_ids)
+                       if input_ids is not None else shape_list(inputs_embeds))
         batch_size, seq_len = input_shape[:2]
-        padding_len = (attention_window - seq_len % attention_window) % attention_window
+        padding_len = (attention_window -
+                       seq_len % attention_window) % attention_window
 
         if padding_len > 0:
             logger.info(
-                "Input ids are automatically padded from {} to {} to be a multiple of `config.attention_window`: {}".format(
-                    seq_len, seq_len + padding_len, attention_window
-                )
-            )
+                "Input ids are automatically padded from {} to {} to be a multiple of `config.attention_window`: {}"
+                .format(seq_len, seq_len + padding_len, attention_window))
 
         paddings = tf.convert_to_tensor([[0, 0], [0, padding_len]])
 
         if input_ids is not None:
-            input_ids = tf.pad(input_ids, paddings, constant_values=pad_token_id)
+            input_ids = tf.pad(input_ids,
+                               paddings,
+                               constant_values=pad_token_id)
 
         if position_ids is not None:
             # pad with position_id = pad_token_id as in modeling_roberta.RobertaEmbeddings
-            position_ids = tf.pad(position_ids, paddings, constant_values=pad_token_id)
+            position_ids = tf.pad(position_ids,
+                                  paddings,
+                                  constant_values=pad_token_id)
 
         if inputs_embeds is not None:
 
             def pad_embeddings():
-                input_ids_padding = tf.fill((batch_size, padding_len), self.pad_token_id)
+                input_ids_padding = tf.fill((batch_size, padding_len),
+                                            self.pad_token_id)
                 inputs_embeds_padding = self.embeddings(input_ids_padding)
-                return tf.concat([inputs_embeds, inputs_embeds_padding], axis=-2)
+                return tf.concat([inputs_embeds, inputs_embeds_padding],
+                                 axis=-2)
 
-            inputs_embeds = tf.cond(tf.math.greater(padding_len, 0), pad_embeddings, lambda: inputs_embeds)
+            inputs_embeds = tf.cond(tf.math.greater(padding_len, 0),
+                                    pad_embeddings, lambda: inputs_embeds)
 
-        attention_mask = tf.pad(attention_mask, paddings, constant_values=False)  # no attention on the padding tokens
-        token_type_ids = tf.pad(token_type_ids, paddings, constant_values=0)  # pad with token_type_id = 0
+        attention_mask = tf.pad(
+            attention_mask, paddings,
+            constant_values=False)  # no attention on the padding tokens
+        token_type_ids = tf.pad(
+            token_type_ids, paddings,
+            constant_values=0)  # pad with token_type_id = 0
 
         return (
             padding_len,
@@ -1792,7 +2013,8 @@ class TFLongformerMainLayer(tf.keras.layers.Layer):
         )
 
     @staticmethod
-    def _merge_to_attention_mask(attention_mask: tf.Tensor, global_attention_mask: tf.Tensor):
+    def _merge_to_attention_mask(attention_mask: tf.Tensor,
+                                 global_attention_mask: tf.Tensor):
         # longformer self attention expects attention mask to have 0 (no attn), 1 (local attn), 2 (global attn)
         # (global_attention_mask + 1) => 1 for local attention, 2 for global attention
         # => final attention_mask => 0 for no attention, 1 for local attention 2 for global attention
@@ -1817,24 +2039,27 @@ class TFLongformerPreTrainedModel(TFPreTrainedModel):
 
     @property
     def dummy_inputs(self):
-        input_ids = tf.convert_to_tensor([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0], [0, 0, 0, 4, 5]])
+        input_ids = tf.convert_to_tensor([[7, 6, 0, 0, 1], [1, 2, 3, 0, 0],
+                                          [0, 0, 0, 4, 5]])
         # make sure global layers are initialized
-        attention_mask = tf.convert_to_tensor([[1, 1, 0, 0, 1], [1, 1, 1, 0, 0], [1, 0, 0, 1, 1]])
-        global_attention_mask = tf.convert_to_tensor([[0, 0, 0, 0, 1], [0, 0, 1, 0, 0], [0, 0, 0, 0, 1]])
+        attention_mask = tf.convert_to_tensor([[1, 1, 0, 0,
+                                                1], [1, 1, 1, 0, 0],
+                                               [1, 0, 0, 1, 1]])
+        global_attention_mask = tf.convert_to_tensor([[0, 0, 0, 0, 1],
+                                                      [0, 0, 1, 0, 0],
+                                                      [0, 0, 0, 0, 1]])
         return {
             "input_ids": input_ids,
             "attention_mask": attention_mask,
             "global_attention_mask": global_attention_mask,
         }
 
-    @tf.function(
-        input_signature=[
-            {
-                "input_ids": tf.TensorSpec((None, None), tf.int32, name="input_ids"),
-                "attention_mask": tf.TensorSpec((None, None), tf.int32, name="attention_mask"),
-            }
-        ]
-    )
+    @tf.function(input_signature=[{
+        "input_ids":
+        tf.TensorSpec((None, None), tf.int32, name="input_ids"),
+        "attention_mask":
+        tf.TensorSpec((None, None), tf.int32, name="attention_mask"),
+    }])
     def serving(self, inputs):
         output = self.call(inputs)
 
@@ -1876,7 +2101,6 @@ LONGFORMER_START_DOCSTRING = r"""
             configuration. Check out the :meth:`~transformers.PreTrainedModel.from_pretrained` method to load the model
             weights.
 """
-
 
 LONGFORMER_INPUTS_DOCSTRING = r"""
     Args:
@@ -1966,13 +2190,13 @@ class TFLongformerModel(TFLongformerPreTrainedModel):
     custom CUDA kernel to be memory and compute efficient.
 
     """
-
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
 
         self.longformer = TFLongformerMainLayer(config, name="longformer")
 
-    @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     def call(
         self,
         input_ids=None,
@@ -2021,9 +2245,12 @@ class TFLongformerModel(TFLongformerPreTrainedModel):
         return outputs
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerBaseModelOutputWithPooling(
             last_hidden_state=output.last_hidden_state,
@@ -2038,24 +2265,33 @@ class TFLongformerModel(TFLongformerPreTrainedModel):
     """Longformer Model with a `language modeling` head on top. """,
     LONGFORMER_START_DOCSTRING,
 )
-class TFLongformerForMaskedLM(TFLongformerPreTrainedModel, TFMaskedLanguageModelingLoss):
+class TFLongformerForMaskedLM(TFLongformerPreTrainedModel,
+                              TFMaskedLanguageModelingLoss):
     # names with a '.' represents the authorized unexpected/missing layers when a TF model is loaded from a PT model
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
 
     def __init__(self, config, *inputs, **kwargs):
         super().__init__(config, *inputs, **kwargs)
 
-        self.longformer = TFLongformerMainLayer(config, add_pooling_layer=False, name="longformer")
-        self.lm_head = TFLongformerLMHead(config, self.longformer.embeddings, name="lm_head")
+        self.longformer = TFLongformerMainLayer(config,
+                                                add_pooling_layer=False,
+                                                name="longformer")
+        self.lm_head = TFLongformerLMHead(config,
+                                          self.longformer.embeddings,
+                                          name="lm_head")
 
     def get_lm_head(self):
         return self.lm_head
 
     def get_prefix_bias_name(self):
-        warnings.warn("The method get_prefix_bias_name is deprecated. Please use `get_bias` instead.", FutureWarning)
+        warnings.warn(
+            "The method get_prefix_bias_name is deprecated. Please use `get_bias` instead.",
+            FutureWarning,
+        )
         return self.name + "/" + self.lm_head.name
 
-    @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="allenai/longformer-base-4096",
@@ -2115,13 +2351,15 @@ class TFLongformerForMaskedLM(TFLongformerPreTrainedModel, TFMaskedLanguageModel
             training=inputs["training"],
         )
         sequence_output = outputs[0]
-        prediction_scores = self.lm_head(sequence_output, training=inputs["training"])
-        loss = None if inputs["labels"] is None else self.compute_loss(inputs["labels"], prediction_scores)
+        prediction_scores = self.lm_head(sequence_output,
+                                         training=inputs["training"])
+        loss = (None if inputs["labels"] is None else self.compute_loss(
+            inputs["labels"], prediction_scores))
 
         if not inputs["return_dict"]:
-            output = (prediction_scores,) + outputs[2:]
+            output = (prediction_scores, ) + outputs[2:]
 
-            return ((loss,) + output) if loss is not None else output
+            return ((loss, ) + output) if loss is not None else output
 
         return TFLongformerMaskedLMOutput(
             loss=loss,
@@ -2132,12 +2370,18 @@ class TFLongformerForMaskedLM(TFLongformerPreTrainedModel, TFMaskedLanguageModel
         )
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerMaskedLMOutput(
-            logits=output.logits, hidden_states=hs, attentions=attns, global_attentions=g_attns
+            logits=output.logits,
+            hidden_states=hs,
+            attentions=attns,
+            global_attentions=g_attns,
         )
 
 
@@ -2148,7 +2392,8 @@ class TFLongformerForMaskedLM(TFLongformerPreTrainedModel, TFMaskedLanguageModel
     """,
     LONGFORMER_START_DOCSTRING,
 )
-class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAnsweringLoss):
+class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel,
+                                       TFQuestionAnsweringLoss):
     # names with a '.' represents the authorized unexpected/missing layers when a TF model is loaded from a PT model
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
 
@@ -2156,14 +2401,17 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
         super().__init__(config, *inputs, **kwargs)
 
         self.num_labels = config.num_labels
-        self.longformer = TFLongformerMainLayer(config, add_pooling_layer=False, name="longformer")
+        self.longformer = TFLongformerMainLayer(config,
+                                                add_pooling_layer=False,
+                                                name="longformer")
         self.qa_outputs = tf.keras.layers.Dense(
             config.num_labels,
             kernel_initializer=get_initializer(config.initializer_range),
             name="qa_outputs",
         )
 
-    @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="allenai/longformer-large-4096-finetuned-triviaqa",
@@ -2217,22 +2465,27 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
         )
 
         # set global attention on question tokens
-        if inputs["global_attention_mask"] is None and inputs["input_ids"] is not None:
-            if (
-                shape_list(tf.where(inputs["input_ids"] == self.config.sep_token_id))[0]
-                != 3 * shape_list(inputs["input_ids"])[0]
-            ):
+        if inputs["global_attention_mask"] is None and inputs[
+                "input_ids"] is not None:
+            if (shape_list(
+                    tf.where(
+                        inputs["input_ids"] == self.config.sep_token_id))[0] !=
+                    3 * shape_list(inputs["input_ids"])[0]):
                 logger.warning(
                     f"There should be exactly three separator tokens: {self.config.sep_token_id} in every sample for questions answering. You might also consider to set `global_attention_mask` manually in the forward function to avoid this. This is most likely an error. The global attention is disabled for this forward pass."
                 )
-                inputs["global_attention_mask"] = tf.fill(shape_list(inputs["input_ids"]), value=0)
+                inputs["global_attention_mask"] = tf.fill(shape_list(
+                    inputs["input_ids"]),
+                                                          value=0)
             else:
-                logger.info("Initializing global attention on question tokens...")
+                logger.info(
+                    "Initializing global attention on question tokens...")
                 # put global attention on all tokens until `config.sep_token_id` is reached
-                sep_token_indices = tf.where(inputs["input_ids"] == self.config.sep_token_id)
-                inputs["global_attention_mask"] = _compute_global_attention_mask(
-                    shape_list(inputs["input_ids"]), sep_token_indices
-                )
+                sep_token_indices = tf.where(
+                    inputs["input_ids"] == self.config.sep_token_id)
+                inputs[
+                    "global_attention_mask"] = _compute_global_attention_mask(
+                        shape_list(inputs["input_ids"]), sep_token_indices)
 
         outputs = self.longformer(
             input_ids=inputs["input_ids"],
@@ -2254,7 +2507,8 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
         end_logits = tf.squeeze(end_logits, axis=-1)
         loss = None
 
-        if inputs["start_positions"] is not None and inputs["end_positions"] is not None:
+        if (inputs["start_positions"] is not None
+                and inputs["end_positions"] is not None):
             labels = {"start_position": inputs["start_positions"]}
             labels["end_position"] = inputs["end_positions"]
             loss = self.compute_loss(labels, (start_logits, end_logits))
@@ -2262,7 +2516,7 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
         if not inputs["return_dict"]:
             output = (start_logits, end_logits) + outputs[2:]
 
-            return ((loss,) + output) if loss is not None else output
+            return ((loss, ) + output) if loss is not None else output
 
         return TFLongformerQuestionAnsweringModelOutput(
             loss=loss,
@@ -2274,9 +2528,12 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
         )
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerQuestionAnsweringModelOutput(
             start_logits=output.start_logits,
@@ -2289,7 +2546,6 @@ class TFLongformerForQuestionAnswering(TFLongformerPreTrainedModel, TFQuestionAn
 
 class TFLongformerClassificationHead(tf.keras.layers.Layer):
     """Head for sentence-level classification tasks."""
-
     def __init__(self, config, **kwargs):
         super().__init__(**kwargs)
         self.dense = tf.keras.layers.Dense(
@@ -2300,11 +2556,14 @@ class TFLongformerClassificationHead(tf.keras.layers.Layer):
         )
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.out_proj = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="out_proj"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="out_proj",
         )
 
     def call(self, hidden_states, training=False):
-        hidden_states = hidden_states[:, 0, :]  # take <s> token (equiv. to [CLS])
+        hidden_states = hidden_states[:,
+                                      0, :]  # take <s> token (equiv. to [CLS])
         hidden_states = self.dropout(hidden_states, training=training)
         hidden_states = self.dense(hidden_states)
         hidden_states = self.dropout(hidden_states, training=training)
@@ -2319,7 +2578,8 @@ class TFLongformerClassificationHead(tf.keras.layers.Layer):
     """,
     LONGFORMER_START_DOCSTRING,
 )
-class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSequenceClassificationLoss):
+class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel,
+                                            TFSequenceClassificationLoss):
     # names with a '.' represents the authorized unexpected/missing layers when a TF model is loaded from a PT model
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
 
@@ -2328,10 +2588,14 @@ class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSeque
 
         self.num_labels = config.num_labels
 
-        self.longformer = TFLongformerMainLayer(config, add_pooling_layer=False, name="longformer")
-        self.classifier = TFLongformerClassificationHead(config, name="classifier")
+        self.longformer = TFLongformerMainLayer(config,
+                                                add_pooling_layer=False,
+                                                name="longformer")
+        self.classifier = TFLongformerClassificationHead(config,
+                                                         name="classifier")
 
-    @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="allenai/longformer-base-4096",
@@ -2372,13 +2636,18 @@ class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSeque
             kwargs_call=kwargs,
         )
 
-        if inputs["global_attention_mask"] is None and inputs["input_ids"] is not None:
+        if inputs["global_attention_mask"] is None and inputs[
+                "input_ids"] is not None:
             logger.info("Initializing global attention on CLS token...")
             # global attention on cls token
-            inputs["global_attention_mask"] = tf.zeros_like(inputs["input_ids"])
-            updates = tf.ones(shape_list(inputs["input_ids"])[0], dtype=tf.int32)
+            inputs["global_attention_mask"] = tf.zeros_like(
+                inputs["input_ids"])
+            updates = tf.ones(shape_list(inputs["input_ids"])[0],
+                              dtype=tf.int32)
             indices = tf.pad(
-                tensor=tf.expand_dims(tf.range(shape_list(inputs["input_ids"])[0]), axis=1),
+                tensor=tf.expand_dims(tf.range(
+                    shape_list(inputs["input_ids"])[0]),
+                                      axis=1),
                 paddings=[[0, 0], [0, 1]],
                 constant_values=0,
             )
@@ -2404,11 +2673,12 @@ class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSeque
         sequence_output = outputs[0]
         logits = self.classifier(sequence_output)
 
-        loss = None if inputs["labels"] is None else self.compute_loss(inputs["labels"], logits)
+        loss = (None if inputs["labels"] is None else self.compute_loss(
+            inputs["labels"], logits))
 
         if not inputs["return_dict"]:
-            output = (logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return TFLongformerSequenceClassifierOutput(
             loss=loss,
@@ -2419,12 +2689,18 @@ class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSeque
         )
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerSequenceClassifierOutput(
-            logits=output.logits, hidden_states=hs, attentions=attns, global_attentions=g_attns
+            logits=output.logits,
+            hidden_states=hs,
+            attentions=attns,
+            global_attentions=g_attns,
         )
 
 
@@ -2435,7 +2711,8 @@ class TFLongformerForSequenceClassification(TFLongformerPreTrainedModel, TFSeque
     """,
     LONGFORMER_START_DOCSTRING,
 )
-class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoiceLoss):
+class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel,
+                                    TFMultipleChoiceLoss):
     # names with a '.' represents the authorized unexpected/missing layers when a TF model is loaded from a PT model
     _keys_to_ignore_on_load_missing = [r"dropout"]
 
@@ -2445,19 +2722,25 @@ class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoic
         self.longformer = TFLongformerMainLayer(config, name="longformer")
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(
-            1, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
+            1,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="classifier",
         )
 
     @property
     def dummy_inputs(self):
         input_ids = tf.convert_to_tensor(MULTIPLE_CHOICE_DUMMY_INPUTS)
         # make sure global layers are initialized
-        global_attention_mask = tf.convert_to_tensor([[[0, 0, 0, 1], [0, 0, 0, 1]]] * 2)
-        return {"input_ids": input_ids, "global_attention_mask": global_attention_mask}
+        global_attention_mask = tf.convert_to_tensor(
+            [[[0, 0, 0, 1], [0, 0, 0, 1]]] * 2)
+        return {
+            "input_ids": input_ids,
+            "global_attention_mask": global_attention_mask
+        }
 
     @add_start_docstrings_to_model_forward(
-        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length")
-    )
+        LONGFORMER_INPUTS_DOCSTRING.format(
+            "batch_size, num_choices, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="allenai/longformer-base-4096",
@@ -2511,26 +2794,25 @@ class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoic
             num_choices = shape_list(inputs["inputs_embeds"])[1]
             seq_length = shape_list(inputs["inputs_embeds"])[2]
 
-        flat_input_ids = tf.reshape(inputs["input_ids"], (-1, seq_length)) if inputs["input_ids"] is not None else None
-        flat_attention_mask = (
-            tf.reshape(inputs["attention_mask"], (-1, seq_length)) if inputs["attention_mask"] is not None else None
-        )
-        flat_token_type_ids = (
-            tf.reshape(inputs["token_type_ids"], (-1, seq_length)) if inputs["token_type_ids"] is not None else None
-        )
-        flat_position_ids = (
-            tf.reshape(inputs["position_ids"], (-1, seq_length)) if inputs["position_ids"] is not None else None
-        )
-        flat_global_attention_mask = (
-            tf.reshape(inputs["global_attention_mask"], (-1, shape_list(inputs["global_attention_mask"])[-1]))
-            if inputs["global_attention_mask"] is not None
-            else None
-        )
-        flat_inputs_embeds = (
-            tf.reshape(inputs["inputs_embeds"], (-1, seq_length, shape_list(inputs["inputs_embeds"])[3]))
-            if inputs["inputs_embeds"] is not None
-            else None
-        )
+        flat_input_ids = (tf.reshape(inputs["input_ids"], (-1, seq_length))
+                          if inputs["input_ids"] is not None else None)
+        flat_attention_mask = (tf.reshape(inputs["attention_mask"],
+                                          (-1, seq_length)) if
+                               inputs["attention_mask"] is not None else None)
+        flat_token_type_ids = (tf.reshape(inputs["token_type_ids"],
+                                          (-1, seq_length)) if
+                               inputs["token_type_ids"] is not None else None)
+        flat_position_ids = (tf.reshape(inputs["position_ids"],
+                                        (-1, seq_length))
+                             if inputs["position_ids"] is not None else None)
+        flat_global_attention_mask = (tf.reshape(
+            inputs["global_attention_mask"],
+            (-1, shape_list(inputs["global_attention_mask"])[-1]),
+        ) if inputs["global_attention_mask"] is not None else None)
+        flat_inputs_embeds = (tf.reshape(
+            inputs["inputs_embeds"],
+            (-1, seq_length, shape_list(inputs["inputs_embeds"])[3]),
+        ) if inputs["inputs_embeds"] is not None else None)
 
         outputs = self.longformer(
             flat_input_ids,
@@ -2551,11 +2833,12 @@ class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoic
         logits = self.classifier(pooled_output)
         reshaped_logits = tf.reshape(logits, (-1, num_choices))
 
-        loss = None if inputs["labels"] is None else self.compute_loss(inputs["labels"], reshaped_logits)
+        loss = (None if inputs["labels"] is None else self.compute_loss(
+            inputs["labels"], reshaped_logits))
 
         if not inputs["return_dict"]:
-            output = (reshaped_logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (reshaped_logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return TFLongformerMultipleChoiceModelOutput(
             loss=loss,
@@ -2565,26 +2848,30 @@ class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoic
             global_attentions=outputs.global_attentions,
         )
 
-    @tf.function(
-        input_signature=[
-            {
-                "input_ids": tf.TensorSpec((None, None, None), tf.int32, name="input_ids"),
-                "attention_mask": tf.TensorSpec((None, None, None), tf.int32, name="attention_mask"),
-            }
-        ]
-    )
+    @tf.function(input_signature=[{
+        "input_ids":
+        tf.TensorSpec((None, None, None), tf.int32, name="input_ids"),
+        "attention_mask":
+        tf.TensorSpec((None, None, None), tf.int32, name="attention_mask"),
+    }])
     def serving(self, inputs):
         output = self.call(inputs)
 
         return self.serving_output(output)
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerMultipleChoiceModelOutput(
-            logits=output.logits, hidden_states=hs, attentions=attns, global_attentions=g_attns
+            logits=output.logits,
+            hidden_states=hs,
+            attentions=attns,
+            global_attentions=g_attns,
         )
 
 
@@ -2595,7 +2882,8 @@ class TFLongformerForMultipleChoice(TFLongformerPreTrainedModel, TFMultipleChoic
     """,
     LONGFORMER_START_DOCSTRING,
 )
-class TFLongformerForTokenClassification(TFLongformerPreTrainedModel, TFTokenClassificationLoss):
+class TFLongformerForTokenClassification(TFLongformerPreTrainedModel,
+                                         TFTokenClassificationLoss):
     # names with a '.' represents the authorized unexpected/missing layers when a TF model is loaded from a PT model
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
     _keys_to_ignore_on_load_missing = [r"dropout"]
@@ -2604,13 +2892,18 @@ class TFLongformerForTokenClassification(TFLongformerPreTrainedModel, TFTokenCla
         super().__init__(config, *inputs, **kwargs)
 
         self.num_labels = config.num_labels
-        self.longformer = TFLongformerMainLayer(config=config, add_pooling_layer=False, name="longformer")
+        self.longformer = TFLongformerMainLayer(config=config,
+                                                add_pooling_layer=False,
+                                                name="longformer")
         self.dropout = tf.keras.layers.Dropout(config.hidden_dropout_prob)
         self.classifier = tf.keras.layers.Dense(
-            config.num_labels, kernel_initializer=get_initializer(config.initializer_range), name="classifier"
+            config.num_labels,
+            kernel_initializer=get_initializer(config.initializer_range),
+            name="classifier",
         )
 
-    @add_start_docstrings_to_model_forward(LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        LONGFORMER_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="allenai/longformer-base-4096",
@@ -2671,11 +2964,12 @@ class TFLongformerForTokenClassification(TFLongformerPreTrainedModel, TFTokenCla
         sequence_output = outputs[0]
         sequence_output = self.dropout(sequence_output)
         logits = self.classifier(sequence_output)
-        loss = None if inputs["labels"] is None else self.compute_loss(inputs["labels"], logits)
+        loss = (None if inputs["labels"] is None else self.compute_loss(
+            inputs["labels"], logits))
 
         if not inputs["return_dict"]:
-            output = (logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return TFLongformerTokenClassifierOutput(
             loss=loss,
@@ -2686,10 +2980,16 @@ class TFLongformerForTokenClassification(TFLongformerPreTrainedModel, TFTokenCla
         )
 
     def serving_output(self, output):
-        hs = tf.convert_to_tensor(output.hidden_states) if self.config.output_hidden_states else None
-        attns = tf.convert_to_tensor(output.attentions) if self.config.output_attentions else None
-        g_attns = tf.convert_to_tensor(output.global_attentions) if self.config.output_attentions else None
+        hs = (tf.convert_to_tensor(output.hidden_states)
+              if self.config.output_hidden_states else None)
+        attns = (tf.convert_to_tensor(output.attentions)
+                 if self.config.output_attentions else None)
+        g_attns = (tf.convert_to_tensor(output.global_attentions)
+                   if self.config.output_attentions else None)
 
         return TFLongformerTokenClassifierOutput(
-            logits=output.logits, hidden_states=hs, attentions=attns, global_attentions=g_attns
+            logits=output.logits,
+            hidden_states=hs,
+            attentions=attns,
+            global_attentions=g_attns,
         )

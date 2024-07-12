@@ -25,9 +25,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_mbart": ["MBART_PRETRAINED_CONFIG_ARCHIVE_MAP", "MBartConfig"],
+    "configuration_mbart":
+    ["MBART_PRETRAINED_CONFIG_ARCHIVE_MAP", "MBartConfig"],
 }
 
 if is_sentencepiece_available():
@@ -50,8 +50,10 @@ if is_torch_available():
     ]
 
 if is_tf_available():
-    _import_structure["modeling_tf_mbart"] = ["TFMBartForConditionalGeneration", "TFMBartModel"]
-
+    _import_structure["modeling_tf_mbart"] = [
+        "TFMBartForConditionalGeneration",
+        "TFMBartModel",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_mbart import MBART_PRETRAINED_CONFIG_ARCHIVE_MAP, MBartConfig

@@ -22,7 +22,6 @@ from collections import OrderedDict
 from run_eval import datetime_now, run_generate
 from utils import ROUGE_KEYS
 
-
 # A table of supported tasks and the list of scores in the order of importance to be sorted by.
 # To add a new task, simply list the score names that `run_eval.run_generate()` returns
 task_score_names = {
@@ -35,7 +34,10 @@ def parse_search_arg(search):
     groups = search.split()
     entries = {k: vs for k, vs in (g.split("=") for g in groups)}
     entry_names = list(entries.keys())
-    sets = [list((f"--{k} {v}") for v in vs.split(":")) for k, vs in entries.items()]
+    sets = [
+        list((f"--{k} {v}") for v in vs.split(":"))
+        for k, vs in entries.items()
+    ]
     matrix = [list(x) for x in itertools.product(*sets)]
     return matrix, entry_names
 
@@ -66,24 +68,33 @@ def run_search():
     prog = sys.argv[0]
 
     parser = argparse.ArgumentParser(
-        usage="\n\nImportant: this script accepts all arguments `run_eval.py` accepts and then a few extra, therefore refer to `run_eval.py -h` for the complete list."
+        usage=
+        "\n\nImportant: this script accepts all arguments `run_eval.py` accepts and then a few extra, therefore refer to `run_eval.py -h` for the complete list."
     )
     parser.add_argument(
         "--search",
         type=str,
         required=False,
-        help='param space to search, e.g. "num_beams=5:10 length_penalty=0.8:1.0:1.2"',
+        help=
+        'param space to search, e.g. "num_beams=5:10 length_penalty=0.8:1.0:1.2"',
     )
     parser.add_argument(
-        "--bs", type=int, default=8, required=False, help="initial batch size (may get reduced if it's too big)"
+        "--bs",
+        type=int,
+        default=8,
+        required=False,
+        help="initial batch size (may get reduced if it's too big)",
     )
-    parser.add_argument("--task", type=str, help="used for task_specific_params + metrics")
+    parser.add_argument("--task",
+                        type=str,
+                        help="used for task_specific_params + metrics")
     parser.add_argument(
         "--info",
         nargs="?",
         type=str,
         const=datetime_now(),
-        help="add custom notes to be printed before the results table. If no value is passed, the current datetime string will be used.",
+        help=
+        "add custom notes to be printed before the results table. If no value is passed, the current datetime string will be used.",
     )
     args, args_main = parser.parse_known_args()
     # we share some of the args
@@ -100,7 +111,8 @@ def run_search():
     for r in matrix:
         hparams = {k: v for k, v in (x.replace("--", "").split() for x in r)}
         args_exp = " ".join(r).split()
-        args_exp.extend(["--bs", str(args.bs)])  # in case we need to reduce its size due to CUDA OOM
+        args_exp.extend(["--bs", str(
+            args.bs)])  # in case we need to reduce its size due to CUDA OOM
         sys.argv = args_normal + args_exp
 
         # XXX: need to trap CUDA OOM and lower args.bs if that happens and retry
@@ -119,11 +131,14 @@ def run_search():
             if l > col_widths[k]:
                 col_widths[k] = l
 
-    results_sorted = sorted(results, key=operator.itemgetter(*task_score_names[task]), reverse=True)
+    results_sorted = sorted(results,
+                            key=operator.itemgetter(*task_score_names[task]),
+                            reverse=True)
     print(" | ".join([f"{col:{col_widths[col]}}" for col in col_names]))
     print(" | ".join([f"{'-'*col_widths[col]}" for col in col_names]))
     for row in results_sorted:
-        print(" | ".join([f"{row[col]:{col_widths[col]}}" for col in col_names]))
+        print(" | ".join(
+            [f"{row[col]:{col_widths[col]}}" for col in col_names]))
 
     best = results_sorted[0]
     for score in task_score_names[task]:

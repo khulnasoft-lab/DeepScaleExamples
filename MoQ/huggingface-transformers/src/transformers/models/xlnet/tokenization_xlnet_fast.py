@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization classes for XLNet model."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -24,25 +23,30 @@ from ...tokenization_utils import AddedToken
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 
-
 if is_sentencepiece_available():
     from .tokenization_xlnet import XLNetTokenizer
 else:
     XLNetTokenizer = None
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "spiece.model",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "xlnet-base-cased": "https://huggingface.co/xlnet-base-cased/resolve/main/spiece.model",
-        "xlnet-large-cased": "https://huggingface.co/xlnet-large-cased/resolve/main/spiece.model",
+        "xlnet-base-cased":
+        "https://huggingface.co/xlnet-base-cased/resolve/main/spiece.model",
+        "xlnet-large-cased":
+        "https://huggingface.co/xlnet-large-cased/resolve/main/spiece.model",
     },
     "tokenizer_file": {
-        "xlnet-base-cased": "https://huggingface.co/xlnet-base-cased/resolve/main/tokenizer.json",
-        "xlnet-large-cased": "https://huggingface.co/xlnet-large-cased/resolve/main/tokenizer.json",
+        "xlnet-base-cased":
+        "https://huggingface.co/xlnet-base-cased/resolve/main/tokenizer.json",
+        "xlnet-large-cased":
+        "https://huggingface.co/xlnet-large-cased/resolve/main/tokenizer.json",
     },
 }
 
@@ -122,25 +126,24 @@ class XLNetTokenizerFast(PreTrainedTokenizerFast):
     padding_side = "left"
     slow_tokenizer_class = XLNetTokenizer
 
-    def __init__(
-        self,
-        vocab_file,
-        tokenizer_file=None,
-        do_lower_case=False,
-        remove_space=True,
-        keep_accents=False,
-        bos_token="<s>",
-        eos_token="</s>",
-        unk_token="<unk>",
-        sep_token="<sep>",
-        pad_token="<pad>",
-        cls_token="<cls>",
-        mask_token="<mask>",
-        additional_special_tokens=["<eop>", "<eod>"],
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 tokenizer_file=None,
+                 do_lower_case=False,
+                 remove_space=True,
+                 keep_accents=False,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 unk_token="<unk>",
+                 sep_token="<sep>",
+                 pad_token="<pad>",
+                 cls_token="<cls>",
+                 mask_token="<mask>",
+                 additional_special_tokens=["<eop>", "<eod>"],
+                 **kwargs):
         # Mask token behave like a normal word, i.e. include the space before it
-        mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
+        mask_token = (AddedToken(mask_token, lstrip=True, rstrip=False)
+                      if isinstance(mask_token, str) else mask_token)
 
         super().__init__(
             vocab_file=vocab_file,
@@ -166,8 +169,9 @@ class XLNetTokenizerFast(PreTrainedTokenizerFast):
         self.vocab_file = vocab_file
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. An XLNet sequence has the following format:
@@ -191,7 +195,10 @@ class XLNetTokenizerFast(PreTrainedTokenizerFast):
         return token_ids_0 + sep + token_ids_1 + sep + cls
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -215,15 +222,22 @@ class XLNetTokenizerFast(PreTrainedTokenizerFast):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is not None:
-            return ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1, 1]
+            return ([0] * len(token_ids_0)) + [1] + (
+                [0] * len(token_ids_1)) + [1, 1]
         return ([0] * len(token_ids_0)) + [1, 1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. An XLNet
         sequence pair mask has the following format:
@@ -250,17 +264,23 @@ class XLNetTokenizerFast(PreTrainedTokenizerFast):
 
         if token_ids_1 is None:
             return len(token_ids_0 + sep) * [0] + cls_segment_id
-        return len(token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1] + cls_segment_id
+        return (len(token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1] +
+                cls_segment_id)
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

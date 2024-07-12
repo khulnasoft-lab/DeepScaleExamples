@@ -18,8 +18,11 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_sentencepiece_available, is_tokenizers_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_sentencepiece_available,
+    is_tokenizers_available,
+)
 
 _import_structure = {}
 
@@ -28,7 +31,6 @@ if is_sentencepiece_available():
 
 if is_tokenizers_available():
     _import_structure["tokenization_barthez_fast"] = ["BarthezTokenizerFast"]
-
 
 if TYPE_CHECKING:
 

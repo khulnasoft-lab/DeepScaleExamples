@@ -28,7 +28,6 @@ from logging import WARN  # NOQA
 from logging import WARNING  # NOQA
 from typing import Optional
 
-
 _lock = threading.Lock()
 _default_handler: Optional[logging.Handler] = None
 
@@ -55,8 +54,7 @@ def _get_default_logging_level():
         else:
             logging.getLogger().warning(
                 f"Unknown option TRANSFORMERS_VERBOSITY={env_level_str}, "
-                f"has to be one of: { ', '.join(log_levels.keys()) }"
-            )
+                f"has to be one of: { ', '.join(log_levels.keys()) }")
     return _default_log_level
 
 
@@ -227,7 +225,9 @@ def enable_explicit_format() -> None:
     handlers = _get_library_root_logger().handlers
 
     for handler in handlers:
-        formatter = logging.Formatter("[%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s >> %(message)s")
+        formatter = logging.Formatter(
+            "[%(levelname)s|%(filename)s:%(lineno)s] %(asctime)s >> %(message)s"
+        )
         handler.setFormatter(formatter)
 
 

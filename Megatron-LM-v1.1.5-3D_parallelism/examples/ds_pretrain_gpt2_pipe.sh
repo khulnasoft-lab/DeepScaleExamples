@@ -83,13 +83,13 @@ gpt_options=" \
         --fp16 \
         --tensorboard-dir ${LOGDIR}
 "
-  
+
  deepscale_options=" \
                 --deepscale \
                 --deepscale_config ${config_json} \
                 --zero-stage ${stage} \
                 --zero-reduce-bucket-size ${rbs} \
-                --zero-allgather-bucket-size ${agbs} 
+                --zero-allgather-bucket-size ${agbs}
             "
 
 if [ "${contigious_gradients}" = "true" ]; then

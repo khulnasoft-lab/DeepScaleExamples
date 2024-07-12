@@ -21,7 +21,6 @@ from transformers.testing_utils import require_tf, slow
 from .test_configuration_common import ConfigTester
 from .test_modeling_tf_common import TFModelTesterMixin, ids_tensor
 
-
 if is_tf_available():
     import numpy
     import tensorflow as tf
@@ -90,24 +89,28 @@ class TFDPRModelTester:
         self.projection_dim = projection_dim
 
     def prepare_config_and_inputs(self):
-        input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
+        input_ids = ids_tensor([self.batch_size, self.seq_length],
+                               self.vocab_size)
 
         input_mask = None
         if self.use_input_mask:
             input_mask = ids_tensor(
-                [self.batch_size, self.seq_length], vocab_size=2
-            )  # follow test_modeling_tf_ctrl.py
+                [self.batch_size, self.seq_length],
+                vocab_size=2)  # follow test_modeling_tf_ctrl.py
 
         token_type_ids = None
         if self.use_token_type_ids:
-            token_type_ids = ids_tensor([self.batch_size, self.seq_length], self.type_vocab_size)
+            token_type_ids = ids_tensor([self.batch_size, self.seq_length],
+                                        self.type_vocab_size)
 
         sequence_labels = None
         token_labels = None
         choice_labels = None
         if self.use_labels:
-            sequence_labels = ids_tensor([self.batch_size], self.type_sequence_label_size)
-            token_labels = ids_tensor([self.batch_size, self.seq_length], self.num_labels)
+            sequence_labels = ids_tensor([self.batch_size],
+                                         self.type_sequence_label_size)
+            token_labels = ids_tensor([self.batch_size, self.seq_length],
+                                      self.num_labels)
             choice_labels = ids_tensor([self.batch_size], self.num_choices)
 
         config = BertConfig(
@@ -124,37 +127,80 @@ class TFDPRModelTester:
             is_decoder=False,
             initializer_range=self.initializer_range,
         )
-        config = DPRConfig(projection_dim=self.projection_dim, **config.to_dict())
+        config = DPRConfig(projection_dim=self.projection_dim,
+                           **config.to_dict())
 
-        return config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+        return (
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
+        )
 
     def create_and_check_dpr_context_encoder(
-        self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        token_type_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDPRContextEncoder(config=config)
-        result = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids)
+        result = model(input_ids,
+                       attention_mask=input_mask,
+                       token_type_ids=token_type_ids)
         result = model(input_ids, token_type_ids=token_type_ids)
         result = model(input_ids)
-        self.parent.assertEqual(result.pooler_output.shape, (self.batch_size, self.projection_dim or self.hidden_size))
+        self.parent.assertEqual(
+            result.pooler_output.shape,
+            (self.batch_size, self.projection_dim or self.hidden_size),
+        )
 
     def create_and_check_dpr_question_encoder(
-        self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        token_type_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDPRQuestionEncoder(config=config)
-        result = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids)
+        result = model(input_ids,
+                       attention_mask=input_mask,
+                       token_type_ids=token_type_ids)
         result = model(input_ids, token_type_ids=token_type_ids)
         result = model(input_ids)
-        self.parent.assertEqual(result.pooler_output.shape, (self.batch_size, self.projection_dim or self.hidden_size))
+        self.parent.assertEqual(
+            result.pooler_output.shape,
+            (self.batch_size, self.projection_dim or self.hidden_size),
+        )
 
     def create_and_check_dpr_reader(
-        self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        token_type_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDPRReader(config=config)
         result = model(input_ids, attention_mask=input_mask)
 
-        self.parent.assertEqual(result.start_logits.shape, (self.batch_size, self.seq_length))
-        self.parent.assertEqual(result.end_logits.shape, (self.batch_size, self.seq_length))
-        self.parent.assertEqual(result.relevance_logits.shape, (self.batch_size,))
+        self.parent.assertEqual(result.start_logits.shape,
+                                (self.batch_size, self.seq_length))
+        self.parent.assertEqual(result.end_logits.shape,
+                                (self.batch_size, self.seq_length))
+        self.parent.assertEqual(result.relevance_logits.shape,
+                                (self.batch_size, ))
 
     def prepare_config_and_inputs_for_common(self):
         config_and_inputs = self.prepare_config_and_inputs()
@@ -174,15 +220,11 @@ class TFDPRModelTester:
 @require_tf
 class TFDPRModelTest(TFModelTesterMixin, unittest.TestCase):
 
-    all_model_classes = (
-        (
-            TFDPRContextEncoder,
-            TFDPRQuestionEncoder,
-            TFDPRReader,
-        )
-        if is_tf_available()
-        else ()
-    )
+    all_model_classes = ((
+        TFDPRContextEncoder,
+        TFDPRQuestionEncoder,
+        TFDPRReader,
+    ) if is_tf_available() else ())
 
     test_resize_embeddings = False
     test_missing_keys = False
@@ -192,18 +234,22 @@ class TFDPRModelTest(TFModelTesterMixin, unittest.TestCase):
 
     def setUp(self):
         self.model_tester = TFDPRModelTester(self)
-        self.config_tester = ConfigTester(self, config_class=DPRConfig, hidden_size=37)
+        self.config_tester = ConfigTester(self,
+                                          config_class=DPRConfig,
+                                          hidden_size=37)
 
     def test_config(self):
         self.config_tester.run_common_tests()
 
     def test_dpr_context_encoder_model(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_dpr_context_encoder(*config_and_inputs)
+        self.model_tester.create_and_check_dpr_context_encoder(
+            *config_and_inputs)
 
     def test_dpr_question_encoder_model(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_dpr_question_encoder(*config_and_inputs)
+        self.model_tester.create_and_check_dpr_question_encoder(
+            *config_and_inputs)
 
     def test_dpr_reader_model(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
@@ -211,15 +257,18 @@ class TFDPRModelTest(TFModelTesterMixin, unittest.TestCase):
 
     @slow
     def test_model_from_pretrained(self):
-        for model_name in TF_DPR_CONTEXT_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:1]:
+        for model_name in TF_DPR_CONTEXT_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:
+                                                                               1]:
             model = TFDPRContextEncoder.from_pretrained(model_name)
             self.assertIsNotNone(model)
 
-        for model_name in TF_DPR_CONTEXT_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:1]:
+        for model_name in TF_DPR_CONTEXT_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:
+                                                                               1]:
             model = TFDPRContextEncoder.from_pretrained(model_name)
             self.assertIsNotNone(model)
 
-        for model_name in TF_DPR_QUESTION_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:1]:
+        for model_name in TF_DPR_QUESTION_ENCODER_PRETRAINED_MODEL_ARCHIVE_LIST[:
+                                                                                1]:
             model = TFDPRQuestionEncoder.from_pretrained(model_name)
             self.assertIsNotNone(model)
 
@@ -232,27 +281,27 @@ class TFDPRModelTest(TFModelTesterMixin, unittest.TestCase):
 class TFDPRModelIntegrationTest(unittest.TestCase):
     @slow
     def test_inference_no_head(self):
-        model = TFDPRQuestionEncoder.from_pretrained("facebook/dpr-question_encoder-single-nq-base")
+        model = TFDPRQuestionEncoder.from_pretrained(
+            "facebook/dpr-question_encoder-single-nq-base")
 
         input_ids = tf.constant(
-            [[101, 7592, 1010, 2003, 2026, 3899, 10140, 1029, 102]]
-        )  # [CLS] hello, is my dog cute? [SEP]
+            [[101, 7592, 1010, 2003, 2026, 3899, 10140, 1029,
+              102]])  # [CLS] hello, is my dog cute? [SEP]
         output = model(input_ids)[0]  # embedding shape = (1, 768)
         # compare the actual values for a slice.
-        expected_slice = tf.constant(
-            [
-                [
-                    0.03236253,
-                    0.12753335,
-                    0.16818509,
-                    0.00279786,
-                    0.3896933,
-                    0.24264945,
-                    0.2178971,
-                    -0.02335227,
-                    -0.08481959,
-                    -0.14324117,
-                ]
-            ]
-        )
-        self.assertTrue(numpy.allclose(output[:, :10].numpy(), expected_slice.numpy(), atol=1e-4))
+        expected_slice = tf.constant([[
+            0.03236253,
+            0.12753335,
+            0.16818509,
+            0.00279786,
+            0.3896933,
+            0.24264945,
+            0.2178971,
+            -0.02335227,
+            -0.08481959,
+            -0.14324117,
+        ]])
+        self.assertTrue(
+            numpy.allclose(output[:, :10].numpy(),
+                           expected_slice.numpy(),
+                           atol=1e-4))

@@ -26,9 +26,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_mpnet": ["MPNET_PRETRAINED_CONFIG_ARCHIVE_MAP", "MPNetConfig"],
+    "configuration_mpnet":
+    ["MPNET_PRETRAINED_CONFIG_ARCHIVE_MAP", "MPNetConfig"],
     "tokenization_mpnet": ["MPNetTokenizer"],
 }
 
@@ -61,7 +61,6 @@ if is_tf_available():
         "TFMPNetModel",
         "TFMPNetPreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_mpnet import MPNET_PRETRAINED_CONFIG_ARCHIVE_MAP, MPNetConfig

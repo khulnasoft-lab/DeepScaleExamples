@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pretrain GPT2"""
 
 import torch
@@ -31,16 +30,19 @@ from megatron.fp16 import fp32_to_fp16
 
 # pretend this is a great DeepScale change too
 
+
 def model_provider():
     """Build the model."""
 
     args = get_args()
 
-    print_rank_0('building GPT2 model ...')
+    print_rank_0("building GPT2 model ...")
     if args.pipe_parallel_size == 0:
         model = GPT2Model(num_tokentypes=0, parallel_output=True)
     else:
-        model = GPT2ModelPipe(num_tokentypes=0, parallel_output=True, topology=mpu.get_topology())
+        model = GPT2ModelPipe(num_tokentypes=0,
+                              parallel_output=True,
+                              topology=mpu.get_topology())
         # This is a hack to give us a reference to get_batch_pipe from within training.py
         # We need to call model.set_batch_fn after deepscale.initialize
         model._megatron_batch_fn = get_batch_pipe
@@ -54,7 +56,7 @@ def get_batch(data_iterator):
     tokenizer = get_tokenizer()
 
     # Items and their type.
-    keys = ['text']
+    keys = ["text"]
     datatype = torch.int64
 
     # Broadcast data.
@@ -65,7 +67,7 @@ def get_batch(data_iterator):
     data_b = mpu.broadcast_data(keys, data, datatype)
 
     # Unpack.
-    tokens_ = data_b['text'].long()
+    tokens_ = data_b["text"].long()
     labels = tokens_[:, 1:].contiguous()
     tokens = tokens_[:, :-1].contiguous()
 
@@ -75,24 +77,26 @@ def get_batch(data_iterator):
         tokenizer.eod,
         args.reset_position_ids,
         args.reset_attention_mask,
-        args.eod_mask_loss)
+        args.eod_mask_loss,
+    )
 
     return tokens, labels, loss_mask, attention_mask, position_ids
 
+
 def get_batch_pipe(data):
-    """A modification of get_batch() to work with the latest batch instead of an iterator. """
+    """A modification of get_batch() to work with the latest batch instead of an iterator."""
     args = get_args()
     tokenizer = get_tokenizer()
 
     # Items and their type.
-    keys = ['text']
+    keys = ["text"]
     datatype = torch.int64
 
     # Broadcast data.
     data_b = mpu.broadcast_data(keys, data, datatype)
 
     # Unpack.
-    tokens_ = data_b['text'].long()
+    tokens_ = data_b["text"].long()
     labels = tokens_[:, 1:].contiguous()
     tokens = tokens_[:, :-1].contiguous()
 
@@ -102,12 +106,15 @@ def get_batch_pipe(data):
         tokenizer.eod,
         args.reset_position_ids,
         args.reset_attention_mask,
-        args.eod_mask_loss)
+        args.eod_mask_loss,
+    )
 
     # unpack data
     if args.fp16:
         # cast to fp16 because pipeline parallelism skips the FP16 wrapper.
-        return fp32_to_fp16((tokens, position_ids, attention_mask)), fp32_to_fp16((labels, loss_mask))
+        return fp32_to_fp16(
+            (tokens, position_ids, attention_mask)), fp32_to_fp16(
+                (labels, loss_mask))
     else:
         return (tokens, position_ids, attention_mask), (labels, loss_mask)
 
@@ -118,10 +125,10 @@ def forward_step(data_iterator, model):
     timers = get_timers()
 
     # Get the batch.
-    timers('batch generator').start()
+    timers("batch generator").start()
     tokens, labels, loss_mask, attention_mask, position_ids = get_batch(
         data_iterator)
-    timers('batch generator').stop()
+    timers("batch generator").stop()
     # Forward model.
     losses = model(tokens, position_ids, attention_mask, labels=labels)
     loss_mask = loss_mask.view(-1)
@@ -130,15 +137,15 @@ def forward_step(data_iterator, model):
     # Reduce loss for logging.
     reduced_loss = reduce_losses([loss])
 
-    return loss, {'lm loss': reduced_loss[0]}
+    return loss, {"lm loss": reduced_loss[0]}
 
 
 def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid, and test datasets."""
     args = get_args()
 
-    print_rank_0('> building train, validation, and test datasets '
-                 'for GPT2 ...')
+    print_rank_0("> building train, validation, and test datasets "
+                 "for GPT2 ...")
     train_ds, valid_ds, test_ds = build_train_valid_test_datasets(
         data_prefix=args.data_path,
         data_impl=args.data_impl,
@@ -146,7 +153,8 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
         train_valid_test_num_samples=train_val_test_num_samples,
         seq_length=args.seq_length,
         seed=args.seed,
-        skip_warmup=(not args.mmap_warmup))
+        skip_warmup=(not args.mmap_warmup),
+    )
     print_rank_0("> finished creating GPT2 datasets ...")
 
     return train_ds, valid_ds, test_ds
@@ -154,5 +162,9 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
 if __name__ == "__main__":
 
-    pretrain(train_valid_test_datasets_provider, model_provider, forward_step,
-             args_defaults={'tokenizer_type': 'GPT2BPETokenizer'})
+    pretrain(
+        train_valid_test_datasets_provider,
+        model_provider,
+        forward_step,
+        args_defaults={"tokenizer_type": "GPT2BPETokenizer"},
+    )

@@ -29,7 +29,7 @@ namespace fused_softmax {
 namespace scaled_upper_triang_masked_softmax {
 
 torch::Tensor fwd_cuda(
-    torch::Tensor const& input, 
+    torch::Tensor const& input,
     float scale_factor)
 {
   // input is a 3d tensor with dimensions [attn_batches, seq_len, seq_len]
@@ -37,9 +37,9 @@ torch::Tensor fwd_cuda(
   const int seq_len = input.size(1);
   TORCH_INTERNAL_ASSERT(seq_len <= 2048);
 
-  // Output 
+  // Output
   auto act_options = input.options().requires_grad(false);
-  torch::Tensor softmax_results = 
+  torch::Tensor softmax_results =
       torch::empty({attn_batches, seq_len, seq_len}, act_options);
 
   // Softmax Intermediate Result Ptr
@@ -57,10 +57,10 @@ torch::Tensor fwd_cuda(
 }
 
 torch::Tensor bwd_cuda(
-    torch::Tensor const& output_grads_, 
-    torch::Tensor const& softmax_results_, 
+    torch::Tensor const& output_grads_,
+    torch::Tensor const& softmax_results_,
     float scale_factor)  {
-	
+
   auto output_grads = output_grads_.contiguous();
   auto softmax_results = softmax_results_.contiguous();
 
@@ -73,14 +73,14 @@ torch::Tensor bwd_cuda(
 
   //Softmax Grad
   dispatch_scaled_upper_triang_masked_softmax_backward<half, half, float>(
-      reinterpret_cast<half*>(output_grads_ptr), 
-      reinterpret_cast<half*>(output_grads_ptr), 
+      reinterpret_cast<half*>(output_grads_ptr),
+      reinterpret_cast<half*>(output_grads_ptr),
       reinterpret_cast<half const*>(softmax_results.data_ptr()),
       scale_factor,
       seq_len,
       seq_len,
       attn_batches);
-  
+
   //backward pass is completely in-place
   return output_grads;
 }

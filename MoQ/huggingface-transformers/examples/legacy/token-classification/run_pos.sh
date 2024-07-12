@@ -34,4 +34,3 @@ python3 run_ner.py \
 --do_train \
 --do_eval \
 --do_predict
-

@@ -27,8 +27,8 @@ def truncate_input_sequence(tokens_a, tokens_b, max_num_tokens):
 
 
 class TokenInstance:
-    """ This TokenInstance is a obect to have the basic units of data that should be
-        extracted from the raw text file and can be consumed by any BERT like model.
+    """This TokenInstance is a obect to have the basic units of data that should be
+    extracted from the raw text file and can be consumed by any BERT like model.
     """
     def __init__(self, tokens_a, tokens_b, is_next, lang="en"):
         self.tokens_a = tokens_a
@@ -48,8 +48,8 @@ class QueryPassageDataset:
         all_pairs = []
         with open(path, encoding="utf-8") as fd:
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
-                qpl_tuple: Tuple[str, str, str] = line.split('\t')
+                line = line.replace("\n", "")
+                qpl_tuple: Tuple[str, str, str] = line.split("\t")
                 all_pairs.append(qpl_tuple)
                 if i > readin:
                     break
@@ -67,10 +67,13 @@ class QueryPassageFineTuningDataset:
         all_pairs = []
         with open(path, encoding="utf-8") as fd:
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
-                entities = line.split('\t')
-                qpl_tuple: Tuple[str, str,
-                                 str] = (entities[0], entities[2], entities[4])
+                line = line.replace("\n", "")
+                entities = line.split("\t")
+                qpl_tuple: Tuple[str, str, str] = (
+                    entities[0],
+                    entities[2],
+                    entities[4],
+                )
                 all_pairs.append(qpl_tuple)
                 if i > readin:
                     break
@@ -88,8 +91,8 @@ class QueryInstanceDataset:
         all_pairs = []
         with open(path, encoding="utf-8") as fd:
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
-                qpl_tuple: Tuple[str, str, str] = line.split('\t')
+                line = line.replace("\n", "")
+                qpl_tuple: Tuple[str, str, str] = line.split("\t")
                 all_pairs.append(qpl_tuple)
                 if i > readin:
                     break
@@ -103,22 +106,24 @@ class QueryInstanceDataset:
 
 
 class PretrainingDataCreator:
-    def __init__(self,
-                 path,
-                 tokenizer: BertTokenizer,
-                 max_seq_length,
-                 readin: int = 2000000,
-                 dupe_factor: int = 5,
-                 small_seq_prob: float = 0.1):
+    def __init__(
+        self,
+        path,
+        tokenizer: BertTokenizer,
+        max_seq_length,
+        readin: int = 2000000,
+        dupe_factor: int = 5,
+        small_seq_prob: float = 0.1,
+    ):
         self.dupe_factor = dupe_factor
         self.max_seq_length = max_seq_length
         self.small_seq_prob = small_seq_prob
 
         documents = []
         instances = []
-        with open(path, encoding='utf-8') as fd:
+        with open(path, encoding="utf-8") as fd:
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
+                line = line.replace("\n", "")
                 # Expected format (Q,T,U,S,D)
                 # query, title, url, snippet, document = line.split('\t')
                 # ! remove this following line later
@@ -156,12 +161,12 @@ class PretrainingDataCreator:
         self.__dict__.update(state)
 
     def save(self, filename):
-        with open(filename, 'wb') as outfile:
+        with open(filename, "wb") as outfile:
             pickle.dump(self, outfile)
 
     @staticmethod
     def load(filename):
-        with open(filename, 'rb') as f:
+        with open(filename, "rb") as f:
             return pickle.load(f)
 
     def create_training_instance(self, index):
@@ -255,25 +260,27 @@ class PretrainingDataCreator:
 
 
 class CleanBodyDataCreator(PretrainingDataCreator):
-    def __init__(self,
-                 path,
-                 tokenizer: BertTokenizer,
-                 max_seq_length: int = 512,
-                 readin: int = 2000000,
-                 dupe_factor: int = 5,
-                 small_seq_prob: float = 0.1):
+    def __init__(
+        self,
+        path,
+        tokenizer: BertTokenizer,
+        max_seq_length: int = 512,
+        readin: int = 2000000,
+        dupe_factor: int = 5,
+        small_seq_prob: float = 0.1,
+    ):
         self.dupe_factor = dupe_factor
         self.max_seq_length = max_seq_length
         self.small_seq_prob = small_seq_prob
 
         documents = []
         instances = []
-        with open(path, encoding='utf-8') as fd:
+        with open(path, encoding="utf-8") as fd:
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
+                line = line.replace("\n", "")
                 url, cleanbody, rand_int = line.rstrip("\n").split("\t")
-                cleanbody = cleanbody.replace("#TAB#", " ").replace(
-                    "#NULL#", "").replace("#HASH#", "#")
+                cleanbody = (cleanbody.replace("#TAB#", " ").replace(
+                    "#NULL#", "").replace("#HASH#", "#"))
                 cleanbody_parts = cleanbody.split("#R##N#")
                 for document in cleanbody_parts:
                     lines = document.split("#N#")
@@ -302,30 +309,32 @@ class CleanBodyDataCreator(PretrainingDataCreator):
 
 
 class WikiNBookCorpusPretrainingDataCreator(PretrainingDataCreator):
-    def __init__(self,
-                 path,
-                 tokenizer: BertTokenizer,
-                 max_seq_length: int = 512,
-                 readin: int = 2000000,
-                 dupe_factor: int = 6,
-                 small_seq_prob: float = 0.1):
+    def __init__(
+        self,
+        path,
+        tokenizer: BertTokenizer,
+        max_seq_length: int = 512,
+        readin: int = 2000000,
+        dupe_factor: int = 6,
+        small_seq_prob: float = 0.1,
+    ):
         self.dupe_factor = dupe_factor
         self.max_seq_length = max_seq_length
         self.small_seq_prob = small_seq_prob
 
         documents = []
         instances = []
-        with open(path, encoding='utf-8') as fd:
+        with open(path, encoding="utf-8") as fd:
             document = []
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
+                line = line.replace("\n", "")
                 # document = line
                 # if len(document.split("<sep>")) <= 3:
                 #     continue
                 if len(line) == 0:  # This is end of document
                     documents.append(document)
                     document = []
-                if len(line.split(' ')) > 2:
+                if len(line.split(" ")) > 2:
                     document.append(tokenizer.tokenize(line))
             if len(document) > 0:
                 documents.append(document)
@@ -346,23 +355,25 @@ class WikiNBookCorpusPretrainingDataCreator(PretrainingDataCreator):
 
 
 class WikiPretrainingDataCreator(PretrainingDataCreator):
-    def __init__(self,
-                 path,
-                 tokenizer: BertTokenizer,
-                 max_seq_length: int = 512,
-                 readin: int = 2000000,
-                 dupe_factor: int = 6,
-                 small_seq_prob: float = 0.1):
+    def __init__(
+        self,
+        path,
+        tokenizer: BertTokenizer,
+        max_seq_length: int = 512,
+        readin: int = 2000000,
+        dupe_factor: int = 6,
+        small_seq_prob: float = 0.1,
+    ):
         self.dupe_factor = dupe_factor
         self.max_seq_length = max_seq_length
         self.small_seq_prob = small_seq_prob
 
         documents = []
         instances = []
-        with open(path, encoding='utf-8') as fd:
+        with open(path, encoding="utf-8") as fd:
             document = []
             for i, line in enumerate(tqdm(fd)):
-                line = line.replace('\n', '')
+                line = line.replace("\n", "")
                 # document = line
                 # if len(document.split("<sep>")) <= 3:
                 #     continue
@@ -370,7 +381,7 @@ class WikiPretrainingDataCreator(PretrainingDataCreator):
                        ) > 0 and line[:2] == "[[":  # This is end of document
                     documents.append(document)
                     document = []
-                if len(line.split(' ')) > 2:
+                if len(line.split(" ")) > 2:
                     document.append(tokenizer.tokenize(line))
             if len(document) > 0:
                 documents.append(document)
@@ -392,11 +403,13 @@ class WikiPretrainingDataCreator(PretrainingDataCreator):
 
 
 class NumpyByteInstances:
-    TOKEN_SEP_VAL = int.from_bytes(b'\x1f', byteorder='big')
+    TOKEN_SEP_VAL = int.from_bytes(b"\x1f", byteorder="big")
 
     def __init__(self, data_creator):
         self.data_creator = data_creator
-        self.getitem_fixed = self.sep_getitem_fixed if self.data_creator.use_separators else self.data_creator.nosep_getitem_fixed
+        self.getitem_fixed = (self.sep_getitem_fixed
+                              if self.data_creator.use_separators else
+                              self.data_creator.nosep_getitem_fixed)
         # if self.data_creator.multilingual:
         #     self.__getitem__ = self.getitem_multilingual
         # else:
@@ -432,10 +445,13 @@ class NumpyByteInstances:
         tokens_split = self.data_creator.tokens_split[i]
         token_arrs = np.split(
             self.data_creator.data[instance_start:instance_end], token_offsets)
-        tokens = [t.tostring().decode('utf8') for t in token_arrs]
+        tokens = [t.tostring().decode("utf8") for t in token_arrs]
 
-        return tokens[:tokens_split], tokens[
-            tokens_split:], self.data_creator.is_next[i]
+        return (
+            tokens[:tokens_split],
+            tokens[tokens_split:],
+            self.data_creator.is_next[i],
+        )
 
     def sep_getitem_fixed(self, i):
         if i > self.data_creator.len:
@@ -450,15 +466,18 @@ class NumpyByteInstances:
         tokens_split = self.data_creator.tokens_split[i]
         token_arrs = np.split(
             instance_data,
-            np.where(instance_data == NumpyByteInstances.TOKEN_SEP_VAL)
-            [0])  # split on the token separator
+            np.where(instance_data == NumpyByteInstances.TOKEN_SEP_VAL)[0],
+        )  # split on the token separator
         tokens = [
-            (t[1:] if i > 0 else t).tostring().decode('utf8')
+            (t[1:] if i > 0 else t).tostring().decode("utf8")
             for i, t in enumerate(token_arrs)
         ]  # ignore first byte, which will be separator, for tokens after the first
 
-        return tokens[:tokens_split], tokens[
-            tokens_split:], self.data_creator.is_next[i]
+        return (
+            tokens[:tokens_split],
+            tokens[tokens_split:],
+            self.data_creator.is_next[i],
+        )
 
     def __len__(self):
         return self.data_creator.len
@@ -469,30 +488,30 @@ class NumpyPretrainingDataCreator:
         path = Path(path)
         self.path = path
 
-        mmap_mode = 'r' if mmap else None
+        mmap_mode = "r" if mmap else None
 
-        self.data = np.load(str(path / 'data.npy'), mmap_mode=mmap_mode)
-        self.is_next = np.load(str(path / 'is_next.npy'), mmap_mode=mmap_mode)
-        self.tokens_split = np.load(str(path / 'tokens_split.npy'),
+        self.data = np.load(str(path / "data.npy"), mmap_mode=mmap_mode)
+        self.is_next = np.load(str(path / "is_next.npy"), mmap_mode=mmap_mode)
+        self.tokens_split = np.load(str(path / "tokens_split.npy"),
                                     mmap_mode=mmap_mode)
-        self.instance_offsets = np.load(str(path / 'instance_offsets.npy'),
+        self.instance_offsets = np.load(str(path / "instance_offsets.npy"),
                                         mmap_mode=mmap_mode)
 
-        if (path / 'instance_token_offsets.npy').is_file():
+        if (path / "instance_token_offsets.npy").is_file():
             self.use_separators = False
             self.instance_token_offsets = np.load(str(
-                path / 'instance_token_offsets.npy'),
+                path / "instance_token_offsets.npy"),
                                                   mmap_mode=mmap_mode)
-            self.token_offsets = np.load(str(path / 'token_offsets.npy'),
+            self.token_offsets = np.load(str(path / "token_offsets.npy"),
                                          mmap_mode=mmap_mode)
         else:
             self.use_separators = True
             self.instance_token_offsets = None
             self.token_offsets = None
 
-        if (path / 'lang.npy').is_file():
+        if (path / "lang.npy").is_file():
             self.multilingual = True
-            self.lang = np.load(str(path / 'lang.npy'), mmap_mode=mmap_mode)
+            self.lang = np.load(str(path / "lang.npy"), mmap_mode=mmap_mode)
         else:
             self.multilingual = False
             self.lang = None

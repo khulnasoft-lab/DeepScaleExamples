@@ -32,13 +32,16 @@ def main():
     )
     args = parser.parse_args()
 
-    with open(args.src_path, "r") as src_file, open(args.evaluation_set, "w") as eval_file, open(
-        args.gold_data_path, "w"
-    ) as gold_file:
+    with open(args.src_path, "r") as src_file, open(args.evaluation_set,
+                                                    "w") as eval_file, open(
+                                                        args.gold_data_path,
+                                                        "w") as gold_file:
         dpr_records = json.load(src_file)
         for dpr_record in tqdm(dpr_records):
             question = dpr_record["question"]
-            contexts = [context["title"] for context in dpr_record["positive_ctxs"]]
+            contexts = [
+                context["title"] for context in dpr_record["positive_ctxs"]
+            ]
             eval_file.write(question + "\n")
             gold_file.write("\t".join(contexts) + "\n")
 

@@ -30,11 +30,9 @@ from transformers.testing_utils import (
 from transformers.trainer_callback import TrainerState
 from transformers.trainer_utils import set_seed
 
-
 bindir = os.path.abspath(os.path.dirname(__file__))
 sys.path.append(f"{bindir}/../../seq2seq")
 from run_seq2seq import main  # noqa
-
 
 set_seed(42)
 MARIAN_MODEL = "sshleifer/student_marian_en_ro_6_1"
@@ -65,8 +63,10 @@ def require_apex(test_case):
 
 class TestTrainerExt(TestCasePlus):
     def run_seq2seq_quick(self, distributed=False, extra_args_str=None):
-        output_dir = self.run_trainer(1, "12", MBART_TINY, 1, distributed, extra_args_str)
-        logs = TrainerState.load_from_json(os.path.join(output_dir, "trainer_state.json")).log_history
+        output_dir = self.run_trainer(1, "12", MBART_TINY, 1, distributed,
+                                      extra_args_str)
+        logs = TrainerState.load_from_json(
+            os.path.join(output_dir, "trainer_state.json")).log_history
         eval_metrics = [log for log in logs if "eval_loss" in log.keys()]
         first_step_stats = eval_metrics[0]
         assert "eval_bleu" in first_step_stats
@@ -89,13 +89,15 @@ class TestTrainerExt(TestCasePlus):
     @require_torch_multi_gpu
     @require_fairscale
     def test_run_seq2seq_ddp_sharded_ddp(self):
-        self.run_seq2seq_quick(distributed=True, extra_args_str="--sharded_ddp")
+        self.run_seq2seq_quick(distributed=True,
+                               extra_args_str="--sharded_ddp")
 
     # test --sharded_ddp w/ --fp16
     @require_torch_multi_gpu
     @require_fairscale
     def test_run_seq2seq_ddp_sharded_ddp_fp16(self):
-        self.run_seq2seq_quick(distributed=True, extra_args_str="--sharded_ddp --fp16")
+        self.run_seq2seq_quick(distributed=True,
+                               extra_args_str="--sharded_ddp --fp16")
 
     @require_apex
     def test_run_seq2seq_apex(self):
@@ -105,16 +107,22 @@ class TestTrainerExt(TestCasePlus):
     def test_run_seq2seq_slow(self):
         # There is a missing call to __init__process_group somewhere
         output_dir = self.run_trainer(
-            eval_steps=2, max_len="128", model_name=MARIAN_MODEL, num_train_epochs=10, distributed=False
+            eval_steps=2,
+            max_len="128",
+            model_name=MARIAN_MODEL,
+            num_train_epochs=10,
+            distributed=False,
         )
 
         # Check metrics
-        logs = TrainerState.load_from_json(os.path.join(output_dir, "trainer_state.json")).log_history
+        logs = TrainerState.load_from_json(
+            os.path.join(output_dir, "trainer_state.json")).log_history
         eval_metrics = [log for log in logs if "eval_loss" in log.keys()]
         first_step_stats = eval_metrics[0]
         last_step_stats = eval_metrics[-1]
 
-        assert first_step_stats["eval_bleu"] < last_step_stats["eval_bleu"]  # model learned nothing
+        assert (first_step_stats["eval_bleu"] < last_step_stats["eval_bleu"]
+                )  # model learned nothing
         assert isinstance(last_step_stats["eval_bleu"], float)
 
         # test if do_predict saves generations and metrics

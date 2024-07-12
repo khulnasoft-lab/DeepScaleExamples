@@ -16,25 +16,39 @@
 from ..bert.tokenization_bert_fast import BertTokenizerFast
 from .tokenization_electra import ElectraTokenizer
 
-
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.txt",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "google/electra-small-generator": "https://huggingface.co/google/electra-small-generator/resolve/main/vocab.txt",
-        "google/electra-base-generator": "https://huggingface.co/google/electra-base-generator/resolve/main/vocab.txt",
-        "google/electra-large-generator": "https://huggingface.co/google/electra-large-generator/resolve/main/vocab.txt",
-        "google/electra-small-discriminator": "https://huggingface.co/google/electra-small-discriminator/resolve/main/vocab.txt",
-        "google/electra-base-discriminator": "https://huggingface.co/google/electra-base-discriminator/resolve/main/vocab.txt",
-        "google/electra-large-discriminator": "https://huggingface.co/google/electra-large-discriminator/resolve/main/vocab.txt",
+        "google/electra-small-generator":
+        "https://huggingface.co/google/electra-small-generator/resolve/main/vocab.txt",
+        "google/electra-base-generator":
+        "https://huggingface.co/google/electra-base-generator/resolve/main/vocab.txt",
+        "google/electra-large-generator":
+        "https://huggingface.co/google/electra-large-generator/resolve/main/vocab.txt",
+        "google/electra-small-discriminator":
+        "https://huggingface.co/google/electra-small-discriminator/resolve/main/vocab.txt",
+        "google/electra-base-discriminator":
+        "https://huggingface.co/google/electra-base-discriminator/resolve/main/vocab.txt",
+        "google/electra-large-discriminator":
+        "https://huggingface.co/google/electra-large-discriminator/resolve/main/vocab.txt",
     },
     "tokenizer_file": {
-        "google/electra-small-generator": "https://huggingface.co/google/electra-small-generator/resolve/main/tokenizer.json",
-        "google/electra-base-generator": "https://huggingface.co/google/electra-base-generator/resolve/main/tokenizer.json",
-        "google/electra-large-generator": "https://huggingface.co/google/electra-large-generator/resolve/main/tokenizer.json",
-        "google/electra-small-discriminator": "https://huggingface.co/google/electra-small-discriminator/resolve/main/tokenizer.json",
-        "google/electra-base-discriminator": "https://huggingface.co/google/electra-base-discriminator/resolve/main/tokenizer.json",
-        "google/electra-large-discriminator": "https://huggingface.co/google/electra-large-discriminator/resolve/main/tokenizer.json",
+        "google/electra-small-generator":
+        "https://huggingface.co/google/electra-small-generator/resolve/main/tokenizer.json",
+        "google/electra-base-generator":
+        "https://huggingface.co/google/electra-base-generator/resolve/main/tokenizer.json",
+        "google/electra-large-generator":
+        "https://huggingface.co/google/electra-large-generator/resolve/main/tokenizer.json",
+        "google/electra-small-discriminator":
+        "https://huggingface.co/google/electra-small-discriminator/resolve/main/tokenizer.json",
+        "google/electra-base-discriminator":
+        "https://huggingface.co/google/electra-base-discriminator/resolve/main/tokenizer.json",
+        "google/electra-large-discriminator":
+        "https://huggingface.co/google/electra-large-discriminator/resolve/main/tokenizer.json",
     },
 }
 
@@ -47,14 +61,25 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "google/electra-large-discriminator": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "google/electra-small-generator": {"do_lower_case": True},
-    "google/electra-base-generator": {"do_lower_case": True},
-    "google/electra-large-generator": {"do_lower_case": True},
-    "google/electra-small-discriminator": {"do_lower_case": True},
-    "google/electra-base-discriminator": {"do_lower_case": True},
-    "google/electra-large-discriminator": {"do_lower_case": True},
+    "google/electra-small-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-base-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-large-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-small-discriminator": {
+        "do_lower_case": True
+    },
+    "google/electra-base-discriminator": {
+        "do_lower_case": True
+    },
+    "google/electra-large-discriminator": {
+        "do_lower_case": True
+    },
 }
 
 
@@ -68,6 +93,7 @@ class ElectraTokenizerFast(BertTokenizerFast):
     Refer to superclass :class:`~transformers.BertTokenizerFast` for usage examples and documentation concerning
     parameters.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

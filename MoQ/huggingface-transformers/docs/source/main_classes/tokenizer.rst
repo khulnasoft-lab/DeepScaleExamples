@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -54,7 +54,7 @@ PreTrainedTokenizer
 
 .. autoclass:: transformers.PreTrainedTokenizer
     :special-members: __call__
-    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode, 
+    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode,
         get_added_vocab, get_special_tokens_mask, num_special_tokens_to_add, prepare_for_tokenization, tokenize,
         vocab_size
 
@@ -64,7 +64,7 @@ PreTrainedTokenizerFast
 
 .. autoclass:: transformers.PreTrainedTokenizerFast
     :special-members: __call__
-    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode, 
+    :members: batch_decode, convert_ids_to_tokens, convert_tokens_to_ids, convert_tokens_to_string, decode, encode,
         get_added_vocab, get_special_tokens_mask, num_special_tokens_to_add,
         set_truncation_and_padding,tokenize, vocab_size
 

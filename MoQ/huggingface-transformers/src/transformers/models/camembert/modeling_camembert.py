@@ -28,7 +28,6 @@ from ..roberta.modeling_roberta import (
 )
 from .configuration_camembert import CamembertConfig
 
-
 logger = logging.get_logger(__name__)
 
 _TOKENIZER_FOR_DOC = "CamembertTokenizer"
@@ -149,7 +148,8 @@ class CamembertForQuestionAnswering(RobertaForQuestionAnswering):
 
 
 @add_start_docstrings(
-    """CamemBERT Model with a `language modeling` head on top for CLM fine-tuning. """, CAMEMBERT_START_DOCSTRING
+    """CamemBERT Model with a `language modeling` head on top for CLM fine-tuning. """,
+    CAMEMBERT_START_DOCSTRING,
 )
 class CamembertForCausalLM(RobertaForCausalLM):
     """

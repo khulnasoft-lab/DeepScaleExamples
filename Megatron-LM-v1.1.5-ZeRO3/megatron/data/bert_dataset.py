@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """BERT Style dataset."""
 
 import os
@@ -33,10 +32,18 @@ from megatron.data.dataset_utils import create_masked_lm_predictions
 
 
 class BertDataset(Dataset):
-
-    def __init__(self, name, indexed_dataset, data_prefix,
-                 num_epochs, max_num_samples, masked_lm_prob,
-                 max_seq_length, short_seq_prob, seed):
+    def __init__(
+        self,
+        name,
+        indexed_dataset,
+        data_prefix,
+        num_epochs,
+        max_num_samples,
+        masked_lm_prob,
+        max_seq_length,
+        short_seq_prob,
+        seed,
+    ):
 
         # Params to store.
         self.name = name
@@ -48,14 +55,16 @@ class BertDataset(Dataset):
         self.indexed_dataset = indexed_dataset
 
         # Build the samples mapping.
-        self.samples_mapping = get_samples_mapping_(self.indexed_dataset,
-                                                    data_prefix,
-                                                    num_epochs,
-                                                    max_num_samples,
-                                                    self.max_seq_length,
-                                                    short_seq_prob,
-                                                    self.seed,
-                                                    self.name)
+        self.samples_mapping = get_samples_mapping_(
+            self.indexed_dataset,
+            data_prefix,
+            num_epochs,
+            max_num_samples,
+            self.max_seq_length,
+            short_seq_prob,
+            self.seed,
+            self.name,
+        )
 
         # Vocab stuff.
         tokenizer = get_tokenizer()
@@ -75,23 +84,31 @@ class BertDataset(Dataset):
         # Note that this rng state should be numpy and not python since
         # python randint is inclusive whereas the numpy one is exclusive.
         np_rng = np.random.RandomState(seed=(self.seed + idx))
-        return build_training_sample(sample, seq_length,
-                                     self.max_seq_length,  # needed for padding
-                                     self.vocab_id_list,
-                                     self.vocab_id_to_token_dict,
-                                     self.cls_id, self.sep_id,
-                                     self.mask_id, self.pad_id,
-                                     self.masked_lm_prob, np_rng)
+        return build_training_sample(
+            sample,
+            seq_length,
+            self.max_seq_length,  # needed for padding
+            self.vocab_id_list,
+            self.vocab_id_to_token_dict,
+            self.cls_id,
+            self.sep_id,
+            self.mask_id,
+            self.pad_id,
+            self.masked_lm_prob,
+            np_rng,
+        )
 
 
-def get_samples_mapping_(indexed_dataset,
-                         data_prefix,
-                         num_epochs,
-                         max_num_samples,
-                         max_seq_length,
-                         short_seq_prob,
-                         seed,
-                         name):
+def get_samples_mapping_(
+    indexed_dataset,
+    data_prefix,
+    num_epochs,
+    max_num_samples,
+    max_seq_length,
+    short_seq_prob,
+    seed,
+    name,
+):
     if not num_epochs:
         if not max_num_samples:
             raise ValueError("Need to specify either max_num_samples "
@@ -102,21 +119,21 @@ def get_samples_mapping_(indexed_dataset,
 
     # Filename of the index mapping
     indexmap_filename = data_prefix
-    indexmap_filename += '_{}_indexmap'.format(name)
+    indexmap_filename += "_{}_indexmap".format(name)
     if num_epochs != (np.iinfo(np.int32).max - 1):
-        indexmap_filename += '_{}ep'.format(num_epochs)
+        indexmap_filename += "_{}ep".format(num_epochs)
     if max_num_samples != (np.iinfo(np.int64).max - 1):
-        indexmap_filename += '_{}mns'.format(max_num_samples)
-    indexmap_filename += '_{}msl'.format(max_seq_length)
-    indexmap_filename += '_{:0.2f}ssp'.format(short_seq_prob)
-    indexmap_filename += '_{}s'.format(seed)
-    indexmap_filename += '.npy'
+        indexmap_filename += "_{}mns".format(max_num_samples)
+    indexmap_filename += "_{}msl".format(max_seq_length)
+    indexmap_filename += "_{:0.2f}ssp".format(short_seq_prob)
+    indexmap_filename += "_{}s".format(seed)
+    indexmap_filename += ".npy"
 
     # Build the indexed mapping if not exist.
-    if torch.distributed.get_rank() == 0 and \
-       not os.path.isfile(indexmap_filename):
-        print(' > WARNING: could not find index map file {}, building '
-              'the indices on rank 0 ...'.format(indexmap_filename))
+    if torch.distributed.get_rank(
+    ) == 0 and not os.path.isfile(indexmap_filename):
+        print(" > WARNING: could not find index map file {}, building "
+              "the indices on rank 0 ...".format(indexmap_filename))
 
         # Make sure the types match the helpers input types.
         assert indexed_dataset.doc_idx.dtype == np.int64
@@ -125,12 +142,14 @@ def get_samples_mapping_(indexed_dataset,
         # Build samples mapping
         verbose = torch.distributed.get_rank() == 0
         start_time = time.time()
-        print_rank_0(' > building sapmles index mapping for {} ...'.format(
-            name))
+        print_rank_0(
+            " > building sapmles index mapping for {} ...".format(name))
         # First compile and then import.
         from megatron.data.dataset_utils import compile_helper
+
         compile_helper()
         from megatron.data import helpers
+
         samples_mapping = helpers.build_mapping(
             indexed_dataset.doc_idx,
             indexed_dataset.sizes,
@@ -139,15 +158,15 @@ def get_samples_mapping_(indexed_dataset,
             max_seq_length - 3,  # account for added tokens
             short_seq_prob,
             seed,
-            verbose)
-        print_rank_0(' > done building sapmles index maping')
+            verbose,
+        )
+        print_rank_0(" > done building sapmles index maping")
         np.save(indexmap_filename, samples_mapping, allow_pickle=True)
-        print_rank_0(' > saved the index mapping in {}'.format(
-            indexmap_filename))
+        print_rank_0(
+            " > saved the index mapping in {}".format(indexmap_filename))
         # Make sure all the ranks have built the mapping
-        print_rank_0(' > elasped time to build and save samples mapping '
-                     '(seconds): {:4f}'.format(
-                         time.time() - start_time))
+        print_rank_0(" > elasped time to build and save samples mapping "
+                     "(seconds): {:4f}".format(time.time() - start_time))
     # This should be a barrier but nccl barrier assumes
     # device_index=rank which is not the case for model
     # parallel case
@@ -157,23 +176,34 @@ def get_samples_mapping_(indexed_dataset,
         group=mpu.get_data_parallel_group())
 
     # Load indexed dataset.
-    print_rank_0(' > loading indexed mapping from {}'.format(
-        indexmap_filename))
+    print_rank_0(
+        " > loading indexed mapping from {}".format(indexmap_filename))
     start_time = time.time()
-    samples_mapping = np.load(indexmap_filename, allow_pickle=True, mmap_mode='r')
-    print_rank_0('    loaded indexed file in {:3.3f} seconds'.format(
-        time.time() - start_time))
-    print_rank_0('    total number of samples: {}'.format(
+    samples_mapping = np.load(indexmap_filename,
+                              allow_pickle=True,
+                              mmap_mode="r")
+    print_rank_0(
+        "    loaded indexed file in {:3.3f} seconds".format(time.time() -
+                                                            start_time))
+    print_rank_0("    total number of samples: {}".format(
         samples_mapping.shape[0]))
 
     return samples_mapping
 
 
-def build_training_sample(sample,
-                          target_seq_length, max_seq_length,
-                          vocab_id_list, vocab_id_to_token_dict,
-                          cls_id, sep_id, mask_id, pad_id,
-                          masked_lm_prob, np_rng):
+def build_training_sample(
+    sample,
+    target_seq_length,
+    max_seq_length,
+    vocab_id_list,
+    vocab_id_to_token_dict,
+    cls_id,
+    sep_id,
+    mask_id,
+    pad_id,
+    masked_lm_prob,
+    np_rng,
+):
     """Biuld training sample.
 
     Arguments:
@@ -211,22 +241,31 @@ def build_training_sample(sample,
 
     # Masking.
     max_predictions_per_seq = masked_lm_prob * max_num_tokens
-    (tokens, masked_positions, masked_labels, _) = create_masked_lm_predictions(
-        tokens, vocab_id_list, vocab_id_to_token_dict, masked_lm_prob,
-        cls_id, sep_id, mask_id, max_predictions_per_seq, np_rng)
+    (tokens, masked_positions, masked_labels,
+     _) = create_masked_lm_predictions(
+         tokens,
+         vocab_id_list,
+         vocab_id_to_token_dict,
+         masked_lm_prob,
+         cls_id,
+         sep_id,
+         mask_id,
+         max_predictions_per_seq,
+         np_rng,
+     )
 
     # Padding.
-    tokens_np, tokentypes_np, labels_np, padding_mask_np, loss_mask_np \
-        = pad_and_convert_to_numpy(tokens, tokentypes, masked_positions,
-                                   masked_labels, pad_id, max_seq_length)
+    tokens_np, tokentypes_np, labels_np, padding_mask_np, loss_mask_np = (
+        pad_and_convert_to_numpy(tokens, tokentypes, masked_positions,
+                                 masked_labels, pad_id, max_seq_length))
 
     train_sample = {
-        'text': tokens_np,
-        'types': tokentypes_np,
-        'labels': labels_np,
-        'is_random': int(is_next_random),
-        'loss_mask': loss_mask_np,
-        'padding_mask': padding_mask_np,
-        'truncated': int(truncated)}
+        "text": tokens_np,
+        "types": tokentypes_np,
+        "labels": labels_np,
+        "is_random": int(is_next_random),
+        "loss_mask": loss_mask_np,
+        "padding_mask": padding_mask_np,
+        "truncated": int(truncated),
+    }
     return train_sample
-

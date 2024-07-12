@@ -52,4 +52,4 @@ run_cmd="python3.6 -m torch.distributed.launch \
        --model_file $CHECKPOINT_PATH &> $LOG_DIR/${model_name}/${JOBNAME}_${TASK}_bzs${EFFECTIVE_BATCH_SIZE}_lr${LR}_epoch${NUM_EPOCH}.txt
        "
 echo ${run_cmd}
-eval ${run_cmd} 
+eval ${run_cmd}

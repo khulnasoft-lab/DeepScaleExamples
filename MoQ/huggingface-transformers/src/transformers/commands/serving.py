@@ -19,7 +19,6 @@ from ..pipelines import SUPPORTED_TASKS, Pipeline, pipeline
 from ..utils import logging
 from . import BaseTransformersCLICommand
 
-
 try:
     from fastapi import Body, FastAPI, HTTPException
     from fastapi.routing import APIRoute
@@ -35,7 +34,6 @@ except (ImportError, AttributeError):
         pass
 
     _serve_dependencies_installed = False
-
 
 logger = logging.get_logger("transformers-cli/serving")
 
@@ -99,22 +97,46 @@ class ServeCommand(BaseTransformersCLICommand):
             parser: Root parser to register command-specific arguments
         """
         serve_parser = parser.add_parser(
-            "serve", help="CLI tool to run inference requests through REST and GraphQL endpoints."
+            "serve",
+            help=
+            "CLI tool to run inference requests through REST and GraphQL endpoints.",
         )
         serve_parser.add_argument(
-            "--task", type=str, choices=SUPPORTED_TASKS.keys(), help="The task to run the pipeline on"
+            "--task",
+            type=str,
+            choices=SUPPORTED_TASKS.keys(),
+            help="The task to run the pipeline on",
         )
-        serve_parser.add_argument("--host", type=str, default="localhost", help="Interface the server will listen on.")
-        serve_parser.add_argument("--port", type=int, default=8888, help="Port the serving will listen to.")
-        serve_parser.add_argument("--workers", type=int, default=1, help="Number of http workers")
-        serve_parser.add_argument("--model", type=str, help="Model's name or path to stored model.")
-        serve_parser.add_argument("--config", type=str, help="Model's config name or path to stored model.")
-        serve_parser.add_argument("--tokenizer", type=str, help="Tokenizer name to use.")
+        serve_parser.add_argument(
+            "--host",
+            type=str,
+            default="localhost",
+            help="Interface the server will listen on.",
+        )
+        serve_parser.add_argument("--port",
+                                  type=int,
+                                  default=8888,
+                                  help="Port the serving will listen to.")
+        serve_parser.add_argument("--workers",
+                                  type=int,
+                                  default=1,
+                                  help="Number of http workers")
+        serve_parser.add_argument("--model",
+                                  type=str,
+                                  help="Model's name or path to stored model.")
+        serve_parser.add_argument(
+            "--config",
+            type=str,
+            help="Model's config name or path to stored model.")
+        serve_parser.add_argument("--tokenizer",
+                                  type=str,
+                                  help="Tokenizer name to use.")
         serve_parser.add_argument(
             "--device",
             type=int,
             default=-1,
-            help="Indicate the device to run onto, -1 indicates CPU, >= 0 indicates GPU (default: -1)",
+            help=
+            "Indicate the device to run onto, -1 indicates CPU, >= 0 indicates GPU (default: -1)",
         )
         serve_parser.set_defaults(func=serve_command_factory)
 
@@ -130,8 +152,7 @@ class ServeCommand(BaseTransformersCLICommand):
             raise RuntimeError(
                 "Using serve command requires FastAPI and unicorn. "
                 'Please install transformers with [serving]: pip install "transformers[serving]".'
-                "Or install FastAPI and unicorn separately."
-            )
+                "Or install FastAPI and unicorn separately.")
         else:
             logger.info("Serving model over {}:{}".format(host, port))
             self._app = FastAPI(
@@ -174,7 +195,11 @@ class ServeCommand(BaseTransformersCLICommand):
     def model_info(self):
         return ServeModelInfoResult(infos=vars(self._pipeline.model.config))
 
-    def tokenize(self, text_input: str = Body(None, embed=True), return_ids: bool = Body(False, embed=True)):
+    def tokenize(
+            self,
+            text_input: str = Body(None, embed=True),
+            return_ids: bool = Body(False, embed=True),
+    ):
         """
         Tokenize the provided input and eventually returns corresponding tokens id: - **text_input**: String to
         tokenize - **return_ids**: Boolean flags indicating if the tokens have to be converted to their integer
@@ -184,19 +209,25 @@ class ServeCommand(BaseTransformersCLICommand):
             tokens_txt = self._pipeline.tokenizer.tokenize(text_input)
 
             if return_ids:
-                tokens_ids = self._pipeline.tokenizer.convert_tokens_to_ids(tokens_txt)
-                return ServeTokenizeResult(tokens=tokens_txt, tokens_ids=tokens_ids)
+                tokens_ids = self._pipeline.tokenizer.convert_tokens_to_ids(
+                    tokens_txt)
+                return ServeTokenizeResult(tokens=tokens_txt,
+                                           tokens_ids=tokens_ids)
             else:
                 return ServeTokenizeResult(tokens=tokens_txt)
 
         except Exception as e:
-            raise HTTPException(status_code=500, detail={"model": "", "error": str(e)})
+            raise HTTPException(status_code=500,
+                                detail={
+                                    "model": "",
+                                    "error": str(e)
+                                })
 
     def detokenize(
-        self,
-        tokens_ids: List[int] = Body(None, embed=True),
-        skip_special_tokens: bool = Body(False, embed=True),
-        cleanup_tokenization_spaces: bool = Body(True, embed=True),
+            self,
+            tokens_ids: List[int] = Body(None, embed=True),
+            skip_special_tokens: bool = Body(False, embed=True),
+            cleanup_tokenization_spaces: bool = Body(True, embed=True),
     ):
         """
         Detokenize the provided tokens ids to readable text: - **tokens_ids**: List of tokens ids -
@@ -204,10 +235,15 @@ class ServeCommand(BaseTransformersCLICommand):
         Flag indicating to remove all leading/trailing spaces and intermediate ones.
         """
         try:
-            decoded_str = self._pipeline.tokenizer.decode(tokens_ids, skip_special_tokens, cleanup_tokenization_spaces)
+            decoded_str = self._pipeline.tokenizer.decode(
+                tokens_ids, skip_special_tokens, cleanup_tokenization_spaces)
             return ServeDeTokenizeResult(model="", text=decoded_str)
         except Exception as e:
-            raise HTTPException(status_code=500, detail={"model": "", "error": str(e)})
+            raise HTTPException(status_code=500,
+                                detail={
+                                    "model": "",
+                                    "error": str(e)
+                                })
 
     async def forward(self, inputs=Body(None, embed=True)):
         """

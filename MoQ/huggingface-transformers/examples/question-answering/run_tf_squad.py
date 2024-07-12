@@ -16,7 +16,6 @@
 # limitations under the License.
 """ Fine-tuning the library models for question-answering."""
 
-
 import logging
 import os
 from dataclasses import dataclass, field
@@ -36,11 +35,9 @@ from transformers import (
 from transformers.data.processors.squad import SquadV1Processor, SquadV2Processor
 from transformers.utils import logging as hf_logging
 
-
 hf_logging.set_verbosity_info()
 hf_logging.enable_default_handler()
 hf_logging.enable_explicit_format()
-
 
 logger = logging.getLogger(__name__)
 
@@ -52,20 +49,35 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        })
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
-    use_fast: bool = field(default=False, metadata={"help": "Set this flag to use fast tokenization."})
+    use_fast: bool = field(
+        default=False,
+        metadata={"help": "Set this flag to use fast tokenization."})
     # If you want to tweak more attributes on your tokenizer, you should do it in a distinct script,
     # or just modify its tokenizer_config.json.
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
 
 
@@ -76,50 +88,75 @@ class DataTrainingArguments:
     """
 
     data_dir: Optional[str] = field(
-        default=None, metadata={"help": "The input data dir. Should contain the .json files for the SQuAD task."}
+        default=None,
+        metadata={
+            "help":
+            "The input data dir. Should contain the .json files for the SQuAD task."
+        },
     )
-    use_tfds: Optional[bool] = field(default=True, metadata={"help": "If TFDS should be used or not."})
+    use_tfds: Optional[bool] = field(
+        default=True, metadata={"help": "If TFDS should be used or not."})
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     doc_stride: int = field(
         default=128,
-        metadata={"help": "When splitting up a long document into chunks, how much stride to take between chunks."},
+        metadata={
+            "help":
+            "When splitting up a long document into chunks, how much stride to take between chunks."
+        },
     )
     max_query_length: int = field(
         default=64,
         metadata={
-            "help": "The maximum number of tokens for the question. Questions longer than this will "
+            "help":
+            "The maximum number of tokens for the question. Questions longer than this will "
             "be truncated to this length."
         },
     )
     max_answer_length: int = field(
         default=30,
         metadata={
-            "help": "The maximum length of an answer that can be generated. This is needed because the start "
+            "help":
+            "The maximum length of an answer that can be generated. This is needed because the start "
             "and end predictions are not conditioned on one another."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
     version_2_with_negative: bool = field(
-        default=False, metadata={"help": "If true, the SQuAD examples contain some that do not have an answer."}
+        default=False,
+        metadata={
+            "help":
+            "If true, the SQuAD examples contain some that do not have an answer."
+        },
     )
     null_score_diff_threshold: float = field(
-        default=0.0, metadata={"help": "If null_score - best_non_null is greater than the threshold predict null."}
+        default=0.0,
+        metadata={
+            "help":
+            "If null_score - best_non_null is greater than the threshold predict null."
+        },
     )
     n_best_size: int = field(
-        default=20, metadata={"help": "If null_score - best_non_null is greater than the threshold predict null."}
+        default=20,
+        metadata={
+            "help":
+            "If null_score - best_non_null is greater than the threshold predict null."
+        },
     )
     lang_id: int = field(
         default=0,
         metadata={
-            "help": "language id of input for language-specific xlm models (see tokenization_xlm.PRETRAINED_INIT_CONFIGURATION)"
+            "help":
+            "language id of input for language-specific xlm models (see tokenization_xlm.PRETRAINED_INIT_CONFIGURATION)"
         },
     )
 
@@ -128,15 +165,13 @@ def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TFTrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, DataTrainingArguments, TFTrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
+    if (os.path.exists(training_args.output_dir)
+            and os.listdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
@@ -163,11 +198,13 @@ def main():
     # download model & vocab.
 
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
         use_fast=model_args.use_fast,
     )
@@ -183,60 +220,55 @@ def main():
     # Get datasets
     if data_args.use_tfds:
         if data_args.version_2_with_negative:
-            logger.warn("tensorflow_datasets does not handle version 2 of SQuAD. Switch to version 1 automatically")
+            logger.warn(
+                "tensorflow_datasets does not handle version 2 of SQuAD. Switch to version 1 automatically"
+            )
 
         try:
             import tensorflow_datasets as tfds
         except ImportError:
-            raise ImportError("If not data_dir is specified, tensorflow_datasets needs to be installed.")
+            raise ImportError(
+                "If not data_dir is specified, tensorflow_datasets needs to be installed."
+            )
 
         tfds_examples = tfds.load("squad", data_dir=data_args.data_dir)
-        train_examples = (
-            SquadV1Processor().get_examples_from_dataset(tfds_examples, evaluate=False)
-            if training_args.do_train
-            else None
-        )
-        eval_examples = (
-            SquadV1Processor().get_examples_from_dataset(tfds_examples, evaluate=True)
-            if training_args.do_eval
-            else None
-        )
+        train_examples = (SquadV1Processor().get_examples_from_dataset(
+            tfds_examples, evaluate=False) if training_args.do_train else None)
+        eval_examples = (SquadV1Processor().get_examples_from_dataset(
+            tfds_examples, evaluate=True) if training_args.do_eval else None)
     else:
-        processor = SquadV2Processor() if data_args.version_2_with_negative else SquadV1Processor()
-        train_examples = processor.get_train_examples(data_args.data_dir) if training_args.do_train else None
-        eval_examples = processor.get_dev_examples(data_args.data_dir) if training_args.do_eval else None
+        processor = (SquadV2Processor() if data_args.version_2_with_negative
+                     else SquadV1Processor())
+        train_examples = (processor.get_train_examples(data_args.data_dir)
+                          if training_args.do_train else None)
+        eval_examples = (processor.get_dev_examples(data_args.data_dir)
+                         if training_args.do_eval else None)
 
-    train_dataset = (
-        squad_convert_examples_to_features(
-            examples=train_examples,
-            tokenizer=tokenizer,
-            max_seq_length=data_args.max_seq_length,
-            doc_stride=data_args.doc_stride,
-            max_query_length=data_args.max_query_length,
-            is_training=True,
-            return_dataset="tf",
-        )
-        if training_args.do_train
-        else None
-    )
+    train_dataset = (squad_convert_examples_to_features(
+        examples=train_examples,
+        tokenizer=tokenizer,
+        max_seq_length=data_args.max_seq_length,
+        doc_stride=data_args.doc_stride,
+        max_query_length=data_args.max_query_length,
+        is_training=True,
+        return_dataset="tf",
+    ) if training_args.do_train else None)
 
-    train_dataset = train_dataset.apply(tf.data.experimental.assert_cardinality(len(train_examples)))
+    train_dataset = train_dataset.apply(
+        tf.data.experimental.assert_cardinality(len(train_examples)))
 
-    eval_dataset = (
-        squad_convert_examples_to_features(
-            examples=eval_examples,
-            tokenizer=tokenizer,
-            max_seq_length=data_args.max_seq_length,
-            doc_stride=data_args.doc_stride,
-            max_query_length=data_args.max_query_length,
-            is_training=False,
-            return_dataset="tf",
-        )
-        if training_args.do_eval
-        else None
-    )
+    eval_dataset = (squad_convert_examples_to_features(
+        examples=eval_examples,
+        tokenizer=tokenizer,
+        max_seq_length=data_args.max_seq_length,
+        doc_stride=data_args.doc_stride,
+        max_query_length=data_args.max_query_length,
+        is_training=False,
+        return_dataset="tf",
+    ) if training_args.do_eval else None)
 
-    eval_dataset = eval_dataset.apply(tf.data.experimental.assert_cardinality(len(eval_examples)))
+    eval_dataset = eval_dataset.apply(
+        tf.data.experimental.assert_cardinality(len(eval_examples)))
 
     # Initialize our Trainer
     trainer = TFTrainer(

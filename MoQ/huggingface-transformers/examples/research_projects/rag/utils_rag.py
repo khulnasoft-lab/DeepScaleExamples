@@ -18,8 +18,18 @@ from torch.utils.data import Dataset
 from transformers import BartTokenizer, RagTokenizer, T5Tokenizer
 
 
-def encode_line(tokenizer, line, max_length, padding_side, pad_to_max_length=True, return_tensors="pt"):
-    extra_kw = {"add_prefix_space": True} if isinstance(tokenizer, BartTokenizer) and not line.startswith(" ") else {}
+def encode_line(
+    tokenizer,
+    line,
+    max_length,
+    padding_side,
+    pad_to_max_length=True,
+    return_tensors="pt",
+):
+    extra_kw = ({
+        "add_prefix_space": True
+    } if isinstance(tokenizer, BartTokenizer) and not line.startswith(" ") else
+                {})
     tokenizer.padding_side = padding_side
     return tokenizer(
         [line],
@@ -42,7 +52,9 @@ def trim_batch(
     if attention_mask is None:
         return input_ids[:, keep_column_mask]
     else:
-        return (input_ids[:, keep_column_mask], attention_mask[:, keep_column_mask])
+        return (input_ids[:,
+                          keep_column_mask], attention_mask[:,
+                                                            keep_column_mask])
 
 
 class Seq2SeqDataset(Dataset):
@@ -77,7 +89,8 @@ class Seq2SeqDataset(Dataset):
 
     def __getitem__(self, index) -> Dict[str, torch.Tensor]:
         index = index + 1  # linecache starts at 1
-        source_line = self.prefix + linecache.getline(str(self.src_file), index).rstrip("\n")
+        source_line = self.prefix + linecache.getline(str(self.src_file),
+                                                      index).rstrip("\n")
         tgt_line = linecache.getline(str(self.tgt_file), index).rstrip("\n")
         assert source_line, f"empty source line for index {index}"
         assert tgt_line, f"empty tgt line for index {index}"
@@ -88,13 +101,15 @@ class Seq2SeqDataset(Dataset):
             tgt_line += self.tokenizer.eos_token
 
         # Pad source and target to the right
-        source_tokenizer = (
-            self.tokenizer.question_encoder if isinstance(self.tokenizer, RagTokenizer) else self.tokenizer
-        )
-        target_tokenizer = self.tokenizer.generator if isinstance(self.tokenizer, RagTokenizer) else self.tokenizer
+        source_tokenizer = (self.tokenizer.question_encoder if isinstance(
+            self.tokenizer, RagTokenizer) else self.tokenizer)
+        target_tokenizer = (self.tokenizer.generator if isinstance(
+            self.tokenizer, RagTokenizer) else self.tokenizer)
 
-        source_inputs = encode_line(source_tokenizer, source_line, self.max_source_length, "right")
-        target_inputs = encode_line(target_tokenizer, tgt_line, self.max_target_length, "right")
+        source_inputs = encode_line(source_tokenizer, source_line,
+                                    self.max_source_length, "right")
+        target_inputs = encode_line(target_tokenizer, tgt_line,
+                                    self.max_target_length, "right")
 
         source_ids = source_inputs["input_ids"].squeeze()
         target_ids = target_inputs["input_ids"].squeeze()
@@ -113,18 +128,16 @@ class Seq2SeqDataset(Dataset):
         input_ids = torch.stack([x["input_ids"] for x in batch])
         masks = torch.stack([x["attention_mask"] for x in batch])
         target_ids = torch.stack([x["decoder_input_ids"] for x in batch])
-        tgt_pad_token_id = (
-            self.tokenizer.generator.pad_token_id
-            if isinstance(self.tokenizer, RagTokenizer)
-            else self.tokenizer.pad_token_id
-        )
-        src_pad_token_id = (
-            self.tokenizer.question_encoder.pad_token_id
-            if isinstance(self.tokenizer, RagTokenizer)
-            else self.tokenizer.pad_token_id
-        )
+        tgt_pad_token_id = (self.tokenizer.generator.pad_token_id
+                            if isinstance(self.tokenizer, RagTokenizer) else
+                            self.tokenizer.pad_token_id)
+        src_pad_token_id = (self.tokenizer.question_encoder.pad_token_id
+                            if isinstance(self.tokenizer, RagTokenizer) else
+                            self.tokenizer.pad_token_id)
         y = trim_batch(target_ids, tgt_pad_token_id)
-        source_ids, source_mask = trim_batch(input_ids, src_pad_token_id, attention_mask=masks)
+        source_ids, source_mask = trim_batch(input_ids,
+                                             src_pad_token_id,
+                                             attention_mask=masks)
         batch = {
             "input_ids": source_ids,
             "attention_mask": source_mask,
@@ -180,7 +193,6 @@ def pickle_save(obj, path):
 
 def normalize_answer(s):
     """Lower text and remove punctuation, articles and extra whitespace."""
-
     def remove_articles(text):
         return re.sub(r"\b(a|an|the)\b", " ", text)
 
@@ -214,7 +226,8 @@ def exact_match_score(prediction, ground_truth):
     return normalize_answer(prediction) == normalize_answer(ground_truth)
 
 
-def calculate_exact_match(output_lns: List[str], reference_lns: List[str]) -> Dict:
+def calculate_exact_match(output_lns: List[str],
+                          reference_lns: List[str]) -> Dict:
     assert len(output_lns) == len(reference_lns)
     em = 0
     for hypo, pred in zip(output_lns, reference_lns):
@@ -234,7 +247,8 @@ def set_extra_model_params(extra_params, hparams, config):
     equivalent_param["dropout"] = "dropout_rate"
     for p in extra_params:
         if getattr(hparams, p, None):
-            if not hasattr(config, p) and not hasattr(config, equivalent_param[p]):
+            if not hasattr(config, p) and not hasattr(config,
+                                                      equivalent_param[p]):
                 logger.info("config doesn't have a `{}` attribute".format(p))
                 delattr(hparams, p)
                 continue

@@ -20,9 +20,11 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tf_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_flaubert": ["FLAUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "FlaubertConfig"],
+    "configuration_flaubert": [
+        "FLAUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "FlaubertConfig",
+    ],
     "tokenization_flaubert": ["FlaubertTokenizer"],
 }
 
@@ -49,9 +51,11 @@ if is_tf_available():
         "TFFlaubertWithLMHeadModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_flaubert import FLAUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, FlaubertConfig
+    from .configuration_flaubert import (
+        FLAUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        FlaubertConfig,
+    )
     from .tokenization_flaubert import FlaubertTokenizer
 
     if is_torch_available():

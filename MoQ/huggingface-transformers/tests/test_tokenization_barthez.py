@@ -13,11 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 
 from transformers import BarthezTokenizer, BarthezTokenizerFast, BatchEncoding
-from transformers.testing_utils import require_sentencepiece, require_tokenizers, require_torch
+from transformers.testing_utils import (
+    require_sentencepiece,
+    require_tokenizers,
+    require_torch,
+)
 
 from .test_tokenization_common import TokenizerTesterMixin
 
@@ -39,7 +42,10 @@ class BarthezTokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
     @require_torch
     def test_prepare_seq2seq_batch(self):
-        src_text = ["A long paragraph for summarization.", "Another paragraph for summarization."]
+        src_text = [
+            "A long paragraph for summarization.",
+            "Another paragraph for summarization.",
+        ]
         tgt_text = [
             "Summary of the text.",
             "Another summary.",
@@ -47,7 +53,10 @@ class BarthezTokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         expected_src_tokens = [0, 57, 3018, 70307, 91, 2]
 
         batch = self.tokenizer.prepare_seq2seq_batch(
-            src_text, tgt_texts=tgt_text, max_length=len(expected_src_tokens), return_tensors="pt"
+            src_text,
+            tgt_texts=tgt_text,
+            max_length=len(expected_src_tokens),
+            return_tensors="pt",
         )
         self.assertIsInstance(batch, BatchEncoding)
 

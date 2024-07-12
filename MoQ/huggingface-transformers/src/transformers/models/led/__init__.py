@@ -17,8 +17,12 @@
 # limitations under the License.
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
     "configuration_led": ["LED_PRETRAINED_CONFIG_ARCHIVE_MAP", "LEDConfig"],
@@ -38,10 +42,12 @@ if is_torch_available():
         "LEDPreTrainedModel",
     ]
 
-
 if is_tf_available():
-    _import_structure["modeling_tf_led"] = ["TFLEDForConditionalGeneration", "TFLEDModel", "TFLEDPreTrainedModel"]
-
+    _import_structure["modeling_tf_led"] = [
+        "TFLEDForConditionalGeneration",
+        "TFLEDModel",
+        "TFLEDPreTrainedModel",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_led import LED_PRETRAINED_CONFIG_ARCHIVE_MAP, LEDConfig
@@ -61,7 +67,11 @@ if TYPE_CHECKING:
         )
 
     if is_tf_available():
-        from .modeling_tf_led import TFLEDForConditionalGeneration, TFLEDModel, TFLEDPreTrainedModel
+        from .modeling_tf_led import (
+            TFLEDForConditionalGeneration,
+            TFLEDModel,
+            TFLEDPreTrainedModel,
+        )
 
 else:
     import importlib

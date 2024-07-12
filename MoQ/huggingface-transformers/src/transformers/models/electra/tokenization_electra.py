@@ -15,17 +15,22 @@
 
 from ..bert.tokenization_bert import BertTokenizer
 
-
 VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "google/electra-small-generator": "https://huggingface.co/google/electra-small-generator/resolve/main/vocab.txt",
-        "google/electra-base-generator": "https://huggingface.co/google/electra-base-generator/resolve/main/vocab.txt",
-        "google/electra-large-generator": "https://huggingface.co/google/electra-large-generator/resolve/main/vocab.txt",
-        "google/electra-small-discriminator": "https://huggingface.co/google/electra-small-discriminator/resolve/main/vocab.txt",
-        "google/electra-base-discriminator": "https://huggingface.co/google/electra-base-discriminator/resolve/main/vocab.txt",
-        "google/electra-large-discriminator": "https://huggingface.co/google/electra-large-discriminator/resolve/main/vocab.txt",
+        "google/electra-small-generator":
+        "https://huggingface.co/google/electra-small-generator/resolve/main/vocab.txt",
+        "google/electra-base-generator":
+        "https://huggingface.co/google/electra-base-generator/resolve/main/vocab.txt",
+        "google/electra-large-generator":
+        "https://huggingface.co/google/electra-large-generator/resolve/main/vocab.txt",
+        "google/electra-small-discriminator":
+        "https://huggingface.co/google/electra-small-discriminator/resolve/main/vocab.txt",
+        "google/electra-base-discriminator":
+        "https://huggingface.co/google/electra-base-discriminator/resolve/main/vocab.txt",
+        "google/electra-large-discriminator":
+        "https://huggingface.co/google/electra-large-discriminator/resolve/main/vocab.txt",
     }
 }
 
@@ -38,14 +43,25 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "google/electra-large-discriminator": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "google/electra-small-generator": {"do_lower_case": True},
-    "google/electra-base-generator": {"do_lower_case": True},
-    "google/electra-large-generator": {"do_lower_case": True},
-    "google/electra-small-discriminator": {"do_lower_case": True},
-    "google/electra-base-discriminator": {"do_lower_case": True},
-    "google/electra-large-discriminator": {"do_lower_case": True},
+    "google/electra-small-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-base-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-large-generator": {
+        "do_lower_case": True
+    },
+    "google/electra-small-discriminator": {
+        "do_lower_case": True
+    },
+    "google/electra-base-discriminator": {
+        "do_lower_case": True
+    },
+    "google/electra-large-discriminator": {
+        "do_lower_case": True
+    },
 }
 
 

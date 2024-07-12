@@ -28,12 +28,16 @@ from flax.traverse_util import flatten_dict, unflatten_dict
 from jax.random import PRNGKey
 
 from .configuration_utils import PretrainedConfig
-from .file_utils import FLAX_WEIGHTS_NAME, WEIGHTS_NAME, cached_path, hf_bucket_url, is_remote_url
+from .file_utils import (
+    FLAX_WEIGHTS_NAME,
+    WEIGHTS_NAME,
+    cached_path,
+    hf_bucket_url,
+    is_remote_url,
+)
 from .utils import logging
 
-
 logger = logging.get_logger(__name__)
-
 
 ACT2FN = {
     "gelu": nn.gelu,
@@ -58,6 +62,7 @@ class FlaxPreTrainedModel(ABC):
         - **base_model_prefix** (:obj:`str`) -- A string indicating the attribute associated to the base model in
           derived classes of the same architecture adding modules on top of the base model.
     """
+
     config_class = None
     base_model_prefix = ""
 
@@ -87,11 +92,13 @@ class FlaxPreTrainedModel(ABC):
         random_params = self.init(self.key, input_shape)
 
         # save required_params as set
-        self._required_params = set(flatten_dict(unfreeze(random_params)).keys())
+        self._required_params = set(
+            flatten_dict(unfreeze(random_params)).keys())
         self.params = random_params
 
     def init(self, rng: jax.random.PRNGKey, input_shape: Tuple) -> Dict:
-        raise NotImplementedError(f"init method has to be implemented for {self}")
+        raise NotImplementedError(
+            f"init method has to be implemented for {self}")
 
     @property
     def config(self) -> PretrainedConfig:
@@ -117,8 +124,7 @@ class FlaxPreTrainedModel(ABC):
         if len(self.required_params - param_keys) > 0:
             raise ValueError(
                 "Some parameters are missing. Make sure that `params` include the following "
-                f"parameters {self.required_params - param_keys}"
-            )
+                f"parameters {self.required_params - param_keys}")
         self._params = freeze(params)
 
     @staticmethod
@@ -132,9 +138,8 @@ class FlaxPreTrainedModel(ABC):
         pretrained_model_name_or_path: Union[str, os.PathLike],
         dtype: jnp.dtype = jnp.float32,
         *model_args,
-        **kwargs
+        **kwargs,
     ):
-
         r"""
         Instantiate a pretrained flax model from a pre-trained model configuration.
 
@@ -231,7 +236,8 @@ class FlaxPreTrainedModel(ABC):
 
         # Load config if we don't provide a configuration
         if not isinstance(config, PretrainedConfig):
-            config_path = config if config is not None else pretrained_model_name_or_path
+            config_path = (config if config is not None else
+                           pretrained_model_name_or_path)
             config, model_kwargs = cls.config_class.from_pretrained(
                 config_path,
                 *model_args,
@@ -254,20 +260,28 @@ class FlaxPreTrainedModel(ABC):
         # Load model
         if pretrained_model_name_or_path is not None:
             if os.path.isdir(pretrained_model_name_or_path):
-                if from_pt and os.path.isfile(os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)):
+                if from_pt and os.path.isfile(
+                        os.path.join(pretrained_model_name_or_path,
+                                     WEIGHTS_NAME)):
                     # Load from a PyTorch checkpoint
-                    archive_file = os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)
-                elif os.path.isfile(os.path.join(pretrained_model_name_or_path, FLAX_WEIGHTS_NAME)):
+                    archive_file = os.path.join(pretrained_model_name_or_path,
+                                                WEIGHTS_NAME)
+                elif os.path.isfile(
+                        os.path.join(pretrained_model_name_or_path,
+                                     FLAX_WEIGHTS_NAME)):
                     # Load from a Flax checkpoint
-                    archive_file = os.path.join(pretrained_model_name_or_path, FLAX_WEIGHTS_NAME)
+                    archive_file = os.path.join(pretrained_model_name_or_path,
+                                                FLAX_WEIGHTS_NAME)
                 else:
                     raise EnvironmentError(
-                        "Error no file named {} found in directory {} or `from_pt` set to False".format(
+                        "Error no file named {} found in directory {} or `from_pt` set to False"
+                        .format(
                             [FLAX_WEIGHTS_NAME, WEIGHTS_NAME],
                             pretrained_model_name_or_path,
-                        )
-                    )
-            elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+                        ))
+            elif os.path.isfile(
+                    pretrained_model_name_or_path) or is_remote_url(
+                        pretrained_model_name_or_path):
                 archive_file = pretrained_model_name_or_path
             else:
                 archive_file = hf_bucket_url(
@@ -299,7 +313,9 @@ class FlaxPreTrainedModel(ABC):
             if resolved_archive_file == archive_file:
                 logger.info(f"loading weights file {archive_file}")
             else:
-                logger.info(f"loading weights file {archive_file} from cache at {resolved_archive_file}")
+                logger.info(
+                    f"loading weights file {archive_file} from cache at {resolved_archive_file}"
+                )
         else:
             resolved_archive_file = None
 
@@ -323,7 +339,8 @@ class FlaxPreTrainedModel(ABC):
         model = cls(config, *model_args, **model_kwargs)
 
         # if model is base model only use model_prefix key
-        if cls.base_model_prefix not in dict(model.params) and cls.base_model_prefix in state:
+        if (cls.base_model_prefix not in dict(model.params)
+                and cls.base_model_prefix in state):
             state = state[cls.base_model_prefix]
 
         # flatten dicts
@@ -347,7 +364,9 @@ class FlaxPreTrainedModel(ABC):
                 f"to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model)."
             )
         else:
-            logger.info(f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n")
+            logger.info(
+                f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n"
+            )
 
         if len(missing_keys) > 0:
             logger.warning(
@@ -376,7 +395,9 @@ class FlaxPreTrainedModel(ABC):
                 Directory to which to save. Will be created if it doesn't exist.
         """
         if os.path.isfile(save_directory):
-            logger.error("Provided path ({}) should be a directory, not a file".format(save_directory))
+            logger.error(
+                "Provided path ({}) should be a directory, not a file".format(
+                    save_directory))
             return
         os.makedirs(save_directory, exist_ok=True)
 
@@ -391,7 +412,8 @@ class FlaxPreTrainedModel(ABC):
             f.write(model_bytes)
 
 
-def convert_state_dict_from_pt(model_class: ABC, state: Dict, config: PretrainedConfig):
+def convert_state_dict_from_pt(model_class: ABC, state: Dict,
+                               config: PretrainedConfig):
     """
     Converts a PyTorch parameter state dict to an equivalent Flax parameter state dict
     """

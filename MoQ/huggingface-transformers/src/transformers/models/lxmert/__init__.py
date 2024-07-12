@@ -18,11 +18,16 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
-    "configuration_lxmert": ["LXMERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "LxmertConfig"],
+    "configuration_lxmert":
+    ["LXMERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "LxmertConfig"],
     "tokenization_lxmert": ["LxmertTokenizer"],
 }
 
@@ -49,7 +54,6 @@ if is_tf_available():
         "TFLxmertPreTrainedModel",
         "TFLxmertVisualFeatureEncoder",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_lxmert import LXMERT_PRETRAINED_CONFIG_ARCHIVE_MAP, LxmertConfig

@@ -18,10 +18,11 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
-OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP = {"openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/config.json"}
+OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
+    "openai-gpt": "https://huggingface.co/openai-gpt/resolve/main/config.json"
+}
 
 
 class OpenAIGPTConfig(PretrainedConfig):
@@ -116,28 +117,26 @@ class OpenAIGPTConfig(PretrainedConfig):
 
     model_type = "openai-gpt"
 
-    def __init__(
-        self,
-        vocab_size=40478,
-        n_positions=512,
-        n_ctx=512,
-        n_embd=768,
-        n_layer=12,
-        n_head=12,
-        afn="gelu",
-        resid_pdrop=0.1,
-        embd_pdrop=0.1,
-        attn_pdrop=0.1,
-        layer_norm_epsilon=1e-5,
-        initializer_range=0.02,
-        predict_special_tokens=True,
-        summary_type="cls_index",
-        summary_use_proj=True,
-        summary_activation=None,
-        summary_proj_to_labels=True,
-        summary_first_dropout=0.1,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=40478,
+                 n_positions=512,
+                 n_ctx=512,
+                 n_embd=768,
+                 n_layer=12,
+                 n_head=12,
+                 afn="gelu",
+                 resid_pdrop=0.1,
+                 embd_pdrop=0.1,
+                 attn_pdrop=0.1,
+                 layer_norm_epsilon=1e-5,
+                 initializer_range=0.02,
+                 predict_special_tokens=True,
+                 summary_type="cls_index",
+                 summary_use_proj=True,
+                 summary_activation=None,
+                 summary_proj_to_labels=True,
+                 summary_first_dropout=0.1,
+                 **kwargs):
         super().__init__(**kwargs)
 
         self.vocab_size = vocab_size

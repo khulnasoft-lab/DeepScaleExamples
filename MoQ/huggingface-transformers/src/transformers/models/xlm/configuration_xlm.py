@@ -17,20 +17,29 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 XLM_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "xlm-mlm-en-2048": "https://huggingface.co/xlm-mlm-en-2048/resolve/main/config.json",
-    "xlm-mlm-ende-1024": "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/config.json",
-    "xlm-mlm-enfr-1024": "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/config.json",
-    "xlm-mlm-enro-1024": "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/config.json",
-    "xlm-mlm-tlm-xnli15-1024": "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/config.json",
-    "xlm-mlm-xnli15-1024": "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/config.json",
-    "xlm-clm-enfr-1024": "https://huggingface.co/xlm-clm-enfr-1024/resolve/main/config.json",
-    "xlm-clm-ende-1024": "https://huggingface.co/xlm-clm-ende-1024/resolve/main/config.json",
-    "xlm-mlm-17-1280": "https://huggingface.co/xlm-mlm-17-1280/resolve/main/config.json",
-    "xlm-mlm-100-1280": "https://huggingface.co/xlm-mlm-100-1280/resolve/main/config.json",
+    "xlm-mlm-en-2048":
+    "https://huggingface.co/xlm-mlm-en-2048/resolve/main/config.json",
+    "xlm-mlm-ende-1024":
+    "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/config.json",
+    "xlm-mlm-enfr-1024":
+    "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/config.json",
+    "xlm-mlm-enro-1024":
+    "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/config.json",
+    "xlm-mlm-tlm-xnli15-1024":
+    "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/config.json",
+    "xlm-mlm-xnli15-1024":
+    "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/config.json",
+    "xlm-clm-enfr-1024":
+    "https://huggingface.co/xlm-clm-enfr-1024/resolve/main/config.json",
+    "xlm-clm-ende-1024":
+    "https://huggingface.co/xlm-clm-ende-1024/resolve/main/config.json",
+    "xlm-mlm-17-1280":
+    "https://huggingface.co/xlm-mlm-17-1280/resolve/main/config.json",
+    "xlm-mlm-100-1280":
+    "https://huggingface.co/xlm-mlm-100-1280/resolve/main/config.json",
 }
 
 
@@ -147,45 +156,45 @@ class XLMConfig(PretrainedConfig):
 
     model_type = "xlm"
 
-    def __init__(
-        self,
-        vocab_size=30145,
-        emb_dim=2048,
-        n_layers=12,
-        n_heads=16,
-        dropout=0.1,
-        attention_dropout=0.1,
-        gelu_activation=True,
-        sinusoidal_embeddings=False,
-        causal=False,
-        asm=False,
-        n_langs=1,
-        use_lang_emb=True,
-        max_position_embeddings=512,
-        embed_init_std=2048 ** -0.5,
-        layer_norm_eps=1e-12,
-        init_std=0.02,
-        bos_index=0,
-        eos_index=1,
-        pad_index=2,
-        unk_index=3,
-        mask_index=5,
-        is_encoder=True,
-        summary_type="first",
-        summary_use_proj=True,
-        summary_activation=None,
-        summary_proj_to_labels=True,
-        summary_first_dropout=0.1,
-        start_n_top=5,
-        end_n_top=5,
-        mask_token_id=0,
-        lang_id=0,
-        pad_token_id=2,
-        bos_token_id=0,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=30145,
+                 emb_dim=2048,
+                 n_layers=12,
+                 n_heads=16,
+                 dropout=0.1,
+                 attention_dropout=0.1,
+                 gelu_activation=True,
+                 sinusoidal_embeddings=False,
+                 causal=False,
+                 asm=False,
+                 n_langs=1,
+                 use_lang_emb=True,
+                 max_position_embeddings=512,
+                 embed_init_std=2048**-0.5,
+                 layer_norm_eps=1e-12,
+                 init_std=0.02,
+                 bos_index=0,
+                 eos_index=1,
+                 pad_index=2,
+                 unk_index=3,
+                 mask_index=5,
+                 is_encoder=True,
+                 summary_type="first",
+                 summary_use_proj=True,
+                 summary_activation=None,
+                 summary_proj_to_labels=True,
+                 summary_first_dropout=0.1,
+                 start_n_top=5,
+                 end_n_top=5,
+                 mask_token_id=0,
+                 lang_id=0,
+                 pad_token_id=2,
+                 bos_token_id=0,
+                 **kwargs):
         """Constructs XLMConfig."""
-        super().__init__(pad_token_id=pad_token_id, bos_token_id=bos_token_id, **kwargs)
+        super().__init__(pad_token_id=pad_token_id,
+                         bos_token_id=bos_token_id,
+                         **kwargs)
         self.vocab_size = vocab_size
         self.emb_dim = emb_dim
         self.n_layers = n_layers

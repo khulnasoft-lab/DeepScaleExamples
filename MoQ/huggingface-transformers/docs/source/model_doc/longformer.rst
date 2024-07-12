@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -99,59 +99,59 @@ LongformerTokenizer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.LongformerTokenizer
-    :members: 
+    :members:
 
 
 LongformerTokenizerFast
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.LongformerTokenizerFast
-    :members: 
+    :members:
 
 Longformer specific outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerBaseModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerBaseModelOutputWithPooling
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerMaskedLMOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerQuestionAnsweringModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerSequenceClassifierOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerMultipleChoiceModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_longformer.LongformerTokenClassifierOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerBaseModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerBaseModelOutputWithPooling
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerMaskedLMOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerQuestionAnsweringModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerSequenceClassifierOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerMultipleChoiceModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.longformer.modeling_tf_longformer.TFLongformerTokenClassifierOutput
-    :members: 
+    :members:
 
 LongformerModel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -235,4 +235,3 @@ TFLongformerForMultipleChoice
 
 .. autoclass:: transformers.TFLongformerForMultipleChoice
     :members: call
-

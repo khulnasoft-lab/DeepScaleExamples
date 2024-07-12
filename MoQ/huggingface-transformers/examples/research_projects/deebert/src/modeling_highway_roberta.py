@@ -4,14 +4,22 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
 from transformers import RobertaConfig
-from transformers.file_utils import add_start_docstrings, add_start_docstrings_to_model_forward
+from transformers.file_utils import (
+    add_start_docstrings,
+    add_start_docstrings_to_model_forward,
+)
 from transformers.models.roberta.modeling_roberta import (
     ROBERTA_INPUTS_DOCSTRING,
     ROBERTA_START_DOCSTRING,
     RobertaEmbeddings,
 )
 
-from .modeling_highway_bert import BertPreTrainedModel, DeeBertModel, HighwayException, entropy
+from .modeling_highway_bert import (
+    BertPreTrainedModel,
+    DeeBertModel,
+    HighwayException,
+    entropy,
+)
 
 
 @add_start_docstrings(
@@ -106,7 +114,8 @@ class DeeRobertaForSequenceClassification(BertPreTrainedModel):
 
             pooled_output = self.dropout(pooled_output)
             logits = self.classifier(pooled_output)
-            outputs = (logits,) + outputs[2:]  # add hidden states and attention if they are here
+            outputs = (logits, ) + outputs[
+                2:]  # add hidden states and attention if they are here
         except HighwayException as e:
             outputs = e.message
             exit_layer = e.exit_layer
@@ -123,7 +132,8 @@ class DeeRobertaForSequenceClassification(BertPreTrainedModel):
                 loss = loss_fct(logits.view(-1), labels.view(-1))
             else:
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits.view(-1, self.num_labels),
+                                labels.view(-1))
 
             # work with highway exits
             highway_losses = []
@@ -135,22 +145,26 @@ class DeeRobertaForSequenceClassification(BertPreTrainedModel):
                 if self.num_labels == 1:
                     #  We are doing regression
                     loss_fct = MSELoss()
-                    highway_loss = loss_fct(highway_logits.view(-1), labels.view(-1))
+                    highway_loss = loss_fct(highway_logits.view(-1),
+                                            labels.view(-1))
                 else:
                     loss_fct = CrossEntropyLoss()
-                    highway_loss = loss_fct(highway_logits.view(-1, self.num_labels), labels.view(-1))
+                    highway_loss = loss_fct(
+                        highway_logits.view(-1, self.num_labels),
+                        labels.view(-1))
                 highway_losses.append(highway_loss)
 
             if train_highway:
-                outputs = (sum(highway_losses[:-1]),) + outputs
+                outputs = (sum(highway_losses[:-1]), ) + outputs
                 # exclude the final highway, of course
             else:
-                outputs = (loss,) + outputs
+                outputs = (loss, ) + outputs
         if not self.training:
-            outputs = outputs + ((original_entropy, highway_entropy), exit_layer)
+            outputs = outputs + (
+                (original_entropy, highway_entropy), exit_layer)
             if output_layer >= 0:
                 outputs = (
-                    (outputs[0],) + (highway_logits_all[output_layer],) + outputs[2:]
-                )  # use the highway of the last layer
+                    (outputs[0], ) + (highway_logits_all[output_layer], ) +
+                    outputs[2:])  # use the highway of the last layer
 
         return outputs  # (loss), logits, (hidden_states), (attentions), entropy

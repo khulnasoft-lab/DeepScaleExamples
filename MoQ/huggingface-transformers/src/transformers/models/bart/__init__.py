@@ -17,8 +17,12 @@
 # limitations under the License.
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
     "configuration_bart": ["BART_PRETRAINED_CONFIG_ARCHIVE_MAP", "BartConfig"],
@@ -41,8 +45,11 @@ if is_torch_available():
     ]
 
 if is_tf_available():
-    _import_structure["modeling_tf_bart"] = ["TFBartForConditionalGeneration", "TFBartModel", "TFBartPretrainedModel"]
-
+    _import_structure["modeling_tf_bart"] = [
+        "TFBartForConditionalGeneration",
+        "TFBartModel",
+        "TFBartPretrainedModel",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_bart import BART_PRETRAINED_CONFIG_ARCHIVE_MAP, BartConfig
@@ -64,7 +71,11 @@ if TYPE_CHECKING:
         )
 
     if is_tf_available():
-        from .modeling_tf_bart import TFBartForConditionalGeneration, TFBartModel, TFBartPretrainedModel
+        from .modeling_tf_bart import (
+            TFBartForConditionalGeneration,
+            TFBartModel,
+            TFBartPretrainedModel,
+        )
 
 else:
     import importlib

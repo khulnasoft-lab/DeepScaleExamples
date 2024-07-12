@@ -124,7 +124,7 @@ std::vector<at::Tensor> layer_norm_affine(
     at::Tensor gamma,
     at::Tensor beta,
     double epsilon) {
-  
+
   CHECK_INPUT(input);
   CHECK_INPUT(gamma);
   CHECK_INPUT(beta);

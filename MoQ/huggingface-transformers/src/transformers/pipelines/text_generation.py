@@ -61,16 +61,14 @@ class TextGenerationPipeline(Pipeline):
 
         return super()._parse_and_tokenize(*args, **kwargs)
 
-    def __call__(
-        self,
-        text_inputs,
-        return_tensors=False,
-        return_text=True,
-        return_full_text=None,
-        clean_up_tokenization_spaces=False,
-        prefix=None,
-        **generate_kwargs
-    ):
+    def __call__(self,
+                 text_inputs,
+                 return_tensors=False,
+                 return_text=True,
+                 return_full_text=None,
+                 clean_up_tokenization_spaces=False,
+                 prefix=None,
+                 **generate_kwargs):
         """
         Complete the prompt(s) given as inputs.
 
@@ -100,7 +98,8 @@ class TextGenerationPipeline(Pipeline):
               -- The token ids of the generated text.
         """
         prefix = prefix if prefix is not None else self.model.config.prefix
-        return_full_text = return_full_text if return_full_text is not None else self.return_full_text
+        return_full_text = (return_full_text if return_full_text is not None
+                            else self.return_full_text)
 
         if isinstance(text_inputs, str):
             text_inputs = [text_inputs]
@@ -109,16 +108,17 @@ class TextGenerationPipeline(Pipeline):
             # Manage correct placement of the tensors
             with self.device_placement():
                 if prefix is None and self.model.__class__.__name__ in [
-                    "XLNetLMHeadModel",
-                    "TransfoXLLMHeadModel",
-                    "TFXLNetLMHeadModel",
-                    "TFTransfoXLLMHeadModel",
+                        "XLNetLMHeadModel",
+                        "TransfoXLLMHeadModel",
+                        "TFXLNetLMHeadModel",
+                        "TFTransfoXLLMHeadModel",
                 ]:
                     # For XLNet and TransformerXL we add an article to the prompt to give more state to the model.
                     prefix = self.XL_PREFIX
 
                 if prefix:
-                    prefix_inputs = self._parse_and_tokenize(prefix, padding=False, add_special_tokens=False)
+                    prefix_inputs = self._parse_and_tokenize(
+                        prefix, padding=False, add_special_tokens=False)
                     # This impacts max_length and min_length argument that need adjusting.
                     prefix_length = prefix_inputs["input_ids"].shape[-1]
                     if generate_kwargs.get("max_length", None) is not None:
@@ -127,7 +127,9 @@ class TextGenerationPipeline(Pipeline):
                         generate_kwargs["min_length"] += prefix_length
 
                 prefix = prefix or ""
-                inputs = self._parse_and_tokenize(prefix + prompt_text, padding=False, add_special_tokens=False)
+                inputs = self._parse_and_tokenize(prefix + prompt_text,
+                                                  padding=False,
+                                                  add_special_tokens=False)
 
                 # set input_ids to None to allow empty prompt
                 if inputs["input_ids"].shape[-1] == 0:
@@ -144,7 +146,8 @@ class TextGenerationPipeline(Pipeline):
                     input_ids is None or input_ids.shape[0] == 1
                 ), "Batch generation is currently not supported. See https://github.com/huggingface/transformers/issues/3021 for more information."
 
-                output_sequences = self.model.generate(input_ids=input_ids, **generate_kwargs)  # BS x SL
+                output_sequences = self.model.generate(
+                    input_ids=input_ids, **generate_kwargs)  # BS x SL
 
             result = []
             for generated_sequence in output_sequences:
@@ -159,7 +162,8 @@ class TextGenerationPipeline(Pipeline):
                     text = self.tokenizer.decode(
                         generated_sequence,
                         skip_special_tokens=True,
-                        clean_up_tokenization_spaces=clean_up_tokenization_spaces,
+                        clean_up_tokenization_spaces=
+                        clean_up_tokenization_spaces,
                     )
 
                     # Remove PADDING prompt of the sequence if XLNet or Transfo-XL model is used
@@ -170,9 +174,9 @@ class TextGenerationPipeline(Pipeline):
                             self.tokenizer.decode(
                                 input_ids[0],
                                 skip_special_tokens=True,
-                                clean_up_tokenization_spaces=clean_up_tokenization_spaces,
-                            )
-                        )
+                                clean_up_tokenization_spaces=
+                                clean_up_tokenization_spaces,
+                            ))
 
                     if return_full_text:
                         all_text = prompt_text + text[prompt_length:]

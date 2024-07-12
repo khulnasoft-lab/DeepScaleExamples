@@ -17,14 +17,14 @@
 from ...utils import logging
 from ..bert.tokenization_bert import BertTokenizer
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "yjernite/retribert-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
+        "yjernite/retribert-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
     }
 }
 
@@ -32,9 +32,10 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "yjernite/retribert-base-uncased": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "yjernite/retribert-base-uncased": {"do_lower_case": True},
+    "yjernite/retribert-base-uncased": {
+        "do_lower_case": True
+    },
 }
 
 

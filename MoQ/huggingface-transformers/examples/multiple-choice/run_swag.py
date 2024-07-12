@@ -39,9 +39,11 @@ from transformers import (
     default_data_collator,
     set_seed,
 )
-from transformers.tokenization_utils_base import PaddingStrategy, PreTrainedTokenizerBase
+from transformers.tokenization_utils_base import (
+    PaddingStrategy,
+    PreTrainedTokenizerBase,
+)
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
-
 
 logger = logging.getLogger(__name__)
 
@@ -53,30 +55,50 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        })
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
     use_fast_tokenizer: bool = field(
         default=True,
-        metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."},
+        metadata={
+            "help":
+            "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."
+        },
     )
     model_revision: str = field(
         default="main",
-        metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
+        metadata={
+            "help":
+            "The specific model version to use (can be a branch name, tag name or commit id)."
+        },
     )
     use_auth_token: bool = field(
         default=False,
         metadata={
-            "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
+            "help":
+            "Will use the token generated when running `transformers-cli login` (necessary to use this script "
             "with private models)."
         },
     )
@@ -88,29 +110,39 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    train_file: Optional[str] = field(default=None, metadata={"help": "The input training data file (a text file)."})
+    train_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "The input training data file (a text file)."})
     validation_file: Optional[str] = field(
         default=None,
-        metadata={"help": "An optional input evaluation data file to evaluate the perplexity on (a text file)."},
+        metadata={
+            "help":
+            "An optional input evaluation data file to evaluate the perplexity on (a text file)."
+        },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
     preprocessing_num_workers: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."},
+        metadata={
+            "help": "The number of processes to use for the preprocessing."
+        },
     )
     max_seq_length: int = field(
         default=None,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. If passed, sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. If passed, sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     pad_to_max_length: bool = field(
         default=False,
         metadata={
-            "help": "Whether to pad all samples to the maximum sentence length. "
+            "help":
+            "Whether to pad all samples to the maximum sentence length. "
             "If False, will pad the samples dynamically when batching to the maximum length in the batch. More "
             "efficient on GPU but very bad for TPU."
         },
@@ -119,10 +151,16 @@ class DataTrainingArguments:
     def __post_init__(self):
         if self.train_file is not None:
             extension = self.train_file.split(".")[-1]
-            assert extension in ["csv", "json"], "`train_file` should be a csv or a json file."
+            assert extension in [
+                "csv",
+                "json",
+            ], "`train_file` should be a csv or a json file."
         if self.validation_file is not None:
             extension = self.validation_file.split(".")[-1]
-            assert extension in ["csv", "json"], "`validation_file` should be a csv or a json file."
+            assert extension in [
+                "csv",
+                "json",
+            ], "`validation_file` should be a csv or a json file."
 
 
 @dataclass
@@ -162,9 +200,10 @@ class DataCollatorForMultipleChoice:
         labels = [feature.pop(label_name) for feature in features]
         batch_size = len(features)
         num_choices = len(features[0]["input_ids"])
-        flattened_features = [
-            [{k: v[i] for k, v in feature.items()} for i in range(num_choices)] for feature in features
-        ]
+        flattened_features = [[{k: v[i]
+                                for k, v in feature.items()}
+                               for i in range(num_choices)]
+                              for feature in features]
         flattened_features = sum(flattened_features, [])
 
         batch = self.tokenizer.pad(
@@ -176,7 +215,10 @@ class DataCollatorForMultipleChoice:
         )
 
         # Un-flatten
-        batch = {k: v.view(batch_size, num_choices, -1) for k, v in batch.items()}
+        batch = {
+            k: v.view(batch_size, num_choices, -1)
+            for k, v in batch.items()
+        }
         # Add back labels
         batch["labels"] = torch.tensor(labels, dtype=torch.int64)
         return batch
@@ -187,23 +229,27 @@ def main():
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, DataTrainingArguments, TrainingArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
-        model_args, data_args, training_args = parser.parse_json_file(json_file=os.path.abspath(sys.argv[1]))
+        model_args, data_args, training_args = parser.parse_json_file(
+            json_file=os.path.abspath(sys.argv[1]))
     else:
-        model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+        model_args, data_args, training_args = parser.parse_args_into_dataclasses(
+        )
 
     # Detecting last checkpoint.
     last_checkpoint = None
-    if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
+    if (os.path.isdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+        if last_checkpoint is None and len(os.listdir(
+                training_args.output_dir)) > 0:
             raise ValueError(
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
+                "Use --overwrite_output_dir to overcome.")
         elif last_checkpoint is not None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
@@ -216,12 +262,14 @@ def main():
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
-    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank) else logging.WARN)
+    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank
+                                                    ) else logging.WARN)
 
     # Log on each process the small summary:
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        +
+        f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
     if is_main_process(training_args.local_rank):
@@ -260,13 +308,15 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
         revision=model_args.model_revision,
         use_auth_token=True if model_args.use_auth_token else None,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
         use_fast=model_args.use_fast_tokenizer,
         revision=model_args.model_revision,
@@ -300,15 +350,16 @@ def main():
                 f"The max_seq_length passed ({data_args.max_seq_length}) is larger than the maximum length for the"
                 f"model ({tokenizer.model_max_length}). Using max_seq_length={tokenizer.model_max_length}."
             )
-        max_seq_length = min(data_args.max_seq_length, tokenizer.model_max_length)
+        max_seq_length = min(data_args.max_seq_length,
+                             tokenizer.model_max_length)
 
     # Preprocessing the datasets.
     def preprocess_function(examples):
         first_sentences = [[context] * 4 for context in examples[context_name]]
         question_headers = examples[question_header_name]
-        second_sentences = [
-            [f"{header} {examples[end][i]}" for end in ending_names] for i, header in enumerate(question_headers)
-        ]
+        second_sentences = [[
+            f"{header} {examples[end][i]}" for end in ending_names
+        ] for i, header in enumerate(question_headers)]
 
         # Flatten out
         first_sentences = sum(first_sentences, [])
@@ -323,7 +374,10 @@ def main():
             padding="max_length" if data_args.pad_to_max_length else False,
         )
         # Un-flatten
-        return {k: [v[i : i + 4] for i in range(0, len(v), 4)] for k, v in tokenized_examples.items()}
+        return {
+            k: [v[i:i + 4] for i in range(0, len(v), 4)]
+            for k, v in tokenized_examples.items()
+        }
 
     tokenized_datasets = datasets.map(
         preprocess_function,
@@ -333,24 +387,27 @@ def main():
     )
 
     # Data collator
-    data_collator = (
-        default_data_collator
-        if data_args.pad_to_max_length
-        else DataCollatorForMultipleChoice(tokenizer=tokenizer, pad_to_multiple_of=8 if training_args.fp16 else None)
-    )
+    data_collator = (default_data_collator if data_args.pad_to_max_length else
+                     DataCollatorForMultipleChoice(
+                         tokenizer=tokenizer,
+                         pad_to_multiple_of=8 if training_args.fp16 else None))
 
     # Metric
     def compute_metrics(eval_predictions):
         predictions, label_ids = eval_predictions
         preds = np.argmax(predictions, axis=1)
-        return {"accuracy": (preds == label_ids).astype(np.float32).mean().item()}
+        return {
+            "accuracy": (preds == label_ids).astype(np.float32).mean().item()
+        }
 
     # Initialize our Trainer
     trainer = Trainer(
         model=model,
         args=training_args,
-        train_dataset=tokenized_datasets["train"] if training_args.do_train else None,
-        eval_dataset=tokenized_datasets["validation"] if training_args.do_eval else None,
+        train_dataset=tokenized_datasets["train"]
+        if training_args.do_train else None,
+        eval_dataset=(tokenized_datasets["validation"]
+                      if training_args.do_eval else None),
         tokenizer=tokenizer,
         data_collator=data_collator,
         compute_metrics=compute_metrics,
@@ -367,7 +424,8 @@ def main():
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
         trainer.save_model()  # Saves the tokenizer too for easy upload
 
-        output_train_file = os.path.join(training_args.output_dir, "train_results.txt")
+        output_train_file = os.path.join(training_args.output_dir,
+                                         "train_results.txt")
         if trainer.is_world_process_zero():
             with open(output_train_file, "w") as writer:
                 logger.info("***** Train results *****")
@@ -376,7 +434,8 @@ def main():
                     writer.write(f"{key} = {value}\n")
 
             # Need to save the state, since Trainer.save_model saves only the tokenizer with the model
-            trainer.state.save_to_json(os.path.join(training_args.output_dir, "trainer_state.json"))
+            trainer.state.save_to_json(
+                os.path.join(training_args.output_dir, "trainer_state.json"))
 
     # Evaluation
     results = {}
@@ -385,7 +444,8 @@ def main():
 
         results = trainer.evaluate()
 
-        output_eval_file = os.path.join(training_args.output_dir, "eval_results_swag.txt")
+        output_eval_file = os.path.join(training_args.output_dir,
+                                        "eval_results_swag.txt")
         if trainer.is_world_process_zero():
             with open(output_eval_file, "w") as writer:
                 logger.info("***** Eval results *****")

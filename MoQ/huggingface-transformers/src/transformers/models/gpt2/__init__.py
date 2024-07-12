@@ -18,8 +18,12 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
     "configuration_gpt2": ["GPT2_PRETRAINED_CONFIG_ARCHIVE_MAP", "GPT2Config"],
@@ -50,7 +54,6 @@ if is_tf_available():
         "TFGPT2Model",
         "TFGPT2PreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_gpt2 import GPT2_PRETRAINED_CONFIG_ARCHIVE_MAP, GPT2Config

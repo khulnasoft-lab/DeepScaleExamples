@@ -14,37 +14,44 @@
 # limitations under the License.
 """ Tokenization class for model LayoutLM."""
 
-
 from ...utils import logging
 from ..bert.tokenization_bert_fast import BertTokenizerFast
 from .tokenization_layoutlm import LayoutLMTokenizer
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.txt",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "microsoft/layoutlm-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
-        "microsoft/layoutlm-large-uncased": "https://huggingface.co/bert-large-uncased/resolve/main/vocab.txt",
+        "microsoft/layoutlm-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
+        "microsoft/layoutlm-large-uncased":
+        "https://huggingface.co/bert-large-uncased/resolve/main/vocab.txt",
     },
     "tokenizer_file": {
-        "microsoft/layoutlm-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json",
-        "microsoft/layoutlm-large-uncased": "https://huggingface.co/bert-large-uncased/resolve/main/tokenizer.json",
+        "microsoft/layoutlm-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json",
+        "microsoft/layoutlm-large-uncased":
+        "https://huggingface.co/bert-large-uncased/resolve/main/tokenizer.json",
     },
 }
-
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "microsoft/layoutlm-base-uncased": 512,
     "microsoft/layoutlm-large-uncased": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "microsoft/layoutlm-base-uncased": {"do_lower_case": True},
-    "microsoft/layoutlm-large-uncased": {"do_lower_case": True},
+    "microsoft/layoutlm-base-uncased": {
+        "do_lower_case": True
+    },
+    "microsoft/layoutlm-large-uncased": {
+        "do_lower_case": True
+    },
 }
 
 

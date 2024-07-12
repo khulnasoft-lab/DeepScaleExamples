@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -373,7 +373,7 @@ For a single or a group of tests via ``pytest`` (after ``pip install pytest-pspe
 
 .. code-block:: bash
 
-   pytest --pspec tests/test_optimization.py 
+   pytest --pspec tests/test_optimization.py
 
 
 
@@ -657,7 +657,7 @@ and it will list:
 
     test_this2.py::test_floor[integer-1-1.0]
     test_this2.py::test_floor[negative--1.5--2.0]
-    test_this2.py::test_floor[large fraction-1.6-1]       
+    test_this2.py::test_floor[large fraction-1.6-1]
 
 So now you can run just the specific test:
 

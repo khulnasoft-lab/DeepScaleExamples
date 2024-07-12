@@ -34,12 +34,16 @@ import unittest
 import pytest
 
 from parameterized import parameterized
-from transformers.testing_utils import require_torch, require_torch_gpu, slow, torch_device
-
+from transformers.testing_utils import (
+    require_torch,
+    require_torch_gpu,
+    slow,
+    torch_device,
+)
 
 # skipping in unittest tests
 
-params = [(1,)]
+params = [(1, )]
 
 
 # test that we can stack our skip decorators with 3rd party decorators

@@ -14,12 +14,10 @@
 # limitations under the License.
 """ FSMT configuration """
 
-
 import copy
 
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -30,6 +28,7 @@ class DecoderConfig(PretrainedConfig):
     r"""
     Configuration class for FSMT's decoder specific things. note: this is a private helper class
     """
+
     model_type = "fsmt_decoder"
 
     def __init__(self, vocab_size=0, bos_token_id=0):
@@ -123,44 +122,43 @@ class FSMTConfig(PretrainedConfig):
             >>> model = FSMTModel(config)
 
     """
+
     model_type = "fsmt"
 
     # update the defaults from config file
-    def __init__(
-        self,
-        langs=["en", "de"],
-        src_vocab_size=42024,
-        tgt_vocab_size=42024,
-        activation_function="relu",
-        d_model=1024,
-        max_length=200,
-        max_position_embeddings=1024,
-        encoder_ffn_dim=4096,
-        encoder_layers=12,
-        encoder_attention_heads=16,
-        encoder_layerdrop=0.0,
-        decoder_ffn_dim=4096,
-        decoder_layers=12,
-        decoder_attention_heads=16,
-        decoder_layerdrop=0.0,
-        attention_dropout=0.0,
-        dropout=0.1,
-        activation_dropout=0.0,
-        init_std=0.02,
-        decoder_start_token_id=2,
-        is_encoder_decoder=True,
-        scale_embedding=True,
-        tie_word_embeddings=False,
-        num_beams=5,
-        length_penalty=1.0,
-        early_stopping=False,
-        use_cache=True,
-        pad_token_id=1,
-        bos_token_id=0,
-        eos_token_id=2,
-        forced_eos_token_id=2,
-        **common_kwargs
-    ):
+    def __init__(self,
+                 langs=["en", "de"],
+                 src_vocab_size=42024,
+                 tgt_vocab_size=42024,
+                 activation_function="relu",
+                 d_model=1024,
+                 max_length=200,
+                 max_position_embeddings=1024,
+                 encoder_ffn_dim=4096,
+                 encoder_layers=12,
+                 encoder_attention_heads=16,
+                 encoder_layerdrop=0.0,
+                 decoder_ffn_dim=4096,
+                 decoder_layers=12,
+                 decoder_attention_heads=16,
+                 decoder_layerdrop=0.0,
+                 attention_dropout=0.0,
+                 dropout=0.1,
+                 activation_dropout=0.0,
+                 init_std=0.02,
+                 decoder_start_token_id=2,
+                 is_encoder_decoder=True,
+                 scale_embedding=True,
+                 tie_word_embeddings=False,
+                 num_beams=5,
+                 length_penalty=1.0,
+                 early_stopping=False,
+                 use_cache=True,
+                 pad_token_id=1,
+                 bos_token_id=0,
+                 eos_token_id=2,
+                 forced_eos_token_id=2,
+                 **common_kwargs):
         if "hidden_size" in common_kwargs:
             raise ValueError("hidden size is called d_model")
         super().__init__(
@@ -195,9 +193,12 @@ class FSMTConfig(PretrainedConfig):
         self.length_penalty = length_penalty
         self.early_stopping = early_stopping
 
-        self.decoder = DecoderConfig(vocab_size=tgt_vocab_size, bos_token_id=eos_token_id)
+        self.decoder = DecoderConfig(vocab_size=tgt_vocab_size,
+                                     bos_token_id=eos_token_id)
 
-        self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
+        self.scale_embedding = (
+            scale_embedding  # scale factor will be sqrt(d_model) if True
+        )
 
         # 3 Types of Dropout
         self.attention_dropout = attention_dropout

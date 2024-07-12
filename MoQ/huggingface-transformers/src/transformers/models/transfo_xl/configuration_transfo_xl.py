@@ -18,11 +18,11 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 TRANSFO_XL_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "transfo-xl-wt103": "https://huggingface.co/transfo-xl-wt103/resolve/main/config.json",
+    "transfo-xl-wt103":
+    "https://huggingface.co/transfo-xl-wt103/resolve/main/config.json",
 }
 
 
@@ -135,7 +135,7 @@ class TransfoXLConfig(PretrainedConfig):
         init_std=0.02,
         layer_norm_epsilon=1e-5,
         eos_token_id=0,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(eos_token_id=eos_token_id, **kwargs)
         self.vocab_size = vocab_size
@@ -171,7 +171,9 @@ class TransfoXLConfig(PretrainedConfig):
     @property
     def max_position_embeddings(self):
         # Message copied from Transformer-XL documentation
-        logger.info(f"The model {self.model_type} is one of the few models that has no sequence length limit.")
+        logger.info(
+            f"The model {self.model_type} is one of the few models that has no sequence length limit."
+        )
         return -1
 
     @property

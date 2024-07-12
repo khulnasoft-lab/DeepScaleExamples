@@ -18,7 +18,6 @@ from ...utils import logging
 from ..t5.modeling_t5 import T5EncoderModel, T5ForConditionalGeneration, T5Model
 from .configuration_mt5 import MT5Config
 
-
 logger = logging.get_logger(__name__)
 
 _CONFIG_FOR_DOC = "T5Config"
@@ -40,6 +39,7 @@ class MT5Model(T5Model):
         >>> outputs = model(input_ids=batch.input_ids, decoder_input_ids=batch.labels)
         >>> hidden_states = outputs.last_hidden_state
     """
+
     model_type = "mt5"
     config_class = MT5Config
     _keys_to_ignore_on_load_missing = [

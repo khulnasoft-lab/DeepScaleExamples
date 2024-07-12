@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -81,28 +81,28 @@ LED specific outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.models.led.modeling_led.LEDEncoderBaseModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_led.LEDSeq2SeqModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_led.LEDSeq2SeqLMOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_led.LEDSeq2SeqSequenceClassifierOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_led.LEDSeq2SeqQuestionAnsweringModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_tf_led.TFLEDEncoderBaseModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_tf_led.TFLEDSeq2SeqModelOutput
-    :members: 
+    :members:
 
 .. autoclass:: transformers.models.led.modeling_tf_led.TFLEDSeq2SeqLMOutput
-    :members: 
+    :members:
 
 
 

@@ -25,9 +25,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_pegasus": ["PEGASUS_PRETRAINED_CONFIG_ARCHIVE_MAP", "PegasusConfig"],
+    "configuration_pegasus":
+    ["PEGASUS_PRETRAINED_CONFIG_ARCHIVE_MAP", "PegasusConfig"],
 }
 
 if is_sentencepiece_available():
@@ -46,11 +46,16 @@ if is_torch_available():
     ]
 
 if is_tf_available():
-    _import_structure["modeling_tf_pegasus"] = ["TFPegasusForConditionalGeneration", "TFPegasusModel"]
-
+    _import_structure["modeling_tf_pegasus"] = [
+        "TFPegasusForConditionalGeneration",
+        "TFPegasusModel",
+    ]
 
 if TYPE_CHECKING:
-    from .configuration_pegasus import PEGASUS_PRETRAINED_CONFIG_ARCHIVE_MAP, PegasusConfig
+    from .configuration_pegasus import (
+        PEGASUS_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        PegasusConfig,
+    )
 
     if is_sentencepiece_available():
         from .tokenization_pegasus import PegasusTokenizer
@@ -68,7 +73,10 @@ if TYPE_CHECKING:
         )
 
     if is_tf_available():
-        from .modeling_tf_pegasus import TFPegasusForConditionalGeneration, TFPegasusModel
+        from .modeling_tf_pegasus import (
+            TFPegasusForConditionalGeneration,
+            TFPegasusModel,
+        )
 
 else:
     import importlib

@@ -18,12 +18,12 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 GPT2_PRETRAINED_CONFIG_ARCHIVE_MAP = {
     "gpt2": "https://huggingface.co/gpt2/resolve/main/config.json",
-    "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/config.json",
+    "gpt2-medium":
+    "https://huggingface.co/gpt2-medium/resolve/main/config.json",
     "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/config.json",
     "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/config.json",
     "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/config.json",
@@ -124,33 +124,33 @@ class GPT2Config(PretrainedConfig):
     model_type = "gpt2"
     keys_to_ignore_at_inference = ["past_key_values"]
 
-    def __init__(
-        self,
-        vocab_size=50257,
-        n_positions=1024,
-        n_ctx=1024,
-        n_embd=768,
-        n_layer=12,
-        n_head=12,
-        n_inner=None,
-        activation_function="gelu_new",
-        resid_pdrop=0.1,
-        embd_pdrop=0.1,
-        attn_pdrop=0.1,
-        layer_norm_epsilon=1e-5,
-        initializer_range=0.02,
-        summary_type="cls_index",
-        summary_use_proj=True,
-        summary_activation=None,
-        summary_proj_to_labels=True,
-        summary_first_dropout=0.1,
-        gradient_checkpointing=False,
-        use_cache=True,
-        bos_token_id=50256,
-        eos_token_id=50256,
-        **kwargs
-    ):
-        super().__init__(bos_token_id=bos_token_id, eos_token_id=eos_token_id, **kwargs)
+    def __init__(self,
+                 vocab_size=50257,
+                 n_positions=1024,
+                 n_ctx=1024,
+                 n_embd=768,
+                 n_layer=12,
+                 n_head=12,
+                 n_inner=None,
+                 activation_function="gelu_new",
+                 resid_pdrop=0.1,
+                 embd_pdrop=0.1,
+                 attn_pdrop=0.1,
+                 layer_norm_epsilon=1e-5,
+                 initializer_range=0.02,
+                 summary_type="cls_index",
+                 summary_use_proj=True,
+                 summary_activation=None,
+                 summary_proj_to_labels=True,
+                 summary_first_dropout=0.1,
+                 gradient_checkpointing=False,
+                 use_cache=True,
+                 bos_token_id=50256,
+                 eos_token_id=50256,
+                 **kwargs):
+        super().__init__(bos_token_id=bos_token_id,
+                         eos_token_id=eos_token_id,
+                         **kwargs)
 
         self.vocab_size = vocab_size
         self.n_ctx = n_ctx

@@ -31,12 +31,10 @@ from torch.utils.data.sampler import RandomSampler, Sampler
 from .file_utils import is_sagemaker_distributed_available, is_torch_tpu_available
 from .utils import logging
 
-
 if is_sagemaker_distributed_available():
     import smdistributed.dataparallel.torch.distributed as dist
 else:
     import torch.distributed as dist
-
 
 if is_torch_tpu_available():
     import torch_xla.core.xla_model as xm
@@ -56,12 +54,15 @@ def torch_pad_and_concatenate(tensor1, tensor2, padding_index=-100):
         return torch.cat((tensor1, tensor2), dim=0)
 
     # Let's figure out the new shape
-    new_shape = (tensor1.shape[0] + tensor2.shape[0], max(tensor1.shape[1], tensor2.shape[1])) + tensor1.shape[2:]
+    new_shape = (
+        tensor1.shape[0] + tensor2.shape[0],
+        max(tensor1.shape[1], tensor2.shape[1]),
+    ) + tensor1.shape[2:]
 
     # Now let's fill the result tensor
     result = tensor1.new_full(new_shape, padding_index)
-    result[: tensor1.shape[0], : tensor1.shape[1]] = tensor1
-    result[tensor1.shape[0] :, : tensor2.shape[1]] = tensor2
+    result[:tensor1.shape[0], :tensor1.shape[1]] = tensor1
+    result[tensor1.shape[0]:, :tensor2.shape[1]] = tensor2
     return result
 
 
@@ -71,12 +72,15 @@ def numpy_pad_and_concatenate(array1, array2, padding_index=-100):
         return np.concatenate((array1, array2), dim=0)
 
     # Let's figure out the new shape
-    new_shape = (array1.shape[0] + array2.shape[0], max(array1.shape[1], array2.shape[1])) + array1.shape[2:]
+    new_shape = (
+        array1.shape[0] + array2.shape[0],
+        max(array1.shape[1], array2.shape[1]),
+    ) + array1.shape[2:]
 
     # Now let's fill the result tensor
     result = np.full_like(array1, padding_index, shape=new_shape)
-    result[: array1.shape[0], : array1.shape[1]] = array1
-    result[array1.shape[0] :, : array2.shape[1]] = array2
+    result[:array1.shape[0], :array1.shape[1]] = array1
+    result[array1.shape[0]:, :array2.shape[1]] = array2
     return result
 
 
@@ -89,13 +93,19 @@ def nested_concat(tensors, new_tensors, padding_index=-100):
         new_tensors
     ), f"Expected `tensors` and `new_tensors` to have the same type but found {type(tensors)} and {type(new_tensors)}."
     if isinstance(tensors, (list, tuple)):
-        return type(tensors)(nested_concat(t, n, padding_index=padding_index) for t, n in zip(tensors, new_tensors))
+        return type(tensors)(nested_concat(t, n, padding_index=padding_index)
+                             for t, n in zip(tensors, new_tensors))
     elif isinstance(tensors, torch.Tensor):
-        return torch_pad_and_concatenate(tensors, new_tensors, padding_index=padding_index)
+        return torch_pad_and_concatenate(tensors,
+                                         new_tensors,
+                                         padding_index=padding_index)
     elif isinstance(tensors, np.ndarray):
-        return numpy_pad_and_concatenate(tensors, new_tensors, padding_index=padding_index)
+        return numpy_pad_and_concatenate(tensors,
+                                         new_tensors,
+                                         padding_index=padding_index)
     else:
-        raise TypeError(f"Unsupported type for concatenation: got {type(tensors)}")
+        raise TypeError(
+            f"Unsupported type for concatenation: got {type(tensors)}")
 
 
 def nested_numpify(tensors):
@@ -117,16 +127,21 @@ def nested_xla_mesh_reduce(tensors, name):
         import torch_xla.core.xla_model as xm
 
         if isinstance(tensors, (list, tuple)):
-            return type(tensors)(nested_xla_mesh_reduce(t, f"{name}_{i}") for i, t in enumerate(tensors))
+            return type(tensors)(nested_xla_mesh_reduce(t, f"{name}_{i}")
+                                 for i, t in enumerate(tensors))
         return xm.mesh_reduce(name, tensors, torch.cat)
     else:
-        raise ImportError("Torch xla must be installed to use `nested_xla_mesh_reduce`")
+        raise ImportError(
+            "Torch xla must be installed to use `nested_xla_mesh_reduce`")
 
 
-def distributed_concat(tensor: "torch.Tensor", num_total_examples: Optional[int] = None) -> torch.Tensor:
+def distributed_concat(
+        tensor: "torch.Tensor",
+        num_total_examples: Optional[int] = None) -> torch.Tensor:
     try:
         if isinstance(tensor, (tuple, list)):
-            return type(tensor)(distributed_concat(t, num_total_examples) for t in tensor)
+            return type(tensor)(distributed_concat(t, num_total_examples)
+                                for t in tensor)
         output_tensors = [tensor.clone() for _ in range(dist.get_world_size())]
         dist.all_gather(output_tensors, tensor)
         concat = torch.cat(output_tensors, dim=0)
@@ -140,11 +155,13 @@ def distributed_concat(tensor: "torch.Tensor", num_total_examples: Optional[int]
 
 
 def distributed_broadcast_scalars(
-    scalars: List[Union[int, float]], num_total_examples: Optional[int] = None
-) -> torch.Tensor:
+        scalars: List[Union[int, float]],
+        num_total_examples: Optional[int] = None) -> torch.Tensor:
     try:
         tensorized_scalar = torch.tensor(scalars).cuda()
-        output_tensors = [tensorized_scalar.clone() for _ in range(dist.get_world_size())]
+        output_tensors = [
+            tensorized_scalar.clone() for _ in range(dist.get_world_size())
+        ]
         dist.all_gather(output_tensors, tensorized_scalar)
         concat = torch.cat(output_tensors, dim=0)
 
@@ -188,33 +205,36 @@ class SequentialDistributedSampler(Sampler):
     extra samples to the sampler to make it evenly divisible (like in `DistributedSampler`) to make it easy to `gather`
     or `reduce` resulting tensors at the end of the loop.
     """
-
     def __init__(self, dataset, num_replicas=None, rank=None):
         if num_replicas is None:
             if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
+                raise RuntimeError(
+                    "Requires distributed package to be available")
             num_replicas = dist.get_world_size()
         if rank is None:
             if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
+                raise RuntimeError(
+                    "Requires distributed package to be available")
             rank = dist.get_rank()
         self.dataset = dataset
         self.num_replicas = num_replicas
         self.rank = rank
-        self.num_samples = int(math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
+        self.num_samples = int(
+            math.ceil(len(self.dataset) * 1.0 / self.num_replicas))
         self.total_size = self.num_samples * self.num_replicas
 
     def __iter__(self):
         indices = list(range(len(self.dataset)))
 
         # add extra samples to make it evenly divisible
-        indices += indices[: (self.total_size - len(indices))]
+        indices += indices[:(self.total_size - len(indices))]
         assert (
             len(indices) == self.total_size
         ), f"Indices length {len(indices)} and total size {self.total_size} mismatched"
 
         # subsample
-        indices = indices[self.rank * self.num_samples : (self.rank + 1) * self.num_samples]
+        indices = indices[self.rank * self.num_samples:(self.rank + 1) *
+                          self.num_samples]
         assert (
             len(indices) == self.num_samples
         ), f"Indices length {len(indices)} and sample number {self.num_samples} mismatched"
@@ -228,23 +248,33 @@ class SequentialDistributedSampler(Sampler):
 def get_tpu_sampler(dataset: torch.utils.data.dataset.Dataset):
     if xm.xrt_world_size() <= 1:
         return RandomSampler(dataset)
-    return DistributedSampler(dataset, num_replicas=xm.xrt_world_size(), rank=xm.get_ordinal())
+    return DistributedSampler(dataset,
+                              num_replicas=xm.xrt_world_size(),
+                              rank=xm.get_ordinal())
 
 
 def nested_new_like(arrays, num_samples, padding_index=-100):
-    """ Create the same nested structure as `arrays` with a first dimension always at `num_samples`."""
+    """Create the same nested structure as `arrays` with a first dimension always at `num_samples`."""
     if isinstance(arrays, (list, tuple)):
         return type(arrays)(nested_new_like(x, num_samples) for x in arrays)
-    return np.full_like(arrays, padding_index, shape=(num_samples, *arrays.shape[1:]))
+    return np.full_like(arrays,
+                        padding_index,
+                        shape=(num_samples, *arrays.shape[1:]))
 
 
 def nested_expand_like(arrays, new_seq_length, padding_index=-100):
-    """ Expand the `arrays` so that the second dimension grows to `new_seq_length`. Uses `padding_index` for padding."""
+    """Expand the `arrays` so that the second dimension grows to `new_seq_length`. Uses `padding_index` for padding."""
     if isinstance(arrays, (list, tuple)):
-        return type(arrays)(nested_expand_like(x, new_seq_length, padding_index=padding_index) for x in arrays)
+        return type(arrays)(
+            nested_expand_like(x, new_seq_length, padding_index=padding_index)
+            for x in arrays)
 
-    result = np.full_like(arrays, padding_index, shape=(arrays.shape[0], new_seq_length) + arrays.shape[2:])
-    result[:, : arrays.shape[1]] = arrays
+    result = np.full_like(
+        arrays,
+        padding_index,
+        shape=(arrays.shape[0], new_seq_length) + arrays.shape[2:],
+    )
+    result[:, :arrays.shape[1]] = arrays
     return result
 
 
@@ -308,12 +338,17 @@ class DistributedTensorGatherer:
         padding_index (:obj:`int`, `optional`, defaults to -100):
             The padding index to use if the arrays don't all have the same sequence length.
     """
-
-    def __init__(self, world_size, num_samples, make_multiple_of=None, padding_index=-100):
+    def __init__(self,
+                 world_size,
+                 num_samples,
+                 make_multiple_of=None,
+                 padding_index=-100):
         self.world_size = world_size
         self.num_samples = num_samples
-        total_size = world_size if make_multiple_of is None else world_size * make_multiple_of
-        self.total_samples = int(np.ceil(num_samples / total_size)) * total_size
+        total_size = (world_size if make_multiple_of is None else world_size *
+                      make_multiple_of)
+        self.total_samples = int(np.ceil(
+            num_samples / total_size)) * total_size
         self.process_length = self.total_samples // world_size
         self._storage = None
         self._offsets = None
@@ -327,14 +362,20 @@ class DistributedTensorGatherer:
         if arrays is None:
             return
         if self._storage is None:
-            self._storage = nested_new_like(arrays, self.total_samples, padding_index=self.padding_index)
-            self._offsets = list(range(0, self.total_samples, self.process_length))
+            self._storage = nested_new_like(arrays,
+                                            self.total_samples,
+                                            padding_index=self.padding_index)
+            self._offsets = list(
+                range(0, self.total_samples, self.process_length))
         else:
             storage_shape = _get_first_shape(self._storage)
             arrays_shape = _get_first_shape(arrays)
             if len(storage_shape) > 1 and storage_shape[1] < arrays_shape[1]:
                 # If we get new arrays that are too big too fit, we expand the shape fo the storage
-                self._storage = nested_expand_like(self._storage, arrays_shape[1], padding_index=self.padding_index)
+                self._storage = nested_expand_like(
+                    self._storage,
+                    arrays_shape[1],
+                    padding_index=self.padding_index)
         slice_len = self._nested_set_tensors(self._storage, arrays)
         for i in range(self.world_size):
             self._offsets[i] += slice_len
@@ -351,11 +392,14 @@ class DistributedTensorGatherer:
         slice_len = arrays.shape[0] // self.world_size
         for i in range(self.world_size):
             if len(arrays.shape) == 1:
-                storage[self._offsets[i] : self._offsets[i] + slice_len] = arrays[i * slice_len : (i + 1) * slice_len]
+                storage[self._offsets[i]:self._offsets[i] +
+                        slice_len] = arrays[i * slice_len:(i + 1) * slice_len]
             else:
-                storage[self._offsets[i] : self._offsets[i] + slice_len, : arrays.shape[1]] = arrays[
-                    i * slice_len : (i + 1) * slice_len
-                ]
+                storage[self._offsets[i]:self._offsets[i] +
+                        slice_len, :arrays.shape[1]] = arrays[i *
+                                                              slice_len:(i +
+                                                                         1) *
+                                                              slice_len]
         return slice_len
 
     def finalize(self):
@@ -366,7 +410,9 @@ class DistributedTensorGatherer:
         if self._storage is None:
             return
         if self._offsets[0] != self.process_length:
-            logger.warn("Not all data has been set. Are you sure you passed all values?")
+            logger.warn(
+                "Not all data has been set. Are you sure you passed all values?"
+            )
         return nested_truncate(self._storage, self.num_samples)
 
 
@@ -386,7 +432,8 @@ class LabelSmoother:
     ignore_index: int = -100
 
     def __call__(self, model_output, labels):
-        logits = model_output["logits"] if isinstance(model_output, dict) else model_output[0]
+        logits = (model_output["logits"]
+                  if isinstance(model_output, dict) else model_output[0])
         log_probs = -torch.nn.functional.log_softmax(logits, dim=-1)
         if labels.dim() == log_probs.dim() - 1:
             labels = labels.unsqueeze(-1)
@@ -404,11 +451,15 @@ class LabelSmoother:
         # Take the mean over the label dimensions, then divide by the number of active elements (i.e. not-padded):
         num_active_elements = padding_mask.numel() - padding_mask.long().sum()
         nll_loss = nll_loss.sum() / num_active_elements
-        smoothed_loss = smoothed_loss.sum() / (num_active_elements * log_probs.shape[-1])
+        smoothed_loss = smoothed_loss.sum() / (num_active_elements *
+                                               log_probs.shape[-1])
         return (1 - self.epsilon) * nll_loss + self.epsilon * smoothed_loss
 
 
-def get_length_grouped_indices(lengths, batch_size, mega_batch_mult=None, generator=None):
+def get_length_grouped_indices(lengths,
+                               batch_size,
+                               mega_batch_mult=None,
+                               generator=None):
     """
     Return a list of indices so that each slice of :obj:`batch_size` consecutive indices correspond to elements of
     similar lengths. To do this, the indices are:
@@ -430,15 +481,24 @@ def get_length_grouped_indices(lengths, batch_size, mega_batch_mult=None, genera
     # We need to use torch for the random part as a distributed sampler will set the random seed for torch.
     indices = torch.randperm(len(lengths), generator=generator)
     megabatch_size = mega_batch_mult * batch_size
-    megabatches = [indices[i : i + megabatch_size].tolist() for i in range(0, len(lengths), megabatch_size)]
-    megabatches = [list(sorted(megabatch, key=lambda i: lengths[i], reverse=True)) for megabatch in megabatches]
+    megabatches = [
+        indices[i:i + megabatch_size].tolist()
+        for i in range(0, len(lengths), megabatch_size)
+    ]
+    megabatches = [
+        list(sorted(megabatch, key=lambda i: lengths[i], reverse=True))
+        for megabatch in megabatches
+    ]
 
     # The rest is to get the biggest batch first.
     # Since each megabatch is sorted by descending length, the longest element is the first
     megabatch_maximums = [lengths[megabatch[0]] for megabatch in megabatches]
     max_idx = torch.argmax(torch.tensor(megabatch_maximums)).item()
     # Switch to put the longest element in first position
-    megabatches[0][0], megabatches[max_idx][0] = megabatches[max_idx][0], megabatches[0][0]
+    megabatches[0][0], megabatches[max_idx][0] = (
+        megabatches[max_idx][0],
+        megabatches[0][0],
+    )
 
     return sum(megabatches, [])
 
@@ -448,16 +508,18 @@ class LengthGroupedSampler(Sampler):
     Sampler that samples indices in a way that groups together features of the dataset of roughly the same length while
     keeping a bit of randomness.
     """
-
-    def __init__(self, dataset: Dataset, batch_size: int, lengths: Optional[List[int]] = None):
+    def __init__(self,
+                 dataset: Dataset,
+                 batch_size: int,
+                 lengths: Optional[List[int]] = None):
         self.dataset = dataset
         self.batch_size = batch_size
         if lengths is None:
-            if not isinstance(dataset[0], dict) or "input_ids" not in dataset[0]:
+            if not isinstance(dataset[0],
+                              dict) or "input_ids" not in dataset[0]:
                 raise ValueError(
                     "Can only automatically infer lengths for datasets whose items are dictionaries with an "
-                    "'input_ids' key."
-                )
+                    "'input_ids' key.")
             lengths = [len(feature["input_ids"]) for feature in dataset]
         self.lengths = lengths
 
@@ -474,6 +536,7 @@ class DistributedLengthGroupedSampler(DistributedSampler):
     Distributed Sampler that samples indices in a way that groups together features of the dataset of roughly the same
     length while keeping a bit of randomness.
     """
+
     # Copied and adapted from PyTorch DistributedSampler.
     def __init__(
         self,
@@ -487,11 +550,13 @@ class DistributedLengthGroupedSampler(DistributedSampler):
     ):
         if num_replicas is None:
             if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
+                raise RuntimeError(
+                    "Requires distributed package to be available")
             num_replicas = dist.get_world_size()
         if rank is None:
             if not dist.is_available():
-                raise RuntimeError("Requires distributed package to be available")
+                raise RuntimeError(
+                    "Requires distributed package to be available")
             rank = dist.get_rank()
         self.dataset = dataset
         self.batch_size = batch_size
@@ -505,18 +570,19 @@ class DistributedLengthGroupedSampler(DistributedSampler):
             # Split to nearest available length that is evenly divisible.
             # This is to ensure each rank receives the same amount of data when
             # using this Sampler.
-            self.num_samples = math.ceil((len(self.dataset) - self.num_replicas) / self.num_replicas)
+            self.num_samples = math.ceil(
+                (len(self.dataset) - self.num_replicas) / self.num_replicas)
         else:
             self.num_samples = math.ceil(len(self.dataset) / self.num_replicas)
         self.total_size = self.num_samples * self.num_replicas
         self.seed = seed
 
         if lengths is None:
-            if not isinstance(dataset[0], dict) or "input_ids" not in dataset[0]:
+            if not isinstance(dataset[0],
+                              dict) or "input_ids" not in dataset[0]:
                 raise ValueError(
                     "Can only automatically infer lengths for datasets whose items are dictionaries with an "
-                    "'input_ids' key."
-                )
+                    "'input_ids' key.")
             lengths = [len(feature["input_ids"]) for feature in dataset]
         self.lengths = lengths
 
@@ -524,18 +590,20 @@ class DistributedLengthGroupedSampler(DistributedSampler):
         # Deterministically shuffle based on epoch and seed
         g = torch.Generator()
         g.manual_seed(self.seed + self.epoch)
-        indices = get_length_grouped_indices(self.lengths, self.batch_size, generator=g)
+        indices = get_length_grouped_indices(self.lengths,
+                                             self.batch_size,
+                                             generator=g)
 
         if not self.drop_last:
             # add extra samples to make it evenly divisible
-            indices += indices[: (self.total_size - len(indices))]
+            indices += indices[:(self.total_size - len(indices))]
         else:
             # remove tail of data to make it evenly divisible.
-            indices = indices[: self.total_size]
+            indices = indices[:self.total_size]
         assert len(indices) == self.total_size
 
         # subsample
-        indices = indices[self.rank : self.total_size : self.num_replicas]
+        indices = indices[self.rank:self.total_size:self.num_replicas]
         assert len(indices) == self.num_samples
 
         return iter(indices)

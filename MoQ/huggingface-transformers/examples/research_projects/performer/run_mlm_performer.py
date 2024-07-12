@@ -53,7 +53,6 @@ from transformers import (
     set_seed,
 )
 
-
 # Cache the result
 has_tensorboard = is_tensorboard_available()
 if has_tensorboard:
@@ -61,13 +60,14 @@ if has_tensorboard:
         from flax.metrics.tensorboard import SummaryWriter
     except ImportError as ie:
         has_tensorboard = False
-        print(f"Unable to display metrics through TensorBoard because some package are not installed: {ie}")
+        print(
+            f"Unable to display metrics through TensorBoard because some package are not installed: {ie}"
+        )
 
 else:
     print(
         "Unable to display metrics through TensorBoard because the package is not installed: "
-        "Please run pip install tensorboard to enable."
-    )
+        "Please run pip install tensorboard to enable.")
 
 MODEL_CONFIG_CLASSES = list(MODEL_FOR_MASKED_LM_MAPPING.keys())
 MODEL_TYPES = tuple(conf.model_type for conf in MODEL_CONFIG_CLASSES)
@@ -81,7 +81,10 @@ class WandbArguments:
 
     wandb_user_name: Optional[str] = field(
         default=None,
-        metadata={"help": "The WandB user name for potential logging. If left None, no logging"},
+        metadata={
+            "help":
+            "The WandB user name for potential logging. If left None, no logging"
+        },
     )
     wandb_project_name: Optional[str] = field(
         default="performer-experiments",
@@ -98,7 +101,8 @@ class ModelArguments:
     model_name_or_path: Optional[str] = field(
         default=None,
         metadata={
-            "help": "The model checkpoint for weights initialization."
+            "help":
+            "The model checkpoint for weights initialization."
             "Don't set if you want to train a model from scratch."
         },
     )
@@ -111,14 +115,25 @@ class ModelArguments:
         metadata={"help": "Whether to use a blank model without pretraining"},
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
     use_fast_tokenizer: bool = field(
         default=True,
-        metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."},
+        metadata={
+            "help":
+            "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."
+        },
     )
     cache_dir: Optional[str] = field(
-        default=None, metadata={"help": "Where do you want to store the pretrained models downloaded from s3"}
+        default=None,
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from s3"
+        },
     )
 
 
@@ -129,65 +144,103 @@ class DataTrainingArguments:
     """
 
     dataset_name: Optional[str] = field(
-        default=None, metadata={"help": "The name of the dataset to use (via the datasets library)."}
+        default=None,
+        metadata={
+            "help":
+            "The name of the dataset to use (via the datasets library)."
+        },
     )
     dataset_config_name: Optional[str] = field(
-        default=None, metadata={"help": "The configuration name of the dataset to use (via the datasets library)."}
+        default=None,
+        metadata={
+            "help":
+            "The configuration name of the dataset to use (via the datasets library)."
+        },
     )
-    train_file: Optional[str] = field(default=None, metadata={"help": "The input training data file (a text file)."})
+    train_file: Optional[str] = field(
+        default=None,
+        metadata={"help": "The input training data file (a text file)."})
     validation_file: Optional[str] = field(
         default=None,
-        metadata={"help": "An optional input evaluation data file to evaluate the perplexity on (a text file)."},
+        metadata={
+            "help":
+            "An optional input evaluation data file to evaluate the perplexity on (a text file)."
+        },
     )
     train_ref_file: Optional[str] = field(
         default=None,
-        metadata={"help": "An optional input train ref data file for whole word masking in Chinese."},
+        metadata={
+            "help":
+            "An optional input train ref data file for whole word masking in Chinese."
+        },
     )
     validation_ref_file: Optional[str] = field(
         default=None,
-        metadata={"help": "An optional input validation ref data file for whole word masking in Chinese."},
+        metadata={
+            "help":
+            "An optional input validation ref data file for whole word masking in Chinese."
+        },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
     validation_split_percentage: Optional[int] = field(
         default=5,
         metadata={
-            "help": "The percentage of the train set used as validation set in case there's no validation split"
+            "help":
+            "The percentage of the train set used as validation set in case there's no validation split"
         },
     )
     max_seq_length: Optional[int] = field(
         default=None,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated. Default to the max input length of the model."
         },
     )
     preprocessing_num_workers: Optional[int] = field(
         default=None,
-        metadata={"help": "The number of processes to use for the preprocessing."},
+        metadata={
+            "help": "The number of processes to use for the preprocessing."
+        },
     )
     mlm_probability: float = field(
-        default=0.15, metadata={"help": "Ratio of tokens to mask for masked language modeling loss"}
+        default=0.15,
+        metadata={
+            "help": "Ratio of tokens to mask for masked language modeling loss"
+        },
     )
     pad_to_max_length: bool = field(
         default=False,
         metadata={
-            "help": "Whether to pad all samples to `max_seq_length`. "
+            "help":
+            "Whether to pad all samples to `max_seq_length`. "
             "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
 
     def __post_init__(self):
-        if self.dataset_name is None and self.train_file is None and self.validation_file is None:
-            raise ValueError("Need either a dataset name or a training/validation file.")
+        if (self.dataset_name is None and self.train_file is None
+                and self.validation_file is None):
+            raise ValueError(
+                "Need either a dataset name or a training/validation file.")
         else:
             if self.train_file is not None:
                 extension = self.train_file.split(".")[-1]
-                assert extension in ["csv", "json", "txt"], "`train_file` should be a csv, a json or a txt file."
+                assert extension in [
+                    "csv",
+                    "json",
+                    "txt",
+                ], "`train_file` should be a csv, a json or a txt file."
             if self.validation_file is not None:
                 extension = self.validation_file.split(".")[-1]
-                assert extension in ["csv", "json", "txt"], "`validation_file` should be a csv, a json or a txt file."
+                assert extension in [
+                    "csv",
+                    "json",
+                    "txt",
+                ], "`validation_file` should be a csv, a json or a txt file."
 
 
 # Adapted from transformers/data/data_collator.py
@@ -227,16 +280,20 @@ class FlaxDataCollatorForLanguageModeling:
                 "You should pass `mlm=False` to train on causal language modeling instead."
             )
 
-    def __call__(self, examples: List[Dict[str, np.ndarray]], pad_to_multiple_of: int) -> Dict[str, np.ndarray]:
+    def __call__(self, examples: List[Dict[str, np.ndarray]],
+                 pad_to_multiple_of: int) -> Dict[str, np.ndarray]:
         # Handle dict or lists with proper padding and conversion to tensor.
-        batch = self.tokenizer.pad(examples, pad_to_multiple_of=pad_to_multiple_of, return_tensors=TensorType.NUMPY)
+        batch = self.tokenizer.pad(
+            examples,
+            pad_to_multiple_of=pad_to_multiple_of,
+            return_tensors=TensorType.NUMPY,
+        )
 
         # If special token mask has been preprocessed, pop it from the dict.
         special_tokens_mask = batch.pop("special_tokens_mask", None)
         if self.mlm:
             batch["input_ids"], batch["labels"] = self.mask_tokens(
-                batch["input_ids"], special_tokens_mask=special_tokens_mask
-            )
+                batch["input_ids"], special_tokens_mask=special_tokens_mask)
         else:
             labels = batch["input_ids"].copy()
             if self.tokenizer.pad_token_id is not None:
@@ -256,18 +313,25 @@ class FlaxDataCollatorForLanguageModeling:
         special_tokens_mask = special_tokens_mask.astype("bool")
 
         probability_matrix[special_tokens_mask] = 0.0
-        masked_indices = np.random.binomial(1, probability_matrix).astype("bool")
+        masked_indices = np.random.binomial(1,
+                                            probability_matrix).astype("bool")
         labels[~masked_indices] = -100  # We only compute loss on masked tokens
 
         # 80% of the time, we replace masked input tokens with tokenizer.mask_token ([MASK])
-        indices_replaced = np.random.binomial(1, np.full(labels.shape, 0.8)).astype("bool") & masked_indices
-        inputs[indices_replaced] = self.tokenizer.convert_tokens_to_ids(self.tokenizer.mask_token)
+        indices_replaced = (
+            np.random.binomial(1, np.full(labels.shape, 0.8)).astype("bool")
+            & masked_indices)
+        inputs[indices_replaced] = self.tokenizer.convert_tokens_to_ids(
+            self.tokenizer.mask_token)
 
         # 10% of the time, we replace masked input tokens with random word
-        indices_random = np.random.binomial(1, np.full(labels.shape, 0.5)).astype("bool")
+        indices_random = np.random.binomial(1, np.full(labels.shape,
+                                                       0.5)).astype("bool")
         indices_random &= masked_indices & ~indices_replaced
 
-        random_words = np.random.randint(self.tokenizer.vocab_size, size=labels.shape, dtype="i4")
+        random_words = np.random.randint(self.tokenizer.vocab_size,
+                                         size=labels.shape,
+                                         dtype="i4")
         inputs[indices_random] = random_words[indices_random]
 
         # The rest of the time (10% of the time) we keep the masked input tokens unchanged
@@ -317,10 +381,12 @@ def create_learning_rate_scheduler(
                 ret *= jnp.sqrt(warmup_steps)
                 ret /= jnp.sqrt(jnp.maximum(step, warmup_steps))
             elif name == "decay_every":
-                ret *= decay_factor ** (step // steps_per_decay)
+                ret *= decay_factor**(step // steps_per_decay)
             elif name == "cosine_decay":
-                progress = jnp.maximum(0.0, (step - warmup_steps) / float(steps_per_cycle))
-                ret *= jnp.maximum(0.0, 0.5 * (1.0 + jnp.cos(jnp.pi * (progress % 1.0))))
+                progress = jnp.maximum(0.0, (step - warmup_steps) /
+                                       float(steps_per_cycle))
+                ret *= jnp.maximum(
+                    0.0, 0.5 * (1.0 + jnp.cos(jnp.pi * (progress % 1.0))))
             else:
                 raise ValueError("Unknown factor %s." % name)
         return jnp.asarray(ret, dtype=jnp.float32)
@@ -348,8 +414,8 @@ def accuracy(logits, targets, weights=None):
     """
     if logits.ndim != targets.ndim + 1:
         raise ValueError(
-            "Incorrect shapes. Got shape %s logits and %s targets" % (str(logits.shape), str(targets.shape))
-        )
+            "Incorrect shapes. Got shape %s logits and %s targets" %
+            (str(logits.shape), str(targets.shape)))
 
     loss = jnp.equal(jnp.argmax(logits, axis=-1), targets)
     loss *= weights
@@ -369,16 +435,19 @@ def cross_entropy(logits, targets, weights=None, label_smoothing=0.0):
     """
     if logits.ndim != targets.ndim + 1:
         raise ValueError(
-            "Incorrect shapes. Got shape %s logits and %s targets" % (str(logits.shape), str(targets.shape))
-        )
+            "Incorrect shapes. Got shape %s logits and %s targets" %
+            (str(logits.shape), str(targets.shape)))
 
     vocab_size = logits.shape[-1]
     confidence = 1.0 - label_smoothing
     low_confidence = (1.0 - confidence) / (vocab_size - 1)
     normalizing_constant = -(
-        confidence * jnp.log(confidence) + (vocab_size - 1) * low_confidence * jnp.log(low_confidence + 1e-20)
-    )
-    soft_targets = common_utils.onehot(targets, vocab_size, on_value=confidence, off_value=low_confidence)
+        confidence * jnp.log(confidence) +
+        (vocab_size - 1) * low_confidence * jnp.log(low_confidence + 1e-20))
+    soft_targets = common_utils.onehot(targets,
+                                       vocab_size,
+                                       on_value=confidence,
+                                       off_value=low_confidence)
 
     loss = -jnp.sum(soft_targets * log_softmax(logits), axis=-1)
     loss = loss - normalizing_constant
@@ -401,7 +470,10 @@ def training_step(optimizer, batch, dropout_rng):
         # Hide away tokens which doesn't participate in the optimization
         token_mask = jnp.where(targets > 0, 1.0, 0.0)
 
-        logits = model(**batch, params=params, dropout_rng=dropout_rng, train=True)[0]
+        logits = model(**batch,
+                       params=params,
+                       dropout_rng=dropout_rng,
+                       train=True)[0]
         loss, weight_sum = cross_entropy(logits, targets, token_mask)
         return loss / weight_sum
 
@@ -428,7 +500,8 @@ def eval_step(params, batch):
     return compute_metrics(logits, targets, token_mask)
 
 
-def generate_batch_splits(samples_idx: jnp.ndarray, batch_size: int) -> jnp.ndarray:
+def generate_batch_splits(samples_idx: jnp.ndarray,
+                          batch_size: int) -> jnp.ndarray:
     nb_samples = len(samples_idx)
     samples_to_remove = nb_samples % batch_size
 
@@ -444,26 +517,23 @@ if __name__ == "__main__":
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments, WandbArguments))
+    parser = HfArgumentParser((ModelArguments, DataTrainingArguments,
+                               TrainingArguments, WandbArguments))
     if len(sys.argv) == 2 and sys.argv[1].endswith(".json"):
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
         model_args, data_args, training_args, wandb_args = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+            json_file=os.path.abspath(sys.argv[1]))
     else:
-        model_args, data_args, training_args, wandb_args = parser.parse_args_into_dataclasses()
+        model_args, data_args, training_args, wandb_args = (
+            parser.parse_args_into_dataclasses())
 
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
+    if (os.path.exists(training_args.output_dir)
+            and os.listdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty."
-            "Use --overwrite_output_dir to overcome."
-        )
+            "Use --overwrite_output_dir to overcome.")
 
     # Setup logging
     logging.basicConfig(
@@ -476,7 +546,8 @@ if __name__ == "__main__":
     logger = logging.getLogger(__name__)
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        +
+        f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
 
     # Set the verbosity to info of the Transformers logger (on main process only):
@@ -496,7 +567,8 @@ if __name__ == "__main__":
     # download the dataset.
     if data_args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
-        datasets = load_dataset(data_args.dataset_name, data_args.dataset_config_name)
+        datasets = load_dataset(data_args.dataset_name,
+                                data_args.dataset_config_name)
         if "validation" not in datasets.keys():
             datasets["validation"] = load_dataset(
                 data_args.dataset_name,
@@ -530,26 +602,35 @@ if __name__ == "__main__":
     rng = jax.random.PRNGKey(training_args.seed)
     dropout_rngs = jax.random.split(rng, jax.local_device_count())
 
-    config = BertConfig.from_pretrained(model_args.model_name_or_path, cache_dir=model_args.cache_dir)
+    config = BertConfig.from_pretrained(model_args.model_name_or_path,
+                                        cache_dir=model_args.cache_dir)
     lm_class = FlaxPerformerForMaskedLM if model_args.performer else FlaxBertForMaskedLM
     if model_args.reinitialize:
-        model = lm_class(config=BertConfig.from_pretrained(model_args.model_name_or_path))
+        model = lm_class(
+            config=BertConfig.from_pretrained(model_args.model_name_or_path))
     else:
         model = lm_class.from_pretrained(
             model_args.model_name_or_path,
             dtype=jnp.float32,
-            input_shape=(training_args.train_batch_size, config.max_position_embeddings),
+            input_shape=(
+                training_args.train_batch_size,
+                config.max_position_embeddings,
+            ),
             seed=training_args.seed,
             dropout_rate=0.1,
         )
 
     if model_args.tokenizer_name:
         tokenizer = AutoTokenizer.from_pretrained(
-            model_args.tokenizer_name, cache_dir=model_args.cache_dir, use_fast=model_args.use_fast_tokenizer
+            model_args.tokenizer_name,
+            cache_dir=model_args.cache_dir,
+            use_fast=model_args.use_fast_tokenizer,
         )
     elif model_args.model_name_or_path:
         tokenizer = AutoTokenizer.from_pretrained(
-            model_args.model_name_or_path, cache_dir=model_args.cache_dir, use_fast=model_args.use_fast_tokenizer
+            model_args.model_name_or_path,
+            cache_dir=model_args.cache_dir,
+            use_fast=model_args.use_fast_tokenizer,
         )
     else:
         raise ValueError(
@@ -569,7 +650,9 @@ if __name__ == "__main__":
 
     def tokenize_function(examples):
         # Remove empty lines
-        examples = [line for line in examples if len(line) > 0 and not line.isspace()]
+        examples = [
+            line for line in examples if len(line) > 0 and not line.isspace()
+        ]
         return tokenizer(
             examples,
             return_special_tokens_mask=True,
@@ -589,11 +672,13 @@ if __name__ == "__main__":
 
     # Enable tensorboard only on the master node
     if has_tensorboard and jax.host_id() == 0:
-        summary_writer = SummaryWriter(log_dir=Path(training_args.output_dir).joinpath("logs").as_posix())
+        summary_writer = SummaryWriter(
+            log_dir=Path(training_args.output_dir).joinpath("logs").as_posix())
 
     # Data collator
     # This one will take care of randomly masking the tokens.
-    data_collator = FlaxDataCollatorForLanguageModeling(tokenizer=tokenizer, mlm_probability=data_args.mlm_probability)
+    data_collator = FlaxDataCollatorForLanguageModeling(
+        tokenizer=tokenizer, mlm_probability=data_args.mlm_probability)
 
     # Setup optimizer
     optimizer = Adam(
@@ -605,12 +690,13 @@ if __name__ == "__main__":
 
     # Create learning rate scheduler
     lr_scheduler_fn = create_learning_rate_scheduler(
-        base_learning_rate=training_args.learning_rate, warmup_steps=max(training_args.warmup_steps, 1)
+        base_learning_rate=training_args.learning_rate,
+        warmup_steps=max(training_args.warmup_steps, 1),
     )
 
     # Create parallel version of the training and evaluation steps
-    p_training_step = jax.pmap(training_step, "batch", donate_argnums=(0,))
-    p_eval_step = jax.pmap(eval_step, "batch", donate_argnums=(0,))
+    p_training_step = jax.pmap(training_step, "batch", donate_argnums=(0, ))
+    p_eval_step = jax.pmap(eval_step, "batch", donate_argnums=(0, ))
 
     # Replicate the optimizer on each device
     optimizer = jax_utils.replicate(optimizer)
@@ -623,9 +709,12 @@ if __name__ == "__main__":
     if wandb_args.wandb_user_name is not None:
         import wandb
 
-        wandb.init(project=wandb_args.wandb_project_name, entity=wandb_args.wandb_user_name)
+        wandb.init(project=wandb_args.wandb_project_name,
+                   entity=wandb_args.wandb_user_name)
 
-    epochs = tqdm(range(nb_epochs), desc=f"Epoch ... (1/{nb_epochs})", position=0)
+    epochs = tqdm(range(nb_epochs),
+                  desc=f"Epoch ... (1/{nb_epochs})",
+                  position=0)
     for epoch in epochs:
 
         # ======================== Training ================================
@@ -634,17 +723,24 @@ if __name__ == "__main__":
 
         # Generate an epoch by shuffling sampling indices from the train dataset
         nb_training_samples = len(tokenized_datasets["train"])
-        training_samples_idx = jax.random.permutation(training_rng, jnp.arange(nb_training_samples))
-        training_batch_idx = generate_batch_splits(training_samples_idx, batch_size)
+        training_samples_idx = jax.random.permutation(
+            training_rng, jnp.arange(nb_training_samples))
+        training_batch_idx = generate_batch_splits(training_samples_idx,
+                                                   batch_size)
 
         # Gather the indexes for creating the batch and do a training step
-        for batch_idx in tqdm(training_batch_idx, desc="Training...", position=1):
-            samples = [tokenized_datasets["train"][int(idx)] for idx in batch_idx]
+        for batch_idx in tqdm(training_batch_idx,
+                              desc="Training...",
+                              position=1):
+            samples = [
+                tokenized_datasets["train"][int(idx)] for idx in batch_idx
+            ]
             model_inputs = data_collator(samples, pad_to_multiple_of=16)
 
             # Model forward
             model_inputs = common_utils.shard(model_inputs.data)
-            loss, optimizer, dropout_rngs = p_training_step(optimizer, model_inputs, dropout_rngs)
+            loss, optimizer, dropout_rngs = p_training_step(
+                optimizer, model_inputs, dropout_rngs)
 
             if wandb_args.wandb_user_name is not None:
                 wandb.log({"Training loss": np.array(loss).mean()})
@@ -654,11 +750,15 @@ if __name__ == "__main__":
         # ======================== Evaluating ==============================
         nb_eval_samples = len(tokenized_datasets["validation"])
         eval_samples_idx = jnp.arange(nb_eval_samples)
-        eval_batch_idx = generate_batch_splits(eval_samples_idx, eval_batch_size)
+        eval_batch_idx = generate_batch_splits(eval_samples_idx,
+                                               eval_batch_size)
 
         eval_metrics = []
-        for i, batch_idx in enumerate(tqdm(eval_batch_idx, desc="Evaluating ...", position=2)):
-            samples = [tokenized_datasets["validation"][int(idx)] for idx in batch_idx]
+        for i, batch_idx in enumerate(
+                tqdm(eval_batch_idx, desc="Evaluating ...", position=2)):
+            samples = [
+                tokenized_datasets["validation"][int(idx)] for idx in batch_idx
+            ]
             model_inputs = data_collator(samples, pad_to_multiple_of=16)
 
             # Model forward
@@ -669,12 +769,11 @@ if __name__ == "__main__":
         eval_metrics_np = get_metrics(eval_metrics)
         eval_metrics_np = jax.tree_map(jnp.sum, eval_metrics_np)
         eval_normalizer = eval_metrics_np.pop("normalizer")
-        eval_summary = jax.tree_map(lambda x: x / eval_normalizer, eval_metrics_np)
+        eval_summary = jax.tree_map(lambda x: x / eval_normalizer,
+                                    eval_metrics_np)
 
         # Update progress bar
-        epochs.desc = (
-            f"Epoch... ({epoch + 1}/{nb_epochs} | Loss: {eval_summary['loss']}, Acc: {eval_summary['accuracy']})"
-        )
+        epochs.desc = f"Epoch... ({epoch + 1}/{nb_epochs} | Loss: {eval_summary['loss']}, Acc: {eval_summary['accuracy']})"
 
         if wandb_args.wandb_user_name is not None:
             wandb.log({"Eval loss": np.array(eval_summary["loss"]).mean()})

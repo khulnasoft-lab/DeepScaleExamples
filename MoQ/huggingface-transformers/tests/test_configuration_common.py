@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import os
 import tempfile
@@ -46,7 +45,8 @@ class ConfigTester(object):
             config_first.to_json_file(json_file_path)
             config_second = self.config_class.from_json_file(json_file_path)
 
-        self.parent.assertEqual(config_second.to_dict(), config_first.to_dict())
+        self.parent.assertEqual(config_second.to_dict(),
+                                config_first.to_dict())
 
     def create_and_test_config_from_and_save_pretrained(self):
         config_first = self.config_class(**self.inputs_dict)
@@ -55,7 +55,8 @@ class ConfigTester(object):
             config_first.save_pretrained(tmpdirname)
             config_second = self.config_class.from_pretrained(tmpdirname)
 
-        self.parent.assertEqual(config_second.to_dict(), config_first.to_dict())
+        self.parent.assertEqual(config_second.to_dict(),
+                                config_first.to_dict())
 
     def create_and_test_config_with_num_labels(self):
         config = self.config_class(**self.inputs_dict, num_labels=5)

@@ -69,7 +69,7 @@ BERT-345M-cased: wget --content-disposition https://api.ngc.nvidia.com/v2/models
 GPT-345M: wget --content-disposition https://api.ngc.nvidia.com/v2/models/nvidia/megatron_lm_345m/versions/v0.0/zip -O megatron_lm_345m_v0.0.zip
 </pre>
 
-The models require vocabulary files to run. The BERT  WordPiece vocab file can be extracted from Google's pretrained BERT models: [uncased](https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-uncased-vocab.txt), [cased](https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-cased-vocab.txt). The GPT [vocab file](https://s3.amazonaws.com/models.huggingface.co/bert/gpt2-vocab.json) and [merge table](https://s3.amazonaws.com/models.huggingface.co/bert/gpt2-merges.txt) can be downloaded directly. 
+The models require vocabulary files to run. The BERT  WordPiece vocab file can be extracted from Google's pretrained BERT models: [uncased](https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-uncased-vocab.txt), [cased](https://s3.amazonaws.com/models.huggingface.co/bert/bert-large-cased-vocab.txt). The GPT [vocab file](https://s3.amazonaws.com/models.huggingface.co/bert/gpt2-vocab.json) and [merge table](https://s3.amazonaws.com/models.huggingface.co/bert/gpt2-merges.txt) can be downloaded directly.
 
 # Usage
 
@@ -144,7 +144,7 @@ BERT_ARGS="--num-layers 24 \
            --train-iters 2000000 \
            --min-lr 0.00001 \
            --lr-warmup-fraction 0.01 \
-	   --micro-batch-size 4 \	   
+	   --micro-batch-size 4 \
            --global-batch-size 8 \
            --vocab-file $VOCAB_FILE \
            --split 949,50,1 \

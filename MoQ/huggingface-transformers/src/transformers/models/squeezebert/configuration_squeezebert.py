@@ -17,13 +17,15 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "squeezebert/squeezebert-uncased": "https://huggingface.co/squeezebert/squeezebert-uncased/resolve/main/config.json",
-    "squeezebert/squeezebert-mnli": "https://huggingface.co/squeezebert/squeezebert-mnli/resolve/main/config.json",
-    "squeezebert/squeezebert-mnli-headless": "https://huggingface.co/squeezebert/squeezebert-mnli-headless/resolve/main/config.json",
+    "squeezebert/squeezebert-uncased":
+    "https://huggingface.co/squeezebert/squeezebert-uncased/resolve/main/config.json",
+    "squeezebert/squeezebert-mnli":
+    "https://huggingface.co/squeezebert/squeezebert-mnli/resolve/main/config.json",
+    "squeezebert/squeezebert-mnli-headless":
+    "https://huggingface.co/squeezebert/squeezebert-mnli-headless/resolve/main/config.json",
 }
 
 
@@ -99,33 +101,32 @@ class SqueezeBertConfig(PretrainedConfig):
     Attributes: pretrained_config_archive_map (Dict[str, str]): A dictionary containing all the available pre-trained
     checkpoints.
     """
+
     pretrained_config_archive_map = SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP
     model_type = "squeezebert"
 
-    def __init__(
-        self,
-        vocab_size=30522,
-        hidden_size=768,
-        num_hidden_layers=12,
-        num_attention_heads=12,
-        intermediate_size=3072,
-        hidden_act="gelu",
-        hidden_dropout_prob=0.1,
-        attention_probs_dropout_prob=0.1,
-        max_position_embeddings=512,
-        type_vocab_size=2,
-        initializer_range=0.02,
-        layer_norm_eps=1e-12,
-        pad_token_id=0,
-        embedding_size=768,
-        q_groups=4,
-        k_groups=4,
-        v_groups=4,
-        post_attention_groups=1,
-        intermediate_groups=4,
-        output_groups=4,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=30522,
+                 hidden_size=768,
+                 num_hidden_layers=12,
+                 num_attention_heads=12,
+                 intermediate_size=3072,
+                 hidden_act="gelu",
+                 hidden_dropout_prob=0.1,
+                 attention_probs_dropout_prob=0.1,
+                 max_position_embeddings=512,
+                 type_vocab_size=2,
+                 initializer_range=0.02,
+                 layer_norm_eps=1e-12,
+                 pad_token_id=0,
+                 embedding_size=768,
+                 q_groups=4,
+                 k_groups=4,
+                 v_groups=4,
+                 post_attention_groups=1,
+                 intermediate_groups=4,
+                 output_groups=4,
+                 **kwargs):
         super().__init__(pad_token_id=pad_token_id, **kwargs)
 
         self.vocab_size = vocab_size

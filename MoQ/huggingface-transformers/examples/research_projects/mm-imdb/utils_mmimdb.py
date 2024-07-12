@@ -25,8 +25,17 @@ import torchvision.transforms as transforms
 from PIL import Image
 from torch.utils.data import Dataset
 
-
-POOLING_BREAKDOWN = {1: (1, 1), 2: (2, 1), 3: (3, 1), 4: (2, 2), 5: (5, 1), 6: (3, 2), 7: (7, 1), 8: (4, 2), 9: (3, 3)}
+POOLING_BREAKDOWN = {
+    1: (1, 1),
+    2: (2, 1),
+    3: (3, 1),
+    4: (2, 2),
+    5: (5, 1),
+    6: (3, 2),
+    7: (7, 1),
+    8: (4, 2),
+    9: (3, 3),
+}
 
 
 class ImageEncoder(nn.Module):
@@ -35,7 +44,8 @@ class ImageEncoder(nn.Module):
         model = torchvision.models.resnet152(pretrained=True)
         modules = list(model.children())[:-2]
         self.model = nn.Sequential(*modules)
-        self.pool = nn.AdaptiveAvgPool2d(POOLING_BREAKDOWN[args.num_image_embeds])
+        self.pool = nn.AdaptiveAvgPool2d(
+            POOLING_BREAKDOWN[args.num_image_embeds])
 
     def forward(self, x):
         # Bx3x224x224 -> Bx2048x7x7 -> Bx2048xN -> BxNx2048
@@ -46,7 +56,8 @@ class ImageEncoder(nn.Module):
 
 
 class JsonlDataset(Dataset):
-    def __init__(self, data_path, tokenizer, transforms, labels, max_seq_length):
+    def __init__(self, data_path, tokenizer, transforms, labels,
+                 max_seq_length):
         self.data = [json.loads(l) for l in open(data_path)]
         self.data_dir = os.path.dirname(data_path)
         self.tokenizer = tokenizer
@@ -60,14 +71,19 @@ class JsonlDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, index):
-        sentence = torch.LongTensor(self.tokenizer.encode(self.data[index]["text"], add_special_tokens=True))
-        start_token, sentence, end_token = sentence[0], sentence[1:-1], sentence[-1]
-        sentence = sentence[: self.max_seq_length]
+        sentence = torch.LongTensor(
+            self.tokenizer.encode(self.data[index]["text"],
+                                  add_special_tokens=True))
+        start_token, sentence, end_token = sentence[0], sentence[
+            1:-1], sentence[-1]
+        sentence = sentence[:self.max_seq_length]
 
         label = torch.zeros(self.n_classes)
-        label[[self.labels.index(tgt) for tgt in self.data[index]["label"]]] = 1
+        label[[self.labels.index(tgt)
+               for tgt in self.data[index]["label"]]] = 1
 
-        image = Image.open(os.path.join(self.data_dir, self.data[index]["img"])).convert("RGB")
+        image = Image.open(os.path.join(
+            self.data_dir, self.data[index]["img"])).convert("RGB")
         image = self.transforms(image)
 
         return {
@@ -101,7 +117,14 @@ def collate_fn(batch):
     img_start_token = torch.stack([row["image_start_token"] for row in batch])
     img_end_token = torch.stack([row["image_end_token"] for row in batch])
 
-    return text_tensor, mask_tensor, img_tensor, img_start_token, img_end_token, tgt_tensor
+    return (
+        text_tensor,
+        mask_tensor,
+        img_tensor,
+        img_start_token,
+        img_end_token,
+        tgt_tensor,
+    )
 
 
 def get_mmimdb_labels():
@@ -133,14 +156,12 @@ def get_mmimdb_labels():
 
 
 def get_image_transforms():
-    return transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(
-                mean=[0.46777044, 0.44531429, 0.40661017],
-                std=[0.12221994, 0.12145835, 0.14380469],
-            ),
-        ]
-    )
+    return transforms.Compose([
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            mean=[0.46777044, 0.44531429, 0.40661017],
+            std=[0.12221994, 0.12145835, 0.14380469],
+        ),
+    ])

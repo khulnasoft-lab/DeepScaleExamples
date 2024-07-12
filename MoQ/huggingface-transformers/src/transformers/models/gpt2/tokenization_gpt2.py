@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for OpenAI GPT."""
 
-
 import json
 import os
 from functools import lru_cache
@@ -24,7 +23,6 @@ import regex as re
 
 from ...tokenization_utils import AddedToken, PreTrainedTokenizer
 from ...utils import logging
-
 
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
@@ -39,17 +37,23 @@ VOCAB_FILES_NAMES = {
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
         "gpt2": "https://huggingface.co/gpt2/resolve/main/vocab.json",
-        "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/vocab.json",
-        "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/vocab.json",
+        "gpt2-medium":
+        "https://huggingface.co/gpt2-medium/resolve/main/vocab.json",
+        "gpt2-large":
+        "https://huggingface.co/gpt2-large/resolve/main/vocab.json",
         "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/vocab.json",
-        "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/vocab.json",
+        "distilgpt2":
+        "https://huggingface.co/distilgpt2/resolve/main/vocab.json",
     },
     "merges_file": {
         "gpt2": "https://huggingface.co/gpt2/resolve/main/merges.txt",
-        "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/merges.txt",
-        "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/merges.txt",
+        "gpt2-medium":
+        "https://huggingface.co/gpt2-medium/resolve/main/merges.txt",
+        "gpt2-large":
+        "https://huggingface.co/gpt2-large/resolve/main/merges.txt",
         "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/merges.txt",
-        "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/merges.txt",
+        "distilgpt2":
+        "https://huggingface.co/distilgpt2/resolve/main/merges.txt",
     },
 }
 
@@ -73,15 +77,17 @@ def bytes_to_unicode():
     decent coverage. This is a signficant percentage of your normal, say, 32K bpe vocab. To avoid that, we want lookup
     tables between utf-8 bytes and unicode strings.
     """
-    bs = (
-        list(range(ord("!"), ord("~") + 1)) + list(range(ord("¡"), ord("¬") + 1)) + list(range(ord("®"), ord("ÿ") + 1))
-    )
+    bs = (list(range(ord("!"),
+                     ord("~") + 1)) + list(range(ord("¡"),
+                                                 ord("¬") + 1)) +
+          list(range(ord("®"),
+                     ord("ÿ") + 1)))
     cs = bs[:]
     n = 0
-    for b in range(2 ** 8):
+    for b in range(2**8):
         if b not in bs:
             bs.append(b)
-            cs.append(2 ** 8 + n)
+            cs.append(2**8 + n)
             n += 1
     cs = [chr(n) for n in cs]
     return dict(zip(bs, cs))
@@ -153,20 +159,21 @@ class GPT2Tokenizer(PreTrainedTokenizer):
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     model_input_names = ["input_ids", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        errors="replace",
-        unk_token="<|endoftext|>",
-        bos_token="<|endoftext|>",
-        eos_token="<|endoftext|>",
-        add_prefix_space=False,
-        **kwargs
-    ):
-        bos_token = AddedToken(bos_token, lstrip=False, rstrip=False) if isinstance(bos_token, str) else bos_token
-        eos_token = AddedToken(eos_token, lstrip=False, rstrip=False) if isinstance(eos_token, str) else eos_token
-        unk_token = AddedToken(unk_token, lstrip=False, rstrip=False) if isinstance(unk_token, str) else unk_token
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 errors="replace",
+                 unk_token="<|endoftext|>",
+                 bos_token="<|endoftext|>",
+                 eos_token="<|endoftext|>",
+                 add_prefix_space=False,
+                 **kwargs):
+        bos_token = (AddedToken(bos_token, lstrip=False, rstrip=False)
+                     if isinstance(bos_token, str) else bos_token)
+        eos_token = (AddedToken(eos_token, lstrip=False, rstrip=False)
+                     if isinstance(eos_token, str) else eos_token)
+        unk_token = (AddedToken(unk_token, lstrip=False, rstrip=False)
+                     if isinstance(unk_token, str) else unk_token)
         super().__init__(
             errors=errors,
             unk_token=unk_token,
@@ -190,7 +197,9 @@ class GPT2Tokenizer(PreTrainedTokenizer):
         self.add_prefix_space = add_prefix_space
 
         # Should haved added re.IGNORECASE so BPE merges can happen for capitalized versions of contractions
-        self.pat = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+        self.pat = re.compile(
+            r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+        )
 
     @property
     def vocab_size(self):
@@ -209,7 +218,8 @@ class GPT2Tokenizer(PreTrainedTokenizer):
             return token
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -225,7 +235,8 @@ class GPT2Tokenizer(PreTrainedTokenizer):
                     new_word.extend(word[i:j])
                     i = j
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -242,17 +253,18 @@ class GPT2Tokenizer(PreTrainedTokenizer):
         return word
 
     def _tokenize(self, text):
-        """ Tokenize a string. """
+        """Tokenize a string."""
         bpe_tokens = []
         for token in re.findall(self.pat, text):
             token = "".join(
                 self.byte_encoder[b] for b in token.encode("utf-8")
             )  # Maps all our bytes to unicode strings, avoiding controle tokens of the BPE (spaces in our case)
-            bpe_tokens.extend(bpe_token for bpe_token in self.bpe(token).split(" "))
+            bpe_tokens.extend(bpe_token
+                              for bpe_token in self.bpe(token).split(" "))
         return bpe_tokens
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.encoder.get(token, self.encoder.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -260,20 +272,28 @@ class GPT2Tokenizer(PreTrainedTokenizer):
         return self.decoder.get(index)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         text = "".join(tokens)
-        text = bytearray([self.byte_decoder[c] for c in text]).decode("utf-8", errors=self.errors)
+        text = bytearray([self.byte_decoder[c]
+                          for c in text]).decode("utf-8", errors=self.errors)
         return text
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
         merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["merges_file"],
         )
 
         with open(vocab_file, "w", encoding="utf-8") as f:
@@ -282,28 +302,36 @@ class GPT2Tokenizer(PreTrainedTokenizer):
         index = 0
         with open(merge_file, "w", encoding="utf-8") as writer:
             writer.write("#version: 0.2\n")
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(),
+                                                  key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: BPE merge indices are not consecutive."
-                        " Please check that the tokenizer is not corrupted!".format(merge_file)
-                    )
+                        " Please check that the tokenizer is not corrupted!".
+                        format(merge_file))
                     index = token_index
                 writer.write(" ".join(bpe_tokens) + "\n")
                 index += 1
 
         return vocab_file, merge_file
 
-    def prepare_for_tokenization(self, text, is_split_into_words=False, **kwargs):
-        add_prefix_space = kwargs.pop("add_prefix_space", self.add_prefix_space)
+    def prepare_for_tokenization(self,
+                                 text,
+                                 is_split_into_words=False,
+                                 **kwargs):
+        add_prefix_space = kwargs.pop("add_prefix_space",
+                                      self.add_prefix_space)
         if is_split_into_words or add_prefix_space:
             text = " " + text
         return (text, kwargs)
 
-    def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
+    def _build_conversation_input_ids(
+            self, conversation: "Conversation") -> List[int]:
         input_ids = []
         for is_user, text in conversation.iter_texts():
-            input_ids.extend(self.encode(text, add_special_tokens=False) + [self.eos_token_id])
+            input_ids.extend(
+                self.encode(text, add_special_tokens=False) +
+                [self.eos_token_id])
         if len(input_ids) > self.model_max_length:
-            input_ids = input_ids[-self.model_max_length :]
+            input_ids = input_ids[-self.model_max_length:]
         return input_ids

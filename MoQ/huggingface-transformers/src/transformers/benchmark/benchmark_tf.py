@@ -17,7 +17,6 @@
     Benchmarking the library on inference and training in PyTorch.
 """
 
-
 import random
 import timeit
 from functools import wraps
@@ -25,7 +24,10 @@ from typing import Callable, Optional
 
 from ..configuration_utils import PretrainedConfig
 from ..file_utils import is_py3nvml_available, is_tf_available
-from ..models.auto.modeling_tf_auto import TF_MODEL_MAPPING, TF_MODEL_WITH_LM_HEAD_MAPPING
+from ..models.auto.modeling_tf_auto import (
+    TF_MODEL_MAPPING,
+    TF_MODEL_WITH_LM_HEAD_MAPPING,
+)
 from ..utils import logging
 from .benchmark_utils import (
     Benchmark,
@@ -35,7 +37,6 @@ from .benchmark_utils import (
     start_memory_tracing,
     stop_memory_tracing,
 )
-
 
 if is_tf_available():
     import tensorflow as tf
@@ -71,10 +72,16 @@ def run_with_tf_optimizations(do_eager_mode: bool, use_xla: bool):
     return run_func
 
 
-def random_input_ids(batch_size: int, sequence_length: int, vocab_size: int) -> ["tf.Tensor"]:
+def random_input_ids(batch_size: int, sequence_length: int,
+                     vocab_size: int) -> ["tf.Tensor"]:
     rng = random.Random()
-    values = [rng.randint(0, vocab_size - 1) for i in range(batch_size * sequence_length)]
-    return tf.constant(values, shape=(batch_size, sequence_length), dtype=tf.int32)
+    values = [
+        rng.randint(0, vocab_size - 1)
+        for i in range(batch_size * sequence_length)
+    ]
+    return tf.constant(values,
+                       shape=(batch_size, sequence_length),
+                       dtype=tf.int32)
 
 
 class TensorFlowBenchmark(Benchmark):
@@ -87,56 +94,74 @@ class TensorFlowBenchmark(Benchmark):
     def framework_version(self):
         return tf.__version__
 
-    def _inference_speed(self, model_name: str, batch_size: int, sequence_length: int) -> float:
+    def _inference_speed(self, model_name: str, batch_size: int,
+                         sequence_length: int) -> float:
         # initialize GPU on separate process
         strategy = self.args.strategy
-        assert strategy is not None, "A device strategy has to be initialized before using TensorFlow."
-        _inference = self._prepare_inference_func(model_name, batch_size, sequence_length)
+        assert (
+            strategy is not None
+        ), "A device strategy has to be initialized before using TensorFlow."
+        _inference = self._prepare_inference_func(model_name, batch_size,
+                                                  sequence_length)
         return self._measure_speed(_inference)
 
-    def _train_speed(self, model_name: str, batch_size: int, sequence_length: int) -> float:
+    def _train_speed(self, model_name: str, batch_size: int,
+                     sequence_length: int) -> float:
         strategy = self.args.strategy
-        assert strategy is not None, "A device strategy has to be initialized before using TensorFlow."
-        _train = self._prepare_train_func(model_name, batch_size, sequence_length)
+        assert (
+            strategy is not None
+        ), "A device strategy has to be initialized before using TensorFlow."
+        _train = self._prepare_train_func(model_name, batch_size,
+                                          sequence_length)
         return self._measure_speed(_train)
 
     def _inference_memory(
-        self, model_name: str, batch_size: int, sequence_length: int
-    ) -> [Memory, Optional[MemorySummary]]:
+            self, model_name: str, batch_size: int,
+            sequence_length: int) -> [Memory, Optional[MemorySummary]]:
         # initialize GPU on separate process
         if self.args.is_gpu:
-            tf.config.experimental.set_memory_growth(self.args.gpu_list[self.args.device_idx], True)
+            tf.config.experimental.set_memory_growth(
+                self.args.gpu_list[self.args.device_idx], True)
         strategy = self.args.strategy
-        assert strategy is not None, "A device strategy has to be initialized before using TensorFlow."
-        _inference = self._prepare_inference_func(model_name, batch_size, sequence_length)
+        assert (
+            strategy is not None
+        ), "A device strategy has to be initialized before using TensorFlow."
+        _inference = self._prepare_inference_func(model_name, batch_size,
+                                                  sequence_length)
         return self._measure_memory(_inference)
 
     def _train_memory(
-        self, model_name: str, batch_size: int, sequence_length: int
-    ) -> [Memory, Optional[MemorySummary]]:
+            self, model_name: str, batch_size: int,
+            sequence_length: int) -> [Memory, Optional[MemorySummary]]:
         if self.args.is_gpu:
-            tf.config.experimental.set_memory_growth(self.args.gpu_list[self.args.device_idx], True)
+            tf.config.experimental.set_memory_growth(
+                self.args.gpu_list[self.args.device_idx], True)
         strategy = self.args.strategy
-        assert strategy is not None, "A device strategy has to be initialized before using TensorFlow."
+        assert (
+            strategy is not None
+        ), "A device strategy has to be initialized before using TensorFlow."
 
-        _train = self._prepare_train_func(model_name, batch_size, sequence_length)
+        _train = self._prepare_train_func(model_name, batch_size,
+                                          sequence_length)
         return self._measure_memory(_train)
 
-    def _prepare_inference_func(self, model_name: str, batch_size: int, sequence_length: int) -> Callable[[], None]:
+    def _prepare_inference_func(self, model_name: str, batch_size: int,
+                                sequence_length: int) -> Callable[[], None]:
         config = self.config_dict[model_name]
 
         if self.args.fp16:
-            raise NotImplementedError("Mixed precision is currently not supported.")
+            raise NotImplementedError(
+                "Mixed precision is currently not supported.")
 
-        has_model_class_in_config = (
-            hasattr(config, "architectures")
-            and isinstance(config.architectures, list)
-            and len(config.architectures) > 0
-        )
+        has_model_class_in_config = (hasattr(config, "architectures")
+                                     and isinstance(config.architectures, list)
+                                     and len(config.architectures) > 0)
         if not self.args.only_pretrain_model and has_model_class_in_config:
             try:
-                model_class = "TF" + config.architectures[0]  # prepend 'TF' for tensorflow model
-                transformers_module = __import__("transformers", fromlist=[model_class])
+                model_class = ("TF" + config.architectures[0]
+                               )  # prepend 'TF' for tensorflow model
+                transformers_module = __import__("transformers",
+                                                 fromlist=[model_class])
                 model_cls = getattr(transformers_module, model_class)
                 model = model_cls(config)
             except ImportError:
@@ -147,22 +172,27 @@ class TensorFlowBenchmark(Benchmark):
             model = TF_MODEL_MAPPING[config.__class__](config)
 
         # encoder-decoder has vocab size saved differently
-        vocab_size = config.vocab_size if hasattr(config, "vocab_size") else config.encoder.vocab_size
+        vocab_size = (config.vocab_size if hasattr(config, "vocab_size") else
+                      config.encoder.vocab_size)
         input_ids = random_input_ids(batch_size, sequence_length, vocab_size)
 
         @run_with_tf_optimizations(self.args.eager_mode, self.args.use_xla)
         def encoder_decoder_forward():
-            return model(input_ids, decoder_input_ids=input_ids, training=False)
+            return model(input_ids,
+                         decoder_input_ids=input_ids,
+                         training=False)
 
         @run_with_tf_optimizations(self.args.eager_mode, self.args.use_xla)
         def encoder_forward():
             return model(input_ids, training=False)
 
-        _inference = encoder_decoder_forward if config.is_encoder_decoder else encoder_forward
+        _inference = (encoder_decoder_forward
+                      if config.is_encoder_decoder else encoder_forward)
 
         return _inference
 
-    def _prepare_train_func(self, model_name: str, batch_size: int, sequence_length: int) -> Callable[[], None]:
+    def _prepare_train_func(self, model_name: str, batch_size: int,
+                            sequence_length: int) -> Callable[[], None]:
         config = self.config_dict[model_name]
 
         assert (
@@ -170,17 +200,18 @@ class TensorFlowBenchmark(Benchmark):
         ), "Training cannot be done in eager mode. Please make sure that `args.eager_mode = False`."
 
         if self.args.fp16:
-            raise NotImplementedError("Mixed precision is currently not supported.")
+            raise NotImplementedError(
+                "Mixed precision is currently not supported.")
 
-        has_model_class_in_config = (
-            hasattr(config, "architectures")
-            and isinstance(config.architectures, list)
-            and len(config.architectures) > 0
-        )
+        has_model_class_in_config = (hasattr(config, "architectures")
+                                     and isinstance(config.architectures, list)
+                                     and len(config.architectures) > 0)
         if not self.args.only_pretrain_model and has_model_class_in_config:
             try:
-                model_class = "TF" + config.architectures[0]  # prepend 'TF' for tensorflow model
-                transformers_module = __import__("transformers", fromlist=[model_class])
+                model_class = ("TF" + config.architectures[0]
+                               )  # prepend 'TF' for tensorflow model
+                transformers_module = __import__("transformers",
+                                                 fromlist=[model_class])
                 model_cls = getattr(transformers_module, model_class)
                 model = model_cls(config)
             except ImportError:
@@ -191,12 +222,16 @@ class TensorFlowBenchmark(Benchmark):
             model = TF_MODEL_WITH_LM_HEAD_MAPPING[config.__class__](config)
 
         # encoder-decoder has vocab size saved differently
-        vocab_size = config.vocab_size if hasattr(config, "vocab_size") else config.encoder.vocab_size
+        vocab_size = (config.vocab_size if hasattr(config, "vocab_size") else
+                      config.encoder.vocab_size)
         input_ids = random_input_ids(batch_size, sequence_length, vocab_size)
 
         @run_with_tf_optimizations(self.args.eager_mode, self.args.use_xla)
         def encoder_decoder_train():
-            loss = model(input_ids, decoder_input_ids=input_ids, labels=input_ids, training=True)[0]
+            loss = model(input_ids,
+                         decoder_input_ids=input_ids,
+                         labels=input_ids,
+                         training=True)[0]
             gradients = tf.gradients(loss, model.trainable_variables)
             return gradients
 
@@ -215,7 +250,9 @@ class TensorFlowBenchmark(Benchmark):
             try:
                 if self.args.is_tpu or self.args.use_xla:
                     # run additional 10 times to stabilize compilation for tpu
-                    logger.info("Do inference on TPU. Running model 5 times to stabilize compilation")
+                    logger.info(
+                        "Do inference on TPU. Running model 5 times to stabilize compilation"
+                    )
                     timeit.repeat(func, repeat=1, number=5)
 
                 # as written in https://docs.python.org/2/library/timeit.html#timeit.Timer.repeat, min should be taken rather than the average
@@ -229,14 +266,13 @@ class TensorFlowBenchmark(Benchmark):
             except ResourceExhaustedError as e:
                 self.print_fn("Doesn't fit on GPU. {}".format(e))
 
-    def _measure_memory(self, func: Callable[[], None]) -> [Memory, MemorySummary]:
-        logger.info(
-            "Note that TensorFlow allocates more memory than"
-            "it might need to speed up computation."
-            "The memory reported here corresponds to the memory"
-            "reported by `nvidia-smi`, which can vary depending"
-            "on total available memory on the GPU that is used."
-        )
+    def _measure_memory(self, func: Callable[[],
+                                             None]) -> [Memory, MemorySummary]:
+        logger.info("Note that TensorFlow allocates more memory than"
+                    "it might need to speed up computation."
+                    "The memory reported here corresponds to the memory"
+                    "reported by `nvidia-smi`, which can vary depending"
+                    "on total available memory on the GPU that is used.")
         with self.args.strategy.scope():
             try:
                 if self.args.trace_memory_line_by_line:
@@ -265,7 +301,8 @@ class TensorFlowBenchmark(Benchmark):
                         # init nvml
                         nvml.nvmlInit()
                         func()
-                        handle = nvml.nvmlDeviceGetHandleByIndex(self.args.device_idx)
+                        handle = nvml.nvmlDeviceGetHandleByIndex(
+                            self.args.device_idx)
                         meminfo = nvml.nvmlDeviceGetMemoryInfo(handle)
                         max_bytes_in_use = meminfo.used
                         memory = Memory(max_bytes_in_use)
@@ -280,7 +317,8 @@ class TensorFlowBenchmark(Benchmark):
                         memory = None
                     else:
                         memory_bytes = measure_peak_memory_cpu(func)
-                        memory = Memory(memory_bytes) if isinstance(memory_bytes, int) else memory_bytes
+                        memory = (Memory(memory_bytes) if isinstance(
+                            memory_bytes, int) else memory_bytes)
                 if self.args.trace_memory_line_by_line:
                     summary = stop_memory_tracing(trace)
                     if memory is None:

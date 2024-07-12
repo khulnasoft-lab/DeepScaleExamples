@@ -17,11 +17,11 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 BLENDERBOT_SMALL_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "facebook/blenderbot_small-90M": "https://huggingface.co/facebook/blenderbot_small-90M/resolve/main/config.json",
+    "facebook/blenderbot_small-90M":
+    "https://huggingface.co/facebook/blenderbot_small-90M/resolve/main/config.json",
     # See all BlenderbotSmall models at https://huggingface.co/models?filter=blenderbot_small
 }
 
@@ -101,39 +101,38 @@ class BlenderbotSmallConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "blenderbot-small"
     keys_to_ignore_at_inference = ["past_key_values"]
 
-    def __init__(
-        self,
-        vocab_size=50265,
-        max_position_embeddings=512,
-        encoder_layers=8,
-        encoder_ffn_dim=2048,
-        encoder_attention_heads=16,
-        decoder_layers=8,
-        decoder_ffn_dim=2048,
-        decoder_attention_heads=16,
-        encoder_layerdrop=0.0,
-        decoder_layerdrop=0.0,
-        use_cache=True,
-        is_encoder_decoder=True,
-        activation_function="gelu",
-        d_model=512,
-        dropout=0.1,
-        attention_dropout=0.0,
-        activation_dropout=0.0,
-        init_std=0.02,
-        decoder_start_token_id=1,
-        classifier_dropout=0.0,
-        scale_embedding=False,
-        gradient_checkpointing=False,
-        pad_token_id=0,
-        bos_token_id=1,
-        eos_token_id=2,
-        forced_eos_token_id=2,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=50265,
+                 max_position_embeddings=512,
+                 encoder_layers=8,
+                 encoder_ffn_dim=2048,
+                 encoder_attention_heads=16,
+                 decoder_layers=8,
+                 decoder_ffn_dim=2048,
+                 decoder_attention_heads=16,
+                 encoder_layerdrop=0.0,
+                 decoder_layerdrop=0.0,
+                 use_cache=True,
+                 is_encoder_decoder=True,
+                 activation_function="gelu",
+                 d_model=512,
+                 dropout=0.1,
+                 attention_dropout=0.0,
+                 activation_dropout=0.0,
+                 init_std=0.02,
+                 decoder_start_token_id=1,
+                 classifier_dropout=0.0,
+                 scale_embedding=False,
+                 gradient_checkpointing=False,
+                 pad_token_id=0,
+                 bos_token_id=1,
+                 eos_token_id=2,
+                 forced_eos_token_id=2,
+                 **kwargs):
         super().__init__(
             pad_token_id=pad_token_id,
             bos_token_id=bos_token_id,
@@ -164,7 +163,9 @@ class BlenderbotSmallConfig(PretrainedConfig):
         self.use_cache = use_cache
         self.num_hidden_layers = encoder_layers
         self.gradient_checkpointing = gradient_checkpointing
-        self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
+        self.scale_embedding = (
+            scale_embedding  # scale factor will be sqrt(d_model) if True
+        )
 
     @property
     def num_attention_heads(self) -> int:

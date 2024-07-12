@@ -42,7 +42,6 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -59,22 +58,29 @@ class DataTrainingArguments:
     max_seq_length: Optional[int] = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached preprocessed datasets or not."}
+        default=False,
+        metadata={
+            "help": "Overwrite the cached preprocessed datasets or not."
+        },
     )
     pad_to_max_length: bool = field(
         default=True,
         metadata={
-            "help": "Whether to pad all samples to `max_seq_length`. "
+            "help":
+            "Whether to pad all samples to `max_seq_length`. "
             "If False, will pad the samples dynamically when batching to the maximum length in the batch."
         },
     )
-    server_ip: Optional[str] = field(default=None, metadata={"help": "For distant debugging."})
-    server_port: Optional[str] = field(default=None, metadata={"help": "For distant debugging."})
+    server_ip: Optional[str] = field(
+        default=None, metadata={"help": "For distant debugging."})
+    server_port: Optional[str] = field(
+        default=None, metadata={"help": "For distant debugging."})
 
 
 @dataclass
@@ -84,40 +90,73 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        default=None, metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
+        default=None,
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        },
     )
     language: str = field(
-        default=None, metadata={"help": "Evaluation language. Also train language if `train_language` is set to None."}
+        default=None,
+        metadata={
+            "help":
+            "Evaluation language. Also train language if `train_language` is set to None."
+        },
     )
     train_language: Optional[str] = field(
-        default=None, metadata={"help": "Train language if it is different from the evaluation language."}
+        default=None,
+        metadata={
+            "help":
+            "Train language if it is different from the evaluation language."
+        },
     )
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
     do_lower_case: Optional[bool] = field(
         default=False,
-        metadata={"help": "arg to indicate if tokenizer should do lower case in AutoTokenizer.from_pretrained()"},
+        metadata={
+            "help":
+            "arg to indicate if tokenizer should do lower case in AutoTokenizer.from_pretrained()"
+        },
     )
     use_fast_tokenizer: bool = field(
         default=True,
-        metadata={"help": "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."},
+        metadata={
+            "help":
+            "Whether to use one of the fast tokenizer (backed by the tokenizers library) or not."
+        },
     )
     model_revision: str = field(
         default="main",
-        metadata={"help": "The specific model version to use (can be a branch name, tag name or commit id)."},
+        metadata={
+            "help":
+            "The specific model version to use (can be a branch name, tag name or commit id)."
+        },
     )
     use_auth_token: bool = field(
         default=False,
         metadata={
-            "help": "Will use the token generated when running `transformers-cli login` (necessary to use this script "
+            "help":
+            "Will use the token generated when running `transformers-cli login` (necessary to use this script "
             "with private models)."
         },
     )
@@ -128,18 +167,20 @@ def main():
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, DataTrainingArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
     # Detecting last checkpoint.
     last_checkpoint = None
-    if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
+    if (os.path.isdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+        if last_checkpoint is None and len(os.listdir(
+                training_args.output_dir)) > 0:
             raise ValueError(
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
+                "Use --overwrite_output_dir to overcome.")
         elif last_checkpoint is not None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
@@ -152,7 +193,9 @@ def main():
         import ptvsd
 
         print("Waiting for debugger attach")
-        ptvsd.enable_attach(address=(data_args.server_ip, data_args.server_port), redirect_output=True)
+        ptvsd.enable_attach(address=(data_args.server_ip,
+                                     data_args.server_port),
+                            redirect_output=True)
         ptvsd.wait_for_attach()
 
     # Setup logging
@@ -161,12 +204,14 @@ def main():
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
-    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank) else logging.WARN)
+    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank
+                                                    ) else logging.WARN)
 
     # Log on each process the small summary:
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        +
+        f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
 
     # Set the verbosity to info of the Transformers logger (on main process only):
@@ -183,11 +228,17 @@ def main():
     # download the dataset.
     # Downloading and loading xnli dataset from the hub.
     if model_args.train_language is None:
-        train_dataset = load_dataset("xnli", model_args.language, split="train")
+        train_dataset = load_dataset("xnli",
+                                     model_args.language,
+                                     split="train")
     else:
-        train_dataset = load_dataset("xnli", model_args.train_language, split="train")
+        train_dataset = load_dataset("xnli",
+                                     model_args.train_language,
+                                     split="train")
 
-    eval_dataset = load_dataset("xnli", model_args.language, split="validation")
+    eval_dataset = load_dataset("xnli",
+                                model_args.language,
+                                split="validation")
     # Labels
     label_list = train_dataset.features["label"].names
     num_labels = len(label_list)
@@ -196,7 +247,8 @@ def main():
     # In distributed training, the .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         num_labels=num_labels,
         finetuning_task="xnli",
         cache_dir=model_args.cache_dir,
@@ -204,7 +256,8 @@ def main():
         use_auth_token=True if model_args.use_auth_token else None,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         do_lower_case=model_args.do_lower_case,
         cache_dir=model_args.cache_dir,
         use_fast=model_args.use_fast_tokenizer,
@@ -239,15 +292,20 @@ def main():
         )
 
     train_dataset = train_dataset.map(
-        preprocess_function, batched=True, load_from_cache_file=not data_args.overwrite_cache
+        preprocess_function,
+        batched=True,
+        load_from_cache_file=not data_args.overwrite_cache,
     )
     eval_dataset = eval_dataset.map(
-        preprocess_function, batched=True, load_from_cache_file=not data_args.overwrite_cache
+        preprocess_function,
+        batched=True,
+        load_from_cache_file=not data_args.overwrite_cache,
     )
 
     # Log a few random samples from the training set:
     for index in random.sample(range(len(train_dataset)), 3):
-        logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
+        logger.info(
+            f"Sample {index} of the training set: {train_dataset[index]}.")
 
     # Get the metric function
     metric = load_metric("xnli")
@@ -255,7 +313,8 @@ def main():
     # You can define your custom compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
     def compute_metrics(p: EvalPrediction):
-        preds = p.predictions[0] if isinstance(p.predictions, tuple) else p.predictions
+        preds = p.predictions[0] if isinstance(p.predictions,
+                                               tuple) else p.predictions
         preds = np.argmax(preds, axis=1)
         return metric.compute(predictions=preds, references=p.label_ids)
 
@@ -263,7 +322,8 @@ def main():
     if data_args.pad_to_max_length:
         data_collator = default_data_collator
     elif training_args.fp16:
-        data_collator = DataCollatorWithPadding(tokenizer, pad_to_multiple_of=8)
+        data_collator = DataCollatorWithPadding(tokenizer,
+                                                pad_to_multiple_of=8)
     else:
         data_collator = None
 
@@ -291,7 +351,8 @@ def main():
 
         trainer.save_model()  # Saves the tokenizer too for easy upload
 
-        output_train_file = os.path.join(training_args.output_dir, "train_results.txt")
+        output_train_file = os.path.join(training_args.output_dir,
+                                         "train_results.txt")
         if trainer.is_world_process_zero():
             with open(output_train_file, "w") as writer:
                 logger.info("***** Train results *****")
@@ -300,7 +361,8 @@ def main():
                     writer.write(f"{key} = {value}\n")
 
             # Need to save the state, since Trainer.save_model saves only the tokenizer with the model
-            trainer.state.save_to_json(os.path.join(training_args.output_dir, "trainer_state.json"))
+            trainer.state.save_to_json(
+                os.path.join(training_args.output_dir, "trainer_state.json"))
 
     # Evaluation
     eval_results = {}
@@ -308,7 +370,8 @@ def main():
         logger.info("*** Evaluate ***")
 
         eval_result = trainer.evaluate(eval_dataset=eval_dataset)
-        output_eval_file = os.path.join(training_args.output_dir, "eval_results_xnli.txt")
+        output_eval_file = os.path.join(training_args.output_dir,
+                                        "eval_results_xnli.txt")
 
         if trainer.is_world_process_zero():
             with open(output_eval_file, "w") as writer:

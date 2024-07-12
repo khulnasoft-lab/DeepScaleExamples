@@ -15,8 +15,13 @@
 import unittest
 
 from transformers import is_torch_available
-from transformers.testing_utils import require_sentencepiece, require_tokenizers, require_torch, slow, torch_device
-
+from transformers.testing_utils import (
+    require_sentencepiece,
+    require_tokenizers,
+    require_torch,
+    slow,
+    torch_device,
+)
 
 if is_torch_available():
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
@@ -40,13 +45,15 @@ class MT5IntegrationTest(unittest.TestCase):
         >>> score = t5_model.score(inputs=["Hello there"], targets=["Hi I am"], vocabulary=vocab)
         """
 
-        model = AutoModelForSeq2SeqLM.from_pretrained("google/mt5-small", return_dict=True).to(torch_device)
+        model = AutoModelForSeq2SeqLM.from_pretrained(
+            "google/mt5-small", return_dict=True).to(torch_device)
         tokenizer = AutoTokenizer.from_pretrained("google/mt5-small")
 
         input_ids = tokenizer("Hello there", return_tensors="pt").input_ids
         labels = tokenizer("Hi I am", return_tensors="pt").input_ids
 
-        loss = model(input_ids.to(torch_device), labels=labels.to(torch_device)).loss
+        loss = model(input_ids.to(torch_device),
+                     labels=labels.to(torch_device)).loss
         mtf_score = -(labels.shape[-1] * loss.item())
 
         EXPECTED_SCORE = -84.9127

@@ -37,7 +37,8 @@ def create_lengths_groups(lengths, k=0):
     # count number of elements per group
     counts = np.unique(groups, return_counts=True)[1]
     fbins = [0] + bins + [np.inf]
-    logger.info("Using {} as bins for aspect lengths quantization".format(fbins))
+    logger.info(
+        "Using {} as bins for aspect lengths quantization".format(fbins))
     logger.info("Count of instances per bin: {}".format(counts))
     return groups
 
@@ -56,12 +57,11 @@ class GroupedBatchSampler(BatchSampler):
             0, i.e. they must be in the range [0, num_groups).
         batch_size (int): Size of mini-batch.
     """
-
     def __init__(self, sampler, group_ids, batch_size):
         if not isinstance(sampler, Sampler):
             raise ValueError(
-                "sampler should be an instance of " "torch.utils.data.Sampler, but got sampler={}".format(sampler)
-            )
+                "sampler should be an instance of "
+                "torch.utils.data.Sampler, but got sampler={}".format(sampler))
         self.sampler = sampler
         self.group_ids = group_ids
         self.batch_size = batch_size
@@ -90,11 +90,12 @@ class GroupedBatchSampler(BatchSampler):
         if num_remaining > 0:
             # for the remaining batches, group the batches by similar lengths
             batch_idx = []
-            for group_id, idxs in sorted(buffer_per_group.items(), key=lambda x: x[0]):
+            for group_id, idxs in sorted(buffer_per_group.items(),
+                                         key=lambda x: x[0]):
                 batch_idx.extend(idxs)
                 if len(batch_idx) >= self.batch_size:
-                    yield batch_idx[: self.batch_size]
-                    batch_idx = batch_idx[self.batch_size :]
+                    yield batch_idx[:self.batch_size]
+                    batch_idx = batch_idx[self.batch_size:]
                     num_remaining -= 1
             if len(batch_idx) > 0:
                 yield batch_idx

@@ -21,7 +21,8 @@ def cifar_trainset(local_rank, dl_path='/tmp/cifar10-data'):
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                             std=[0.229, 0.224, 0.225]),
     ])
 
     # Ensure only one rank downloads.
@@ -104,7 +105,6 @@ def train_base(args):
             step += 1
             if rank == 0 and (step % 10 == 0):
                 print(f'step: {step:3d} / {args.steps:3d} loss: {loss}')
-
 
 
 def join_layers(vision_model):

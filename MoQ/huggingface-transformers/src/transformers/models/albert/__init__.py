@@ -26,9 +26,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_albert": ["ALBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "AlbertConfig"],
+    "configuration_albert":
+    ["ALBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "AlbertConfig"],
 }
 
 if is_sentencepiece_available():
@@ -64,7 +64,6 @@ if is_tf_available():
         "TFAlbertModel",
         "TFAlbertPreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_albert import ALBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, AlbertConfig

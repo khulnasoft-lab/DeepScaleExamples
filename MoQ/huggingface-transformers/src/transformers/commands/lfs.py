@@ -29,9 +29,7 @@ import requests
 from ..utils import logging
 from . import BaseTransformersCLICommand
 
-
 logger = logging.get_logger(__name__)  # pylint: disable=invalid-name
-
 
 LFS_MULTIPART_UPLOAD_COMMAND = "lfs-multipart-upload"
 
@@ -53,17 +51,21 @@ class LfsCommands(BaseTransformersCLICommand):
 
     This command is called by lfs directly and is not meant to be called by the user.
     """
-
     @staticmethod
     def register_subcommand(parser: ArgumentParser):
         enable_parser = parser.add_parser(
-            "lfs-enable-largefiles", help="Configure your repository to enable upload of files > 5GB."
+            "lfs-enable-largefiles",
+            help="Configure your repository to enable upload of files > 5GB.",
         )
-        enable_parser.add_argument("path", type=str, help="Local path to repository you want to configure.")
+        enable_parser.add_argument(
+            "path",
+            type=str,
+            help="Local path to repository you want to configure.")
         enable_parser.set_defaults(func=lambda args: LfsEnableCommand(args))
 
         upload_parser = parser.add_parser(
-            LFS_MULTIPART_UPLOAD_COMMAND, help="Command will get called by git-lfs, do not call it directly."
+            LFS_MULTIPART_UPLOAD_COMMAND,
+            help="Command will get called by git-lfs, do not call it directly.",
         )
         upload_parser.set_defaults(func=lambda args: LfsUploadCommand(args))
 
@@ -78,10 +80,14 @@ class LfsEnableCommand:
             print("This does not look like a valid git repo.")
             exit(1)
         subprocess.run(
-            "git config lfs.customtransfer.multipart.path transformers-cli".split(), check=True, cwd=local_path
+            "git config lfs.customtransfer.multipart.path transformers-cli".
+            split(),
+            check=True,
+            cwd=local_path,
         )
         subprocess.run(
-            f"git config lfs.customtransfer.multipart.args {LFS_MULTIPART_UPLOAD_COMMAND}".split(),
+            f"git config lfs.customtransfer.multipart.args {LFS_MULTIPART_UPLOAD_COMMAND}"
+            .split(),
             check=True,
             cwd=local_path,
         )
@@ -96,7 +102,7 @@ def write_msg(msg: Dict):
 
 
 def read_msg() -> Optional[Dict]:
-    """Read Line delimited JSON from stdin. """
+    """Read Line delimited JSON from stdin."""
     msg = json.loads(sys.stdin.readline().strip())
 
     if "terminate" in (msg.get("type"), msg.get("event")):
@@ -116,7 +122,6 @@ class FileSlice(AbstractContextManager):
 
     Inspired by stackoverflow.com/a/29838711/593036
     """
-
     def __init__(self, filepath: str, seek_from: int, read_limit: int):
         self.filepath = filepath
         self.seek_from = seek_from
@@ -136,7 +141,8 @@ class FileSlice(AbstractContextManager):
         if self.n_seen >= self.read_limit:
             return b""
         remaining_amount = self.read_limit - self.n_seen
-        data = self.f.read(remaining_amount if n < 0 else min(n, remaining_amount))
+        data = self.f.read(
+            remaining_amount if n < 0 else min(n, remaining_amount))
         self.n_seen += len(data)
         return data
 
@@ -156,8 +162,13 @@ class LfsUploadCommand:
         # sends initiation data to the process over stdin.
         # This tells the process useful information about the configuration.
         init_msg = json.loads(sys.stdin.readline().strip())
-        if not (init_msg.get("event") == "init" and init_msg.get("operation") == "upload"):
-            write_msg({"error": {"code": 32, "message": "Wrong lfs init operation"}})
+        if not (init_msg.get("event") == "init"
+                and init_msg.get("operation") == "upload"):
+            write_msg(
+                {"error": {
+                    "code": 32,
+                    "message": "Wrong lfs init operation"
+                }})
             sys.exit(1)
 
         # The transfer process should use the information it needs from the
@@ -186,25 +197,23 @@ class LfsUploadCommand:
 
             parts = []
             for i, presigned_url in enumerate(presigned_urls):
-                with FileSlice(filepath, seek_from=i * chunk_size, read_limit=chunk_size) as data:
+                with FileSlice(filepath,
+                               seek_from=i * chunk_size,
+                               read_limit=chunk_size) as data:
                     r = requests.put(presigned_url, data=data)
                     r.raise_for_status()
-                    parts.append(
-                        {
-                            "etag": r.headers.get("etag"),
-                            "partNumber": i + 1,
-                        }
-                    )
+                    parts.append({
+                        "etag": r.headers.get("etag"),
+                        "partNumber": i + 1,
+                    })
                     # In order to support progress reporting while data is uploading / downloading,
                     # the transfer process should post messages to stdout
-                    write_msg(
-                        {
-                            "event": "progress",
-                            "oid": oid,
-                            "bytesSoFar": (i + 1) * chunk_size,
-                            "bytesSinceLast": chunk_size,
-                        }
-                    )
+                    write_msg({
+                        "event": "progress",
+                        "oid": oid,
+                        "bytesSoFar": (i + 1) * chunk_size,
+                        "bytesSinceLast": chunk_size,
+                    })
                     # Not precise but that's ok.
 
             r = requests.post(

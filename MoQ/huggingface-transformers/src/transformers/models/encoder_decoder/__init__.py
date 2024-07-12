@@ -20,14 +20,12 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_torch_available
 
-
 _import_structure = {
     "configuration_encoder_decoder": ["EncoderDecoderConfig"],
 }
 
 if is_torch_available():
     _import_structure["modeling_encoder_decoder"] = ["EncoderDecoderModel"]
-
 
 if TYPE_CHECKING:
     from .configuration_encoder_decoder import EncoderDecoderConfig

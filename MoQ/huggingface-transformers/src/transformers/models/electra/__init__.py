@@ -18,11 +18,16 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
-    "configuration_electra": ["ELECTRA_PRETRAINED_CONFIG_ARCHIVE_MAP", "ElectraConfig"],
+    "configuration_electra":
+    ["ELECTRA_PRETRAINED_CONFIG_ARCHIVE_MAP", "ElectraConfig"],
     "tokenization_electra": ["ElectraTokenizer"],
 }
 
@@ -56,9 +61,11 @@ if is_tf_available():
         "TFElectraPreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_electra import ELECTRA_PRETRAINED_CONFIG_ARCHIVE_MAP, ElectraConfig
+    from .configuration_electra import (
+        ELECTRA_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        ElectraConfig,
+    )
     from .tokenization_electra import ElectraTokenizer
 
     if is_tokenizers_available():

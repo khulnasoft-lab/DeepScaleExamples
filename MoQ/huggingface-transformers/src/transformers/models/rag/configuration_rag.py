@@ -19,7 +19,6 @@ import copy
 from ...configuration_utils import PretrainedConfig
 from ...file_utils import add_start_docstrings
 
-
 RAG_CONFIG_DOC = r"""
     :class:`~transformers.RagConfig` stores the configuration of a `RagModel`. Configuration objects inherit from
     :class:`~transformers.PretrainedConfig` and can be used to control the model outputs. Read the documentation from
@@ -85,37 +84,35 @@ class RagConfig(PretrainedConfig):
     model_type = "rag"
     is_composition = True
 
-    def __init__(
-        self,
-        vocab_size=None,
-        is_encoder_decoder=True,
-        prefix=None,
-        bos_token_id=None,
-        pad_token_id=None,
-        eos_token_id=None,
-        decoder_start_token_id=None,
-        title_sep=" / ",
-        doc_sep=" // ",
-        n_docs=5,
-        max_combined_length=300,
-        retrieval_vector_size=768,
-        retrieval_batch_size=8,
-        dataset="wiki_dpr",
-        dataset_split="train",
-        index_name="compressed",
-        index_path=None,
-        passages_path=None,
-        use_dummy_dataset=False,
-        reduce_loss=False,
-        label_smoothing=0.0,
-        do_deduplication=True,
-        exclude_bos_score=False,
-        do_marginalize=False,
-        output_retrieved=False,
-        use_cache=True,
-        forced_eos_token_id=None,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=None,
+                 is_encoder_decoder=True,
+                 prefix=None,
+                 bos_token_id=None,
+                 pad_token_id=None,
+                 eos_token_id=None,
+                 decoder_start_token_id=None,
+                 title_sep=" / ",
+                 doc_sep=" // ",
+                 n_docs=5,
+                 max_combined_length=300,
+                 retrieval_vector_size=768,
+                 retrieval_batch_size=8,
+                 dataset="wiki_dpr",
+                 dataset_split="train",
+                 index_name="compressed",
+                 index_path=None,
+                 passages_path=None,
+                 use_dummy_dataset=False,
+                 reduce_loss=False,
+                 label_smoothing=0.0,
+                 do_deduplication=True,
+                 exclude_bos_score=False,
+                 do_marginalize=False,
+                 output_retrieved=False,
+                 use_cache=True,
+                 forced_eos_token_id=None,
+                 **kwargs):
         super().__init__(
             bos_token_id=bos_token_id,
             pad_token_id=pad_token_id,
@@ -137,8 +134,10 @@ class RagConfig(PretrainedConfig):
 
         from ..auto.configuration_auto import AutoConfig
 
-        self.question_encoder = AutoConfig.for_model(question_encoder_model_type, **question_encoder_config)
-        self.generator = AutoConfig.for_model(decoder_model_type, **decoder_config)
+        self.question_encoder = AutoConfig.for_model(
+            question_encoder_model_type, **question_encoder_config)
+        self.generator = AutoConfig.for_model(decoder_model_type,
+                                              **decoder_config)
 
         self.reduce_loss = reduce_loss
         self.label_smoothing = label_smoothing
@@ -167,12 +166,13 @@ class RagConfig(PretrainedConfig):
         self.use_cache = use_cache
 
         if self.forced_eos_token_id is None:
-            self.forced_eos_token_id = getattr(self.generator, "forced_eos_token_id", None)
+            self.forced_eos_token_id = getattr(self.generator,
+                                               "forced_eos_token_id", None)
 
     @classmethod
     def from_question_encoder_generator_configs(
-        cls, question_encoder_config: PretrainedConfig, generator_config: PretrainedConfig, **kwargs
-    ) -> PretrainedConfig:
+            cls, question_encoder_config: PretrainedConfig,
+            generator_config: PretrainedConfig, **kwargs) -> PretrainedConfig:
         r"""
         Instantiate a :class:`~transformers.EncoderDecoderConfig` (or a derived class) from a pre-trained encoder model
         configuration and decoder model configuration.
@@ -180,7 +180,11 @@ class RagConfig(PretrainedConfig):
         Returns:
             :class:`EncoderDecoderConfig`: An instance of a configuration object
         """
-        return cls(question_encoder=question_encoder_config.to_dict(), generator=generator_config.to_dict(), **kwargs)
+        return cls(
+            question_encoder=question_encoder_config.to_dict(),
+            generator=generator_config.to_dict(),
+            **kwargs,
+        )
 
     def to_dict(self):
         """

@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model T5."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -23,12 +22,10 @@ from ...file_utils import is_sentencepiece_available
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 
-
 if is_sentencepiece_available():
     from .tokenization_t5 import T5Tokenizer
 else:
     T5Tokenizer = None
-
 
 logger = logging.get_logger(__name__)
 
@@ -36,7 +33,10 @@ logger = logging.get_logger(__name__)
 # Mapping from the keyword arguments names of Tokenizer `__init__`
 # to file names for serializing Tokenizer instances
 ####################################################
-VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "spiece.model",
+    "tokenizer_file": "tokenizer.json"
+}
 
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
@@ -44,16 +44,21 @@ VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.
 ####################################################
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "t5-small": "https://huggingface.co/t5-small/resolve/main/spiece.model",
+        "t5-small":
+        "https://huggingface.co/t5-small/resolve/main/spiece.model",
         "t5-base": "https://huggingface.co/t5-base/resolve/main/spiece.model",
-        "t5-large": "https://huggingface.co/t5-large/resolve/main/spiece.model",
+        "t5-large":
+        "https://huggingface.co/t5-large/resolve/main/spiece.model",
         "t5-3b": "https://huggingface.co/t5-3b/resolve/main/spiece.model",
         "t5-11b": "https://huggingface.co/t5-11b/resolve/main/spiece.model",
     },
     "tokenizer_file": {
-        "t5-small": "https://huggingface.co/t5-small/resolve/main/tokenizer.json",
-        "t5-base": "https://huggingface.co/t5-base/resolve/main/tokenizer.json",
-        "t5-large": "https://huggingface.co/t5-large/resolve/main/tokenizer.json",
+        "t5-small":
+        "https://huggingface.co/t5-small/resolve/main/tokenizer.json",
+        "t5-base":
+        "https://huggingface.co/t5-base/resolve/main/tokenizer.json",
+        "t5-large":
+        "https://huggingface.co/t5-large/resolve/main/tokenizer.json",
         "t5-3b": "https://huggingface.co/t5-3b/resolve/main/tokenizer.json",
         "t5-11b": "https://huggingface.co/t5-11b/resolve/main/tokenizer.json",
     },
@@ -122,14 +127,19 @@ class T5TokenizerFast(PreTrainedTokenizerFast):
         pad_token="<pad>",
         extra_ids=100,
         additional_special_tokens=None,
-        **kwargs
+        **kwargs,
     ):
         # Add extra_ids to the special token list
         if extra_ids > 0 and additional_special_tokens is None:
-            additional_special_tokens = ["<extra_id_{}>".format(i) for i in range(extra_ids)]
+            additional_special_tokens = [
+                "<extra_id_{}>".format(i) for i in range(extra_ids)
+            ]
         elif extra_ids > 0 and additional_special_tokens is not None:
             # Check that we have the right number of extra special tokens
-            extra_tokens = len(set(filter(lambda x: bool("extra_id_" in x), additional_special_tokens)))
+            extra_tokens = len(
+                set(
+                    filter(lambda x: bool("extra_id_" in x),
+                           additional_special_tokens)))
             if extra_tokens != extra_ids:
                 raise ValueError(
                     f"Both extra_ids ({extra_ids}) and additional_special_tokens ({additional_special_tokens}) are provided to T5Tokenizer. "
@@ -150,23 +160,29 @@ class T5TokenizerFast(PreTrainedTokenizerFast):
         self.vocab_file = vocab_file
         self._extra_ids = extra_ids
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
             logger.info(f"Copy vocab file to {out_vocab_file}")
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A sequence has the following format:
@@ -191,8 +207,9 @@ class T5TokenizerFast(PreTrainedTokenizerFast):
             return self.prefix_tokens + token_ids_0 + token_ids_1
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. T5 does not make
         use of token type ids, therefore a list of zeros is returned.

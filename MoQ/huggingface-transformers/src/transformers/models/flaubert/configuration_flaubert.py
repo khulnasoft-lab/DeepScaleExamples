@@ -17,14 +17,17 @@
 from ...utils import logging
 from ..xlm.configuration_xlm import XLMConfig
 
-
 logger = logging.get_logger(__name__)
 
 FLAUBERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "flaubert/flaubert_small_cased": "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/config.json",
-    "flaubert/flaubert_base_uncased": "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/config.json",
-    "flaubert/flaubert_base_cased": "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/config.json",
-    "flaubert/flaubert_large_cased": "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/config.json",
+    "flaubert/flaubert_small_cased":
+    "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/config.json",
+    "flaubert/flaubert_base_uncased":
+    "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/config.json",
+    "flaubert/flaubert_base_cased":
+    "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/config.json",
+    "flaubert/flaubert_large_cased":
+    "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/config.json",
 }
 
 
@@ -134,8 +137,15 @@ class FlaubertConfig(XLMConfig):
 
     model_type = "flaubert"
 
-    def __init__(self, layerdrop=0.0, pre_norm=False, pad_token_id=2, bos_token_id=0, **kwargs):
+    def __init__(self,
+                 layerdrop=0.0,
+                 pre_norm=False,
+                 pad_token_id=2,
+                 bos_token_id=0,
+                 **kwargs):
         """Constructs FlaubertConfig."""
-        super().__init__(pad_token_id=pad_token_id, bos_token_id=bos_token_id, **kwargs)
+        super().__init__(pad_token_id=pad_token_id,
+                         bos_token_id=bos_token_id,
+                         **kwargs)
         self.layerdrop = layerdrop
         self.pre_norm = pre_norm

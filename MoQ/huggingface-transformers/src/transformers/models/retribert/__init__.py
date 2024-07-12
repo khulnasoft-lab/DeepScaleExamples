@@ -20,14 +20,18 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tokenizers_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_retribert": ["RETRIBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "RetriBertConfig"],
+    "configuration_retribert": [
+        "RETRIBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "RetriBertConfig",
+    ],
     "tokenization_retribert": ["RetriBertTokenizer"],
 }
 
 if is_tokenizers_available():
-    _import_structure["tokenization_retribert_fast"] = ["RetriBertTokenizerFast"]
+    _import_structure["tokenization_retribert_fast"] = [
+        "RetriBertTokenizerFast"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_retribert"] = [
@@ -36,9 +40,11 @@ if is_torch_available():
         "RetriBertPreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_retribert import RETRIBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, RetriBertConfig
+    from .configuration_retribert import (
+        RETRIBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        RetriBertConfig,
+    )
     from .tokenization_retribert import RetriBertTokenizer
 
     if is_tokenizers_available():

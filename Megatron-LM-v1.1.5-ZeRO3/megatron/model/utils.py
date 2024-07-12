@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Utilities for models."""
 
 import math
@@ -48,36 +47,44 @@ def get_linear_layer(rows, columns, init_method):
         layer.bias.zero_()
     return layer
 
+
 @torch.jit.script
 def gelu_impl(x):
     """OpenAI's gelu implementation."""
-    return 0.5 * x * (1.0 + torch.tanh(0.7978845608028654 * x *
-                                       (1.0 + 0.044715 * x * x)))
+    return (0.5 * x * (1.0 + torch.tanh(0.7978845608028654 * x *
+                                        (1.0 + 0.044715 * x * x))))
+
+
 def openai_gelu(x):
     return gelu_impl(x)
 
-#This is actually Python equivalent of torch.nn.functional.gelu(), also with type hints for ONNX exporter
+
+# This is actually Python equivalent of torch.nn.functional.gelu(), also with type hints for ONNX exporter
 @torch.jit.script
 def erf_gelu(x):
-    return x * 0.5 * (torch.erf(x / 1.41421).to(dtype=x.dtype)+torch.ones_like(x).to(dtype=x.dtype))
+    return (x * 0.5 * (torch.erf(x / 1.41421).to(dtype=x.dtype) +
+                       torch.ones_like(x).to(dtype=x.dtype)))
+
 
 def get_params_for_weight_decay_optimization(module):
     """Divide params into with-weight-decay and without-weight-decay groups.
     Layernorms and baises will have no weight decay but the rest will.
     """
-    weight_decay_params = {'params': []}
-    no_weight_decay_params = {'params': [], 'weight_decay': 0.0}
+    weight_decay_params = {"params": []}
+    no_weight_decay_params = {"params": [], "weight_decay": 0.0}
     for module_ in module.modules():
         if isinstance(module_, LayerNorm):
-            no_weight_decay_params['params'].extend(
-                [p for p in list(module_._parameters.values())
-                 if p is not None])
+            no_weight_decay_params["params"].extend([
+                p for p in list(module_._parameters.values()) if p is not None
+            ])
         else:
-            weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n != 'bias'])
-            no_weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n == 'bias'])
+            weight_decay_params["params"].extend([
+                p for n, p in list(module_._parameters.items())
+                if p is not None and n != "bias"
+            ])
+            no_weight_decay_params["params"].extend([
+                p for n, p in list(module_._parameters.items())
+                if p is not None and n == "bias"
+            ])
 
     return weight_decay_params, no_weight_decay_params

@@ -3,7 +3,6 @@ from ..tokenization_utils import TruncationStrategy
 from ..utils import logging
 from .base import PIPELINE_INIT_ARGS, Pipeline
 
-
 if is_tf_available():
     import tensorflow as tf
 
@@ -39,12 +38,11 @@ class Text2TextGenerationPipeline(Pipeline):
         super().__init__(*args, **kwargs)
 
         self.check_model_type(
-            TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING
-            if self.framework == "tf"
-            else MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING
-        )
+            TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING if self.framework ==
+            "tf" else MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING)
 
-    def check_inputs(self, input_length: int, min_length: int, max_length: int):
+    def check_inputs(self, input_length: int, min_length: int,
+                     max_length: int):
         """
         Checks wether there might be something wrong with given input with regard to the model.
         """
@@ -57,7 +55,7 @@ class Text2TextGenerationPipeline(Pipeline):
         return_text=True,
         clean_up_tokenization_spaces=False,
         truncation=TruncationStrategy.DO_NOT_TRUNCATE,
-        **generate_kwargs
+        **generate_kwargs,
     ):
         r"""
         Generate the output text(s) using text(s) given as inputs.
@@ -86,28 +84,30 @@ class Text2TextGenerationPipeline(Pipeline):
             - **generated_token_ids** (:obj:`torch.Tensor` or :obj:`tf.Tensor`, present when ``return_tensors=True``)
               -- The token ids of the generated text.
         """
-        assert return_tensors or return_text, "You must specify return_tensors=True or return_text=True"
+        assert (return_tensors or return_text
+                ), "You must specify return_tensors=True or return_text=True"
 
-        prefix = self.model.config.prefix if self.model.config.prefix is not None else ""
+        prefix = (self.model.config.prefix
+                  if self.model.config.prefix is not None else "")
         if isinstance(args[0], list):
             assert (
                 self.tokenizer.pad_token_id is not None
             ), "Please make sure that the tokenizer has a pad_token_id when using a batch input"
-            args = ([prefix + arg for arg in args[0]],)
+            args = ([prefix + arg for arg in args[0]], )
             padding = True
 
         elif isinstance(args[0], str):
-            args = (prefix + args[0],)
+            args = (prefix + args[0], )
             padding = False
         else:
             raise ValueError(
-                " `args[0]`: {} have the wrong format. The should be either of type `str` or type `list`".format(
-                    args[0]
-                )
-            )
+                " `args[0]`: {} have the wrong format. The should be either of type `str` or type `list`"
+                .format(args[0]))
 
         with self.device_placement():
-            inputs = self._parse_and_tokenize(*args, padding=padding, truncation=truncation)
+            inputs = self._parse_and_tokenize(*args,
+                                              padding=padding,
+                                              truncation=truncation)
 
             if self.framework == "pt":
                 inputs = self.ensure_tensor_on_device(**inputs)
@@ -115,8 +115,10 @@ class Text2TextGenerationPipeline(Pipeline):
             elif self.framework == "tf":
                 input_length = tf.shape(inputs["input_ids"])[-1].numpy()
 
-            min_length = generate_kwargs.get("min_length", self.model.config.min_length)
-            max_length = generate_kwargs.get("max_length", self.model.config.max_length)
+            min_length = generate_kwargs.get("min_length",
+                                             self.model.config.min_length)
+            max_length = generate_kwargs.get("max_length",
+                                             self.model.config.max_length)
             self.check_inputs(input_length, min_length, max_length)
 
             generations = self.model.generate(
@@ -133,7 +135,8 @@ class Text2TextGenerationPipeline(Pipeline):
                     record[f"{self.return_name}_text"] = self.tokenizer.decode(
                         generation,
                         skip_special_tokens=True,
-                        clean_up_tokenization_spaces=clean_up_tokenization_spaces,
+                        clean_up_tokenization_spaces=
+                        clean_up_tokenization_spaces,
                     )
                 results.append(record)
             return results
@@ -192,23 +195,20 @@ class SummarizationPipeline(Text2TextGenerationPipeline):
         """
         return super().__call__(*args, **kwargs)
 
-    def check_inputs(self, input_length: int, min_length: int, max_length: int) -> bool:
+    def check_inputs(self, input_length: int, min_length: int,
+                     max_length: int) -> bool:
         """
         Checks wether there might be something wrong with given input with regard to the model.
         """
         if input_length < min_length // 2:
             logger.warning(
-                "Your min_length is set to {}, but you input_length is only {}. You might consider decreasing min_length manually, e.g. summarizer('...', min_length=10)".format(
-                    min_length, input_length
-                )
-            )
+                "Your min_length is set to {}, but you input_length is only {}. You might consider decreasing min_length manually, e.g. summarizer('...', min_length=10)"
+                .format(min_length, input_length))
 
         if input_length < max_length:
             logger.warning(
-                "Your max_length is set to {}, but you input_length is only {}. You might consider decreasing max_length manually, e.g. summarizer('...', max_length=50)".format(
-                    max_length, input_length
-                )
-            )
+                "Your max_length is set to {}, but you input_length is only {}. You might consider decreasing max_length manually, e.g. summarizer('...', max_length=50)"
+                .format(max_length, input_length))
 
 
 @add_end_docstrings(PIPELINE_INIT_ARGS)
@@ -231,13 +231,12 @@ class TranslationPipeline(Text2TextGenerationPipeline):
     # Used in the return key of the pipeline.
     return_name = "translation"
 
-    def check_inputs(self, input_length: int, min_length: int, max_length: int):
+    def check_inputs(self, input_length: int, min_length: int,
+                     max_length: int):
         if input_length > 0.9 * max_length:
             logger.warning(
-                "Your input_length: {} is bigger than 0.9 * max_length: {}. You might consider increasing your max_length manually, e.g. translator('...', max_length=400)".format(
-                    input_length, max_length
-                )
-            )
+                "Your input_length: {} is bigger than 0.9 * max_length: {}. You might consider increasing your max_length manually, e.g. translator('...', max_length=400)"
+                .format(input_length, max_length))
 
     def __call__(self, *args, **kwargs):
         r"""

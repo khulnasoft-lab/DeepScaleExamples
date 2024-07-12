@@ -14,7 +14,6 @@
 # limitations under the License.
 """Convert Bort checkpoint."""
 
-
 import argparse
 import os
 
@@ -38,7 +37,6 @@ from transformers.models.bert.modeling_bert import (
 )
 from transformers.utils import logging
 
-
 if version.parse(nlp.__version__) != version.parse("0.8.3"):
     raise Exception("requires gluonnlp == 0.8.3")
 
@@ -51,7 +49,8 @@ logger = logging.get_logger(__name__)
 SAMPLE_TEXT = "The Nymphenburg Palace is a beautiful palace in Munich!"
 
 
-def convert_bort_checkpoint_to_pytorch(bort_checkpoint_path: str, pytorch_dump_folder_path: str):
+def convert_bort_checkpoint_to_pytorch(bort_checkpoint_path: str,
+                                       pytorch_dump_folder_path: str):
     """
     Convert the original Bort checkpoint (based on MXNET and Gluonnlp) to our BERT structure-
     """
@@ -117,7 +116,9 @@ def convert_bort_checkpoint_to_pytorch(bort_checkpoint_path: str, pytorch_dump_f
         use_decoder=False,
     )
 
-    original_bort.load_parameters(bort_checkpoint_path, cast_dtype=True, ignore_extra=True)
+    original_bort.load_parameters(bort_checkpoint_path,
+                                  cast_dtype=True,
+                                  ignore_extra=True)
     params = original_bort._collect_params_with_prefix()
 
     # Build our config 🤗
@@ -187,22 +188,22 @@ def convert_bort_checkpoint_to_pytorch(bort_checkpoint_path: str, pytorch_dump_f
         return gluon_param
 
     hf_bort_model.bert.embeddings.word_embeddings.weight = check_and_map_params(
-        hf_bort_model.bert.embeddings.word_embeddings.weight, "word_embed.0.weight"
-    )
+        hf_bort_model.bert.embeddings.word_embeddings.weight,
+        "word_embed.0.weight")
     hf_bort_model.bert.embeddings.position_embeddings.weight = check_and_map_params(
-        hf_bort_model.bert.embeddings.position_embeddings.weight, "encoder.position_weight"
+        hf_bort_model.bert.embeddings.position_embeddings.weight,
+        "encoder.position_weight",
     )
     hf_bort_model.bert.embeddings.LayerNorm.bias = check_and_map_params(
-        hf_bort_model.bert.embeddings.LayerNorm.bias, "encoder.layer_norm.beta"
-    )
+        hf_bort_model.bert.embeddings.LayerNorm.bias,
+        "encoder.layer_norm.beta")
     hf_bort_model.bert.embeddings.LayerNorm.weight = check_and_map_params(
-        hf_bort_model.bert.embeddings.LayerNorm.weight, "encoder.layer_norm.gamma"
-    )
+        hf_bort_model.bert.embeddings.LayerNorm.weight,
+        "encoder.layer_norm.gamma")
 
     # Inspired by RoBERTa conversion script, we just zero them out (Bort does not use them)
     hf_bort_model.bert.embeddings.token_type_embeddings.weight.data = torch.zeros_like(
-        hf_bort_model.bert.embeddings.token_type_embeddings.weight.data
-    )
+        hf_bort_model.bert.embeddings.token_type_embeddings.weight.data)
 
     for i in range(hf_bort_config.num_hidden_layers):
         layer: BertLayer = hf_bort_model.bert.encoder.layer[i]
@@ -211,65 +212,73 @@ def convert_bort_checkpoint_to_pytorch(bort_checkpoint_path: str, pytorch_dump_f
         self_attn: BertSelfAttention = layer.attention.self
 
         self_attn.key.bias.data = check_and_map_params(
-            self_attn.key.bias.data, f"encoder.transformer_cells.{i}.attention_cell.proj_key.bias"
+            self_attn.key.bias.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_key.bias",
         )
 
         self_attn.key.weight.data = check_and_map_params(
-            self_attn.key.weight.data, f"encoder.transformer_cells.{i}.attention_cell.proj_key.weight"
+            self_attn.key.weight.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_key.weight",
         )
         self_attn.query.bias.data = check_and_map_params(
-            self_attn.query.bias.data, f"encoder.transformer_cells.{i}.attention_cell.proj_query.bias"
+            self_attn.query.bias.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_query.bias",
         )
         self_attn.query.weight.data = check_and_map_params(
-            self_attn.query.weight.data, f"encoder.transformer_cells.{i}.attention_cell.proj_query.weight"
+            self_attn.query.weight.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_query.weight",
         )
         self_attn.value.bias.data = check_and_map_params(
-            self_attn.value.bias.data, f"encoder.transformer_cells.{i}.attention_cell.proj_value.bias"
+            self_attn.value.bias.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_value.bias",
         )
         self_attn.value.weight.data = check_and_map_params(
-            self_attn.value.weight.data, f"encoder.transformer_cells.{i}.attention_cell.proj_value.weight"
+            self_attn.value.weight.data,
+            f"encoder.transformer_cells.{i}.attention_cell.proj_value.weight",
         )
 
         # self attention output
         self_output: BertSelfOutput = layer.attention.output
 
         self_output.dense.bias = check_and_map_params(
-            self_output.dense.bias, f"encoder.transformer_cells.{i}.proj.bias"
-        )
+            self_output.dense.bias, f"encoder.transformer_cells.{i}.proj.bias")
         self_output.dense.weight = check_and_map_params(
-            self_output.dense.weight, f"encoder.transformer_cells.{i}.proj.weight"
-        )
+            self_output.dense.weight,
+            f"encoder.transformer_cells.{i}.proj.weight")
         self_output.LayerNorm.bias = check_and_map_params(
-            self_output.LayerNorm.bias, f"encoder.transformer_cells.{i}.layer_norm.beta"
-        )
+            self_output.LayerNorm.bias,
+            f"encoder.transformer_cells.{i}.layer_norm.beta")
         self_output.LayerNorm.weight = check_and_map_params(
-            self_output.LayerNorm.weight, f"encoder.transformer_cells.{i}.layer_norm.gamma"
+            self_output.LayerNorm.weight,
+            f"encoder.transformer_cells.{i}.layer_norm.gamma",
         )
 
         # intermediate
         intermediate: BertIntermediate = layer.intermediate
 
         intermediate.dense.bias = check_and_map_params(
-            intermediate.dense.bias, f"encoder.transformer_cells.{i}.ffn.ffn_1.bias"
-        )
+            intermediate.dense.bias,
+            f"encoder.transformer_cells.{i}.ffn.ffn_1.bias")
         intermediate.dense.weight = check_and_map_params(
-            intermediate.dense.weight, f"encoder.transformer_cells.{i}.ffn.ffn_1.weight"
-        )
+            intermediate.dense.weight,
+            f"encoder.transformer_cells.{i}.ffn.ffn_1.weight")
 
         # output
         bert_output: BertOutput = layer.output
 
         bert_output.dense.bias = check_and_map_params(
-            bert_output.dense.bias, f"encoder.transformer_cells.{i}.ffn.ffn_2.bias"
-        )
+            bert_output.dense.bias,
+            f"encoder.transformer_cells.{i}.ffn.ffn_2.bias")
         bert_output.dense.weight = check_and_map_params(
-            bert_output.dense.weight, f"encoder.transformer_cells.{i}.ffn.ffn_2.weight"
-        )
+            bert_output.dense.weight,
+            f"encoder.transformer_cells.{i}.ffn.ffn_2.weight")
         bert_output.LayerNorm.bias = check_and_map_params(
-            bert_output.LayerNorm.bias, f"encoder.transformer_cells.{i}.ffn.layer_norm.beta"
+            bert_output.LayerNorm.bias,
+            f"encoder.transformer_cells.{i}.ffn.layer_norm.beta",
         )
         bert_output.LayerNorm.weight = check_and_map_params(
-            bert_output.LayerNorm.weight, f"encoder.transformer_cells.{i}.ffn.layer_norm.gamma"
+            bert_output.LayerNorm.weight,
+            f"encoder.transformer_cells.{i}.ffn.layer_norm.gamma",
         )
 
     # Save space and energy 🎄
@@ -309,10 +318,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--bort_checkpoint_path", default=None, type=str, required=True, help="Path the official Bort params file."
+        "--bort_checkpoint_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path the official Bort params file.",
     )
     parser.add_argument(
-        "--pytorch_dump_folder_path", default=None, type=str, required=True, help="Path to the output PyTorch model."
+        "--pytorch_dump_folder_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to the output PyTorch model.",
     )
     args = parser.parse_args()
-    convert_bort_checkpoint_to_pytorch(args.bort_checkpoint_path, args.pytorch_dump_folder_path)
+    convert_bort_checkpoint_to_pytorch(args.bort_checkpoint_path,
+                                       args.pytorch_dump_folder_path)

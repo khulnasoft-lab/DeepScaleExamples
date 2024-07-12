@@ -23,7 +23,6 @@ import sentencepiece as spm
 from ...tokenization_utils import AddedToken, BatchEncoding, PreTrainedTokenizer
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 SPIECE_UNDERLINE = "▁"
@@ -34,7 +33,15 @@ _all_mbart50_models = ["facebook/mbart-large-50-one-to-many-mmt"]
 SPM_URL = "https://huggingface.co/facebook/mbart-large-50-one-to-many-mmt/resolve/main/sentencepiece.bpe.model"
 
 # fmt: off
-FAIRSEQ_LANGUAGE_CODES = ["ar_AR", "cs_CZ", "de_DE", "en_XX", "es_XX", "et_EE", "fi_FI", "fr_XX", "gu_IN", "hi_IN", "it_IT", "ja_XX", "kk_KZ", "ko_KR", "lt_LT", "lv_LV", "my_MM", "ne_NP", "nl_XX", "ro_RO", "ru_RU", "si_LK", "tr_TR", "vi_VN", "zh_CN", "af_ZA", "az_AZ", "bn_IN", "fa_IR", "he_IL", "hr_HR", "id_ID", "ka_GE", "km_KH", "mk_MK", "ml_IN", "mn_MN", "mr_IN", "pl_PL", "ps_AF", "pt_XX", "sv_SE", "sw_KE", "ta_IN", "te_IN", "th_TH", "tl_XX", "uk_UA", "ur_PK", "xh_ZA", "gl_ES", "sl_SI"]
+FAIRSEQ_LANGUAGE_CODES = [
+    "ar_AR", "cs_CZ", "de_DE", "en_XX", "es_XX", "et_EE", "fi_FI", "fr_XX",
+    "gu_IN", "hi_IN", "it_IT", "ja_XX", "kk_KZ", "ko_KR", "lt_LT", "lv_LV",
+    "my_MM", "ne_NP", "nl_XX", "ro_RO", "ru_RU", "si_LK", "tr_TR", "vi_VN",
+    "zh_CN", "af_ZA", "az_AZ", "bn_IN", "fa_IR", "he_IL", "hr_HR", "id_ID",
+    "ka_GE", "km_KH", "mk_MK", "ml_IN", "mn_MN", "mr_IN", "pl_PL", "ps_AF",
+    "pt_XX", "sv_SE", "sw_KE", "ta_IN", "te_IN", "th_TH", "tl_XX", "uk_UA",
+    "ur_PK", "xh_ZA", "gl_ES", "sl_SI"
+]
 # fmt: on
 
 
@@ -84,7 +91,10 @@ class MBart50Tokenizer(PreTrainedTokenizer):
 
     vocab_files_names = VOCAB_FILES_NAMES
     max_model_input_sizes = {m: 1024 for m in _all_mbart50_models}
-    pretrained_vocab_files_map = {"vocab_file": {m: SPM_URL for m in _all_mbart50_models}}
+    pretrained_vocab_files_map = {
+        "vocab_file": {m: SPM_URL
+                       for m in _all_mbart50_models}
+    }
     model_input_names = ["input_ids", "attention_mask"]
 
     prefix_tokens: List[int] = []
@@ -101,10 +111,11 @@ class MBart50Tokenizer(PreTrainedTokenizer):
         unk_token="<unk>",
         pad_token="<pad>",
         mask_token="<mask>",
-        **kwargs
+        **kwargs,
     ):
         # Mask token behave like a normal word, i.e. include the space before it
-        mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
+        mask_token = (AddedToken(mask_token, lstrip=True, rstrip=False)
+                      if isinstance(mask_token, str) else mask_token)
 
         super().__init__(
             src_lang=src_lang,
@@ -129,20 +140,31 @@ class MBart50Tokenizer(PreTrainedTokenizer):
         # spm      | '<unk>' | '<s>'   | '</s>' | ','     | '.' | '▁' | 's' | '▁de' | '-'   | '▁a'
 
         # Mimic fairseq token-to-id alignment for the first 4 token
-        self.fairseq_tokens_to_ids = {"<s>": 0, "<pad>": 1, "</s>": 2, "<unk>": 3}
+        self.fairseq_tokens_to_ids = {
+            "<s>": 0,
+            "<pad>": 1,
+            "</s>": 2,
+            "<unk>": 3
+        }
 
         # The first "real" token "," has position 4 in the original fairseq vocab and position 3 in the spm vocab
         self.fairseq_offset = 1
 
         self.sp_model_size = len(self.sp_model)
         self.lang_code_to_id = {
-            code: self.sp_model_size + i + self.fairseq_offset for i, code in enumerate(FAIRSEQ_LANGUAGE_CODES)
+            code: self.sp_model_size + i + self.fairseq_offset
+            for i, code in enumerate(FAIRSEQ_LANGUAGE_CODES)
         }
         self.id_to_lang_code = {v: k for k, v in self.lang_code_to_id.items()}
-        self.fairseq_tokens_to_ids["<mask>"] = len(self.sp_model) + len(self.lang_code_to_id) + self.fairseq_offset
+        self.fairseq_tokens_to_ids["<mask>"] = (len(self.sp_model) +
+                                                len(self.lang_code_to_id) +
+                                                self.fairseq_offset)
 
         self.fairseq_tokens_to_ids.update(self.lang_code_to_id)
-        self.fairseq_ids_to_tokens = {v: k for k, v in self.fairseq_tokens_to_ids.items()}
+        self.fairseq_ids_to_tokens = {
+            v: k
+            for k, v in self.fairseq_tokens_to_ids.items()
+        }
         self._additional_special_tokens = list(self.lang_code_to_id.keys())
 
         self._src_lang = src_lang if src_lang is not None else "en_XX"
@@ -152,7 +174,8 @@ class MBart50Tokenizer(PreTrainedTokenizer):
 
     @property
     def vocab_size(self) -> int:
-        return len(self.sp_model) + len(self.lang_code_to_id) + self.fairseq_offset + 1  # Plus 1 for the mask token
+        return (len(self.sp_model) + len(self.lang_code_to_id) +
+                self.fairseq_offset + 1)  # Plus 1 for the mask token
 
     @property
     def src_lang(self) -> str:
@@ -174,7 +197,10 @@ class MBart50Tokenizer(PreTrainedTokenizer):
         self.sp_model.Load(self.vocab_file)
 
     def get_vocab(self) -> Dict:
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -182,7 +208,7 @@ class MBart50Tokenizer(PreTrainedTokenizer):
         return self.sp_model.EncodeAsPieces(text)
 
     def _convert_token_to_id(self, token: str) -> int:
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         if token in self.fairseq_tokens_to_ids:
             return self.fairseq_tokens_to_ids[token]
         spm_id = self.sp_model.PieceToId(token)
@@ -201,21 +227,29 @@ class MBart50Tokenizer(PreTrainedTokenizer):
         out_string = "".join(tokens).replace(SPIECE_UNDERLINE, " ").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -239,16 +273,23 @@ class MBart50Tokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
         prefix_ones = [1] * len(self.prefix_tokens)
         suffix_ones = [1] * len(self.suffix_tokens)
         if token_ids_1 is None:
             return prefix_ones + ([0] * len(token_ids_0)) + suffix_ones
-        return prefix_ones + ([0] * len(token_ids_0)) + ([0] * len(token_ids_1)) + suffix_ones
+        return (prefix_ones + ([0] * len(token_ids_0)) +
+                ([0] * len(token_ids_1)) + suffix_ones)
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. An MBART-50 sequence has the following format, where ``X`` represents the sequence:

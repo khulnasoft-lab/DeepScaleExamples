@@ -26,9 +26,12 @@ from filelock import FileLock
 
 from ...tokenization_utils_base import PreTrainedTokenizerBase
 from ...utils import logging
-from ..processors.glue import glue_convert_examples_to_features, glue_output_modes, glue_processors
+from ..processors.glue import (
+    glue_convert_examples_to_features,
+    glue_output_modes,
+    glue_processors,
+)
 from ..processors.utils import InputFeatures
-
 
 logger = logging.get_logger(__name__)
 
@@ -42,19 +45,28 @@ class GlueDataTrainingArguments:
     line.
     """
 
-    task_name: str = field(metadata={"help": "The name of the task to train on: " + ", ".join(glue_processors.keys())})
+    task_name: str = field(
+        metadata={
+            "help":
+            "The name of the task to train on: " +
+            ", ".join(glue_processors.keys())
+        })
     data_dir: str = field(
-        metadata={"help": "The input data dir. Should contain the .tsv files (or other data files) for the task."}
-    )
+        metadata={
+            "help":
+            "The input data dir. Should contain the .tsv files (or other data files) for the task."
+        })
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
 
     def __post_init__(self):
@@ -109,13 +121,14 @@ class GlueDataset(Dataset):
             ),
         )
         label_list = self.processor.get_labels()
-        if args.task_name in ["mnli", "mnli-mm"] and tokenizer.__class__.__name__ in (
-            "RobertaTokenizer",
-            "RobertaTokenizerFast",
-            "XLMRobertaTokenizer",
-            "BartTokenizer",
-            "BartTokenizerFast",
-        ):
+        if args.task_name in ["mnli", "mnli-mm"
+                              ] and tokenizer.__class__.__name__ in (
+                                  "RobertaTokenizer",
+                                  "RobertaTokenizerFast",
+                                  "XLMRobertaTokenizer",
+                                  "BartTokenizer",
+                                  "BartTokenizerFast",
+                              ):
             # HACK(label indices are swapped in RoBERTa pretrained model)
             label_list[1], label_list[2] = label_list[2], label_list[1]
         self.label_list = label_list
@@ -125,14 +138,17 @@ class GlueDataset(Dataset):
         lock_path = cached_features_file + ".lock"
         with FileLock(lock_path):
 
-            if os.path.exists(cached_features_file) and not args.overwrite_cache:
+            if os.path.exists(
+                    cached_features_file) and not args.overwrite_cache:
                 start = time.time()
                 self.features = torch.load(cached_features_file)
                 logger.info(
-                    f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
+                    f"Loading features from cached file {cached_features_file} [took %.3f s]",
+                    time.time() - start,
                 )
             else:
-                logger.info(f"Creating features from dataset file at {args.data_dir}")
+                logger.info(
+                    f"Creating features from dataset file at {args.data_dir}")
 
                 if mode == Split.dev:
                     examples = self.processor.get_dev_examples(args.data_dir)
@@ -153,7 +169,9 @@ class GlueDataset(Dataset):
                 torch.save(self.features, cached_features_file)
                 # ^ This seems to take a lot of time so I want to investigate why and how we can improve.
                 logger.info(
-                    "Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start
+                    "Saving features into cached file %s [took %.3f s]",
+                    cached_features_file,
+                    time.time() - start,
                 )
 
     def __len__(self):

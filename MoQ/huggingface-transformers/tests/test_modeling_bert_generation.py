@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 
 from transformers import is_torch_available
@@ -21,13 +20,21 @@ from transformers.testing_utils import require_torch, slow, torch_device
 
 from .test_configuration_common import ConfigTester
 from .test_generation_utils import GenerationTesterMixin
-from .test_modeling_common import ModelTesterMixin, floats_tensor, ids_tensor, random_attention_mask
-
+from .test_modeling_common import (
+    ModelTesterMixin,
+    floats_tensor,
+    ids_tensor,
+    random_attention_mask,
+)
 
 if is_torch_available():
     import torch
 
-    from transformers import BertGenerationConfig, BertGenerationDecoder, BertGenerationEncoder
+    from transformers import (
+        BertGenerationConfig,
+        BertGenerationDecoder,
+        BertGenerationEncoder,
+    )
 
 
 class BertGenerationEncoderTester:
@@ -70,14 +77,17 @@ class BertGenerationEncoderTester:
         self.scope = scope
 
     def prepare_config_and_inputs(self):
-        input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
+        input_ids = ids_tensor([self.batch_size, self.seq_length],
+                               self.vocab_size)
 
         input_mask = None
         if self.use_input_mask:
-            input_mask = random_attention_mask([self.batch_size, self.seq_length])
+            input_mask = random_attention_mask(
+                [self.batch_size, self.seq_length])
 
         if self.use_labels:
-            token_labels = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
+            token_labels = ids_tensor([self.batch_size, self.seq_length],
+                                      self.vocab_size)
 
         config = BertGenerationConfig(
             vocab_size=self.vocab_size,
@@ -104,8 +114,10 @@ class BertGenerationEncoderTester:
         ) = self.prepare_config_and_inputs()
 
         config.is_decoder = True
-        encoder_hidden_states = floats_tensor([self.batch_size, self.seq_length, self.hidden_size])
-        encoder_attention_mask = ids_tensor([self.batch_size, self.seq_length], vocab_size=2)
+        encoder_hidden_states = floats_tensor(
+            [self.batch_size, self.seq_length, self.hidden_size])
+        encoder_attention_mask = ids_tensor([self.batch_size, self.seq_length],
+                                            vocab_size=2)
 
         return (
             config,
@@ -129,7 +141,10 @@ class BertGenerationEncoderTester:
         model.eval()
         result = model(input_ids, attention_mask=input_mask)
         result = model(input_ids)
-        self.parent.assertEqual(result.last_hidden_state.shape, (self.batch_size, self.seq_length, self.hidden_size))
+        self.parent.assertEqual(
+            result.last_hidden_state.shape,
+            (self.batch_size, self.seq_length, self.hidden_size),
+        )
 
     def create_and_check_model_as_decoder(
         self,
@@ -156,7 +171,10 @@ class BertGenerationEncoderTester:
             attention_mask=input_mask,
             encoder_hidden_states=encoder_hidden_states,
         )
-        self.parent.assertEqual(result.last_hidden_state.shape, (self.batch_size, self.seq_length, self.hidden_size))
+        self.parent.assertEqual(
+            result.last_hidden_state.shape,
+            (self.batch_size, self.seq_length, self.hidden_size),
+        )
 
     def create_and_check_decoder_model_past_large_inputs(
         self,
@@ -207,14 +225,21 @@ class BertGenerationEncoderTester:
         )["hidden_states"][0]
 
         # select random slice
-        random_slice_idx = ids_tensor((1,), output_from_past.shape[-1]).item()
-        output_from_no_past_slice = output_from_no_past[:, -3:, random_slice_idx].detach()
-        output_from_past_slice = output_from_past[:, :, random_slice_idx].detach()
+        random_slice_idx = ids_tensor((1, ), output_from_past.shape[-1]).item()
+        output_from_no_past_slice = output_from_no_past[:, -3:,
+                                                        random_slice_idx].detach(
+                                                        )
+        output_from_past_slice = output_from_past[:, :,
+                                                  random_slice_idx].detach()
 
-        self.parent.assertTrue(output_from_past_slice.shape[1] == next_tokens.shape[1])
+        self.parent.assertTrue(
+            output_from_past_slice.shape[1] == next_tokens.shape[1])
 
         # test that outputs are equal for slice
-        self.parent.assertTrue(torch.allclose(output_from_past_slice, output_from_no_past_slice, atol=1e-3))
+        self.parent.assertTrue(
+            torch.allclose(output_from_past_slice,
+                           output_from_no_past_slice,
+                           atol=1e-3))
 
     def create_and_check_for_causal_lm(
         self,
@@ -227,8 +252,12 @@ class BertGenerationEncoderTester:
         model = BertGenerationDecoder(config)
         model.to(torch_device)
         model.eval()
-        result = model(input_ids, attention_mask=input_mask, labels=token_labels)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.seq_length, self.vocab_size))
+        result = model(input_ids,
+                       attention_mask=input_mask,
+                       labels=token_labels)
+        self.parent.assertEqual(
+            result.logits.shape,
+            (self.batch_size, self.seq_length, self.vocab_size))
 
     def prepare_config_and_inputs_for_common(self):
         config_and_inputs = self.prepare_config_and_inputs()
@@ -243,14 +272,20 @@ class BertGenerationEncoderTester:
 
 
 @require_torch
-class BertGenerationEncoderTest(ModelTesterMixin, GenerationTesterMixin, unittest.TestCase):
+class BertGenerationEncoderTest(ModelTesterMixin, GenerationTesterMixin,
+                                unittest.TestCase):
 
-    all_model_classes = (BertGenerationEncoder, BertGenerationDecoder) if is_torch_available() else ()
-    all_generative_model_classes = (BertGenerationDecoder,) if is_torch_available() else ()
+    all_model_classes = ((BertGenerationEncoder,
+                          BertGenerationDecoder) if is_torch_available() else
+                         ())
+    all_generative_model_classes = ((BertGenerationDecoder, )
+                                    if is_torch_available() else ())
 
     def setUp(self):
         self.model_tester = BertGenerationEncoderTester(self)
-        self.config_tester = ConfigTester(self, config_class=BertGenerationConfig, hidden_size=37)
+        self.config_tester = ConfigTester(self,
+                                          config_class=BertGenerationConfig,
+                                          hidden_size=37)
 
     def test_config(self):
         self.config_tester.run_common_tests()
@@ -260,12 +295,15 @@ class BertGenerationEncoderTest(ModelTesterMixin, GenerationTesterMixin, unittes
         self.model_tester.create_and_check_model(*config_and_inputs)
 
     def test_model_as_decoder(self):
-        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder()
+        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder(
+        )
         self.model_tester.create_and_check_model_as_decoder(*config_and_inputs)
 
     def test_decoder_model_past_with_large_inputs(self):
-        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder()
-        self.model_tester.create_and_check_decoder_model_past_large_inputs(*config_and_inputs)
+        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder(
+        )
+        self.model_tester.create_and_check_decoder_model_past_large_inputs(
+            *config_and_inputs)
 
     def test_model_as_decoder_with_default_input_mask(self):
         # This regression test was failing with PyTorch < 1.3
@@ -290,12 +328,14 @@ class BertGenerationEncoderTest(ModelTesterMixin, GenerationTesterMixin, unittes
         )
 
     def test_for_causal_lm(self):
-        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder()
+        config_and_inputs = self.model_tester.prepare_config_and_inputs_for_decoder(
+        )
         self.model_tester.create_and_check_for_causal_lm(*config_and_inputs)
 
     @slow
     def test_model_from_pretrained(self):
-        model = BertGenerationEncoder.from_pretrained("google/bert_for_seq_generation_L-24_bbc_encoder")
+        model = BertGenerationEncoder.from_pretrained(
+            "google/bert_for_seq_generation_L-24_bbc_encoder")
         self.assertIsNotNone(model)
 
 
@@ -303,27 +343,37 @@ class BertGenerationEncoderTest(ModelTesterMixin, GenerationTesterMixin, unittes
 class BertGenerationEncoderIntegrationTest(unittest.TestCase):
     @slow
     def test_inference_no_head_absolute_embedding(self):
-        model = BertGenerationEncoder.from_pretrained("google/bert_for_seq_generation_L-24_bbc_encoder")
-        input_ids = torch.tensor([[101, 7592, 1010, 2026, 3899, 2003, 10140, 102]])
+        model = BertGenerationEncoder.from_pretrained(
+            "google/bert_for_seq_generation_L-24_bbc_encoder")
+        input_ids = torch.tensor(
+            [[101, 7592, 1010, 2026, 3899, 2003, 10140, 102]])
         output = model(input_ids)[0]
         expected_shape = torch.Size([1, 8, 1024])
         self.assertEqual(output.shape, expected_shape)
-        expected_slice = torch.tensor(
-            [[[0.1775, 0.0083, -0.0321], [1.6002, 0.1287, 0.3912], [2.1473, 0.5791, 0.6066]]]
-        )
-        self.assertTrue(torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4))
+        expected_slice = torch.tensor([[
+            [0.1775, 0.0083, -0.0321],
+            [1.6002, 0.1287, 0.3912],
+            [2.1473, 0.5791, 0.6066],
+        ]])
+        self.assertTrue(
+            torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4))
 
 
 @require_torch
 class BertGenerationDecoderIntegrationTest(unittest.TestCase):
     @slow
     def test_inference_no_head_absolute_embedding(self):
-        model = BertGenerationDecoder.from_pretrained("google/bert_for_seq_generation_L-24_bbc_encoder")
-        input_ids = torch.tensor([[101, 7592, 1010, 2026, 3899, 2003, 10140, 102]])
+        model = BertGenerationDecoder.from_pretrained(
+            "google/bert_for_seq_generation_L-24_bbc_encoder")
+        input_ids = torch.tensor(
+            [[101, 7592, 1010, 2026, 3899, 2003, 10140, 102]])
         output = model(input_ids)[0]
         expected_shape = torch.Size([1, 8, 50358])
         self.assertEqual(output.shape, expected_shape)
-        expected_slice = torch.tensor(
-            [[[-0.5788, -2.5994, -3.7054], [0.0438, 4.7997, 1.8795], [1.5862, 6.6409, 4.4638]]]
-        )
-        self.assertTrue(torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4))
+        expected_slice = torch.tensor([[
+            [-0.5788, -2.5994, -3.7054],
+            [0.0438, 4.7997, 1.8795],
+            [1.5862, 6.6409, 4.4638],
+        ]])
+        self.assertTrue(
+            torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4))

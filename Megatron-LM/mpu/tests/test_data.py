@@ -16,6 +16,7 @@
 import functools
 import operator
 import sys
+
 sys.path.append("../..")
 
 import torch
@@ -29,18 +30,21 @@ from commons import print_separator
 def test_boradcast_data(model_parallel_size):
 
     if torch.distributed.get_rank() == 0:
-        print('> testing boradcast_data with model parallel size {} ...'.
-              format(model_parallel_size))
+        print(
+            "> testing boradcast_data with model parallel size {} ...".format(
+                model_parallel_size))
 
     mpu.initialize_model_parallel(model_parallel_size)
     torch.manual_seed(1234 + mpu.get_data_parallel_rank())
     model_parallel_size = mpu.get_model_parallel_world_size()
 
-    key_size_t = {'key1': [7, 11],
-                  'key2': [8, 2, 1],
-                  'key3': [13],
-                  'key4': [5, 1, 2],
-                  'key5': [5, 12]}
+    key_size_t = {
+        "key1": [7, 11],
+        "key2": [8, 2, 1],
+        "key3": [13],
+        "key4": [5, 1, 2],
+        "key5": [5, 12],
+    }
     keys = list(key_size_t.keys())
 
     data = {}
@@ -48,14 +52,14 @@ def test_boradcast_data(model_parallel_size):
     for key in key_size_t:
         data[key] = torch.LongTensor(size=key_size_t[key]).random_(0, 1000)
         data_t[key] = data[key].clone()
-    data['keyX'] = torch.FloatTensor(size=(5, )).random_(0, 1000)
-    data_t['keyX'] = data['keyX'].clone()
+    data["keyX"] = torch.FloatTensor(size=(5, )).random_(0, 1000)
+    data_t["keyX"] = data["keyX"].clone()
     if mpu.get_model_parallel_rank() != 0:
         data = None
 
     data_utils._check_data_types(keys, data_t, torch.int64)
-    key_size, key_numel, \
-        total_numel = data_utils._build_key_size_numel_dictionaries(keys, data)
+    key_size, key_numel, total_numel = data_utils._build_key_size_numel_dictionaries(
+        keys, data)
     for key in keys:
         assert key_size[key] == key_size_t[key]
     total_numel_t = 0
@@ -75,18 +79,16 @@ def test_boradcast_data(model_parallel_size):
 
     torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        print('>> passed the test :-)')
+        print(">> passed the test :-)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     initialize_distributed()
     world_size = torch.distributed.get_world_size()
 
     model_parallel_size = 1
     while model_parallel_size <= world_size:
-        print_separator('test test boradcast data')
+        print_separator("test test boradcast data")
         test_boradcast_data(model_parallel_size)
         model_parallel_size *= 2
-
-

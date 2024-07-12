@@ -24,7 +24,6 @@ from packaging import version
 
 import pkg_resources
 
-
 ops = {
     "<": operator.lt,
     "<=": operator.le,
@@ -79,22 +78,24 @@ def require_version(requirement: str, hint: Optional[str] = None) -> None:
     try:
         got_ver = pkg_resources.get_distribution(pkg).version
     except pkg_resources.DistributionNotFound:
-        raise pkg_resources.DistributionNotFound(requirement, ["this application", hint])
+        raise pkg_resources.DistributionNotFound(requirement,
+                                                 ["this application", hint])
 
     # check that the right version is installed if version number was provided
-    if want_ver is not None and not ops[op](version.parse(got_ver), version.parse(want_ver)):
+    if want_ver is not None and not ops[op](version.parse(got_ver),
+                                            version.parse(want_ver)):
         raise pkg_resources.VersionConflict(
             f"{requirement} is required for a normal functioning of this module, but found {pkg}=={got_ver}.{hint}"
         )
 
 
 def require_version_core(requirement):
-    """ require_version wrapper which emits a core-specific hint on failure """
+    """require_version wrapper which emits a core-specific hint on failure"""
     hint = "Try: pip install transformers -U or pip install -e '.[dev]' if you're working with git master"
     return require_version(requirement, hint)
 
 
 def require_version_examples(requirement):
-    """ require_version wrapper which emits examples-specific hint on failure """
+    """require_version wrapper which emits examples-specific hint on failure"""
     hint = "Try: pip install -r examples/requirements.txt"
     return require_version(requirement, hint)

@@ -19,9 +19,11 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tf_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_blenderbot_small": ["BLENDERBOT_SMALL_PRETRAINED_CONFIG_ARCHIVE_MAP", "BlenderbotSmallConfig"],
+    "configuration_blenderbot_small": [
+        "BLENDERBOT_SMALL_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "BlenderbotSmallConfig",
+    ],
     "tokenization_blenderbot_small": ["BlenderbotSmallTokenizer"],
 }
 
@@ -41,7 +43,10 @@ if is_tf_available():
     ]
 
 if TYPE_CHECKING:
-    from .configuration_blenderbot_small import BLENDERBOT_SMALL_PRETRAINED_CONFIG_ARCHIVE_MAP, BlenderbotSmallConfig
+    from .configuration_blenderbot_small import (
+        BLENDERBOT_SMALL_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        BlenderbotSmallConfig,
+    )
     from .tokenization_blenderbot_small import BlenderbotSmallTokenizer
 
     if is_torch_available():
@@ -54,7 +59,10 @@ if TYPE_CHECKING:
         )
 
     if is_tf_available():
-        from .modeling_tf_blenderbot_small import TFBlenderbotSmallForConditionalGeneration, TFBlenderbotSmallModel
+        from .modeling_tf_blenderbot_small import (
+            TFBlenderbotSmallForConditionalGeneration,
+            TFBlenderbotSmallModel,
+        )
 
 else:
     import importlib

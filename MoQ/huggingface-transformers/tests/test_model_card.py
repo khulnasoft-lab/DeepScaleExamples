@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import os
 import tempfile
@@ -33,14 +32,23 @@ class ModelCardTester(unittest.TestCase):
             },
             "metrics": "BLEU and ROUGE-1",
             "evaluation_data": {
-                "Datasets": {"BLEU": "My-great-dataset-v1", "ROUGE-1": "My-short-dataset-v2.1"},
-                "Preprocessing": "See details on https://arxiv.org/pdf/1810.03993.pdf",
+                "Datasets": {
+                    "BLEU": "My-great-dataset-v1",
+                    "ROUGE-1": "My-short-dataset-v2.1",
+                },
+                "Preprocessing":
+                "See details on https://arxiv.org/pdf/1810.03993.pdf",
             },
             "training_data": {
-                "Dataset": "English Wikipedia dump dated 2018-12-01",
-                "Preprocessing": "Using SentencePiece vocabulary of size 52k tokens. See details on https://arxiv.org/pdf/1810.03993.pdf",
+                "Dataset":
+                "English Wikipedia dump dated 2018-12-01",
+                "Preprocessing":
+                "Using SentencePiece vocabulary of size 52k tokens. See details on https://arxiv.org/pdf/1810.03993.pdf",
             },
-            "quantitative_analyses": {"BLEU": 55.1, "ROUGE-1": 76},
+            "quantitative_analyses": {
+                "BLEU": 55.1,
+                "ROUGE-1": 76
+            },
         }
 
     def test_model_card_common_properties(self):
@@ -69,7 +77,8 @@ class ModelCardTester(unittest.TestCase):
             model_card_first.to_json_file(filename)
             model_card_second = ModelCard.from_json_file(filename)
 
-        self.assertEqual(model_card_second.to_dict(), model_card_first.to_dict())
+        self.assertEqual(model_card_second.to_dict(),
+                         model_card_first.to_dict())
 
     def test_model_card_from_and_save_pretrained(self):
         model_card_first = ModelCard.from_dict(self.inputs_dict)
@@ -78,4 +87,5 @@ class ModelCardTester(unittest.TestCase):
             model_card_first.save_pretrained(tmpdirname)
             model_card_second = ModelCard.from_pretrained(tmpdirname)
 
-        self.assertEqual(model_card_second.to_dict(), model_card_first.to_dict())
+        self.assertEqual(model_card_second.to_dict(),
+                         model_card_first.to_dict())

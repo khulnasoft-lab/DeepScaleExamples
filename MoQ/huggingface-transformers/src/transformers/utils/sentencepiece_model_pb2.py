@@ -18,19 +18,17 @@
 
 import sys
 
-
-_b = sys.version_info[0] < 3 and (lambda x: x) or (lambda x: x.encode("latin1"))
+_b = sys.version_info[0] < 3 and (lambda x: x) or (
+    lambda x: x.encode("latin1"))
 from google.protobuf import descriptor as _descriptor
 from google.protobuf import descriptor_pb2
 from google.protobuf import message as _message
 from google.protobuf import reflection as _reflection
 from google.protobuf import symbol_database as _symbol_database
 
-
 # @@protoc_insertion_point(imports)
 
 _sym_db = _symbol_database.Default()
-
 
 DESCRIPTOR = _descriptor.FileDescriptor(
     name="sentencepiece_model.proto",
@@ -42,17 +40,32 @@ DESCRIPTOR = _descriptor.FileDescriptor(
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
-
 _TRAINERSPEC_MODELTYPE = _descriptor.EnumDescriptor(
     name="ModelType",
     full_name="sentencepiece.TrainerSpec.ModelType",
     filename=None,
     file=DESCRIPTOR,
     values=[
-        _descriptor.EnumValueDescriptor(name="UNIGRAM", index=0, number=1, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="BPE", index=1, number=2, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="WORD", index=2, number=3, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="CHAR", index=3, number=4, options=None, type=None),
+        _descriptor.EnumValueDescriptor(name="UNIGRAM",
+                                        index=0,
+                                        number=1,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="BPE",
+                                        index=1,
+                                        number=2,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="WORD",
+                                        index=2,
+                                        number=3,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="CHAR",
+                                        index=3,
+                                        number=4,
+                                        options=None,
+                                        type=None),
     ],
     containing_type=None,
     options=None,
@@ -67,11 +80,31 @@ _MODELPROTO_SENTENCEPIECE_TYPE = _descriptor.EnumDescriptor(
     filename=None,
     file=DESCRIPTOR,
     values=[
-        _descriptor.EnumValueDescriptor(name="NORMAL", index=0, number=1, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="UNKNOWN", index=1, number=2, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="CONTROL", index=2, number=3, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="USER_DEFINED", index=3, number=4, options=None, type=None),
-        _descriptor.EnumValueDescriptor(name="UNUSED", index=4, number=5, options=None, type=None),
+        _descriptor.EnumValueDescriptor(name="NORMAL",
+                                        index=0,
+                                        number=1,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="UNKNOWN",
+                                        index=1,
+                                        number=2,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="CONTROL",
+                                        index=2,
+                                        number=3,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="USER_DEFINED",
+                                        index=3,
+                                        number=4,
+                                        options=None,
+                                        type=None),
+        _descriptor.EnumValueDescriptor(name="UNUSED",
+                                        index=4,
+                                        number=5,
+                                        options=None,
+                                        type=None),
     ],
     containing_type=None,
     options=None,
@@ -79,7 +112,6 @@ _MODELPROTO_SENTENCEPIECE_TYPE = _descriptor.EnumDescriptor(
     serialized_end=1943,
 )
 _sym_db.RegisterEnumDescriptor(_MODELPROTO_SENTENCEPIECE_TYPE)
-
 
 _TRAINERSPEC = _descriptor.Descriptor(
     name="TrainerSpec",
@@ -273,7 +305,8 @@ _TRAINERSPEC = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b("\030\001")),
+            options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(),
+                                              _b("\030\001")),
         ),
         _descriptor.FieldDescriptor(
             name="training_sentence_size",
@@ -290,7 +323,8 @@ _TRAINERSPEC = _descriptor.Descriptor(
             containing_type=None,
             is_extension=False,
             extension_scope=None,
-            options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b("\030\001")),
+            options=_descriptor._ParseOptions(descriptor_pb2.FieldOptions(),
+                                              _b("\030\001")),
         ),
         _descriptor.FieldDescriptor(
             name="seed_sentencepiece_size",
@@ -700,7 +734,6 @@ _TRAINERSPEC = _descriptor.Descriptor(
     serialized_end=1185,
 )
 
-
 _NORMALIZERSPEC = _descriptor.Descriptor(
     name="NormalizerSpec",
     full_name="sentencepiece.NormalizerSpec",
@@ -825,7 +858,6 @@ _NORMALIZERSPEC = _descriptor.Descriptor(
     serialized_end=1397,
 )
 
-
 _SELFTESTDATA_SAMPLE = _descriptor.Descriptor(
     name="Sample",
     full_name="sentencepiece.SelfTestData.Sample",
@@ -920,7 +952,6 @@ _SELFTESTDATA = _descriptor.Descriptor(
     serialized_start=1399,
     serialized_end=1520,
 )
-
 
 _MODELPROTO_SENTENCEPIECE = _descriptor.Descriptor(
     name="SentencePiece",
@@ -1093,7 +1124,8 @@ _TRAINERSPEC.fields_by_name["model_type"].enum_type = _TRAINERSPEC_MODELTYPE
 _TRAINERSPEC_MODELTYPE.containing_type = _TRAINERSPEC
 _SELFTESTDATA_SAMPLE.containing_type = _SELFTESTDATA
 _SELFTESTDATA.fields_by_name["samples"].message_type = _SELFTESTDATA_SAMPLE
-_MODELPROTO_SENTENCEPIECE.fields_by_name["type"].enum_type = _MODELPROTO_SENTENCEPIECE_TYPE
+_MODELPROTO_SENTENCEPIECE.fields_by_name["type"].enum_type = (
+    _MODELPROTO_SENTENCEPIECE_TYPE)
 _MODELPROTO_SENTENCEPIECE.containing_type = _MODELPROTO
 _MODELPROTO_SENTENCEPIECE_TYPE.containing_type = _MODELPROTO_SENTENCEPIECE
 _MODELPROTO.fields_by_name["pieces"].message_type = _MODELPROTO_SENTENCEPIECE
@@ -1107,10 +1139,10 @@ DESCRIPTOR.message_types_by_name["ModelProto"] = _MODELPROTO
 
 TrainerSpec = _reflection.GeneratedProtocolMessageType(
     "TrainerSpec",
-    (_message.Message,),
+    (_message.Message, ),
     dict(
         DESCRIPTOR=_TRAINERSPEC,
-        __module__="sentencepiece_model_pb2"
+        __module__="sentencepiece_model_pb2",
         # @@protoc_insertion_point(class_scope:sentencepiece.TrainerSpec)
     ),
 )
@@ -1118,10 +1150,10 @@ _sym_db.RegisterMessage(TrainerSpec)
 
 NormalizerSpec = _reflection.GeneratedProtocolMessageType(
     "NormalizerSpec",
-    (_message.Message,),
+    (_message.Message, ),
     dict(
         DESCRIPTOR=_NORMALIZERSPEC,
-        __module__="sentencepiece_model_pb2"
+        __module__="sentencepiece_model_pb2",
         # @@protoc_insertion_point(class_scope:sentencepiece.NormalizerSpec)
     ),
 )
@@ -1129,19 +1161,19 @@ _sym_db.RegisterMessage(NormalizerSpec)
 
 SelfTestData = _reflection.GeneratedProtocolMessageType(
     "SelfTestData",
-    (_message.Message,),
+    (_message.Message, ),
     dict(
         Sample=_reflection.GeneratedProtocolMessageType(
             "Sample",
-            (_message.Message,),
+            (_message.Message, ),
             dict(
                 DESCRIPTOR=_SELFTESTDATA_SAMPLE,
-                __module__="sentencepiece_model_pb2"
+                __module__="sentencepiece_model_pb2",
                 # @@protoc_insertion_point(class_scope:sentencepiece.SelfTestData.Sample)
             ),
         ),
         DESCRIPTOR=_SELFTESTDATA,
-        __module__="sentencepiece_model_pb2"
+        __module__="sentencepiece_model_pb2",
         # @@protoc_insertion_point(class_scope:sentencepiece.SelfTestData)
     ),
 )
@@ -1150,34 +1182,32 @@ _sym_db.RegisterMessage(SelfTestData.Sample)
 
 ModelProto = _reflection.GeneratedProtocolMessageType(
     "ModelProto",
-    (_message.Message,),
+    (_message.Message, ),
     dict(
         SentencePiece=_reflection.GeneratedProtocolMessageType(
             "SentencePiece",
-            (_message.Message,),
+            (_message.Message, ),
             dict(
                 DESCRIPTOR=_MODELPROTO_SENTENCEPIECE,
-                __module__="sentencepiece_model_pb2"
+                __module__="sentencepiece_model_pb2",
                 # @@protoc_insertion_point(class_scope:sentencepiece.ModelProto.SentencePiece)
             ),
         ),
         DESCRIPTOR=_MODELPROTO,
-        __module__="sentencepiece_model_pb2"
+        __module__="sentencepiece_model_pb2",
         # @@protoc_insertion_point(class_scope:sentencepiece.ModelProto)
     ),
 )
 _sym_db.RegisterMessage(ModelProto)
 _sym_db.RegisterMessage(ModelProto.SentencePiece)
 
-
 DESCRIPTOR.has_options = True
-DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b("H\003"))
+DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(),
+                                                _b("H\003"))
 _TRAINERSPEC.fields_by_name["mining_sentence_size"].has_options = True
-_TRAINERSPEC.fields_by_name["mining_sentence_size"]._options = _descriptor._ParseOptions(
-    descriptor_pb2.FieldOptions(), _b("\030\001")
-)
+_TRAINERSPEC.fields_by_name["mining_sentence_size"]._options = (
+    _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b("\030\001")))
 _TRAINERSPEC.fields_by_name["training_sentence_size"].has_options = True
-_TRAINERSPEC.fields_by_name["training_sentence_size"]._options = _descriptor._ParseOptions(
-    descriptor_pb2.FieldOptions(), _b("\030\001")
-)
+_TRAINERSPEC.fields_by_name["training_sentence_size"]._options = (
+    _descriptor._ParseOptions(descriptor_pb2.FieldOptions(), _b("\030\001")))
 # @@protoc_insertion_point(module_scope)

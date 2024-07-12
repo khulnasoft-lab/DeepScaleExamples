@@ -19,7 +19,6 @@ import os
 import re
 import tempfile
 
-
 # All paths are set with the intent you should run this script from the root of the repo with the command
 # python utils/check_copies.py
 TRANSFORMERS_PATH = "src/transformers"
@@ -28,13 +27,14 @@ REPO_PATH = "."
 
 
 def find_code_in_transformers(object_name):
-    """ Find and return the code source code of `object_name`."""
+    """Find and return the code source code of `object_name`."""
     parts = object_name.split(".")
     i = 0
 
     # First let's find the module where our object lives.
     module = parts[i]
-    while i < len(parts) and not os.path.isfile(os.path.join(TRANSFORMERS_PATH, f"{module}.py")):
+    while i < len(parts) and not os.path.isfile(
+            os.path.join(TRANSFORMERS_PATH, f"{module}.py")):
         i += 1
         if i < len(parts):
             module = os.path.join(module, parts[i])
@@ -43,26 +43,34 @@ def find_code_in_transformers(object_name):
             f"`object_name` should begin with the name of a module of transformers but got {object_name}."
         )
 
-    with open(os.path.join(TRANSFORMERS_PATH, f"{module}.py"), "r", encoding="utf-8", newline="\n") as f:
+    with open(
+            os.path.join(TRANSFORMERS_PATH, f"{module}.py"),
+            "r",
+            encoding="utf-8",
+            newline="\n",
+    ) as f:
         lines = f.readlines()
 
     # Now let's find the class / func in the code!
     indent = ""
     line_index = 0
-    for name in parts[i + 1 :]:
-        while (
-            line_index < len(lines) and re.search(fr"^{indent}(class|def)\s+{name}(\(|\:)", lines[line_index]) is None
-        ):
+    for name in parts[i + 1:]:
+        while (line_index < len(lines)
+               and re.search(rf"^{indent}(class|def)\s+{name}(\(|\:)",
+                             lines[line_index]) is None):
             line_index += 1
         indent += "    "
         line_index += 1
 
     if line_index >= len(lines):
-        raise ValueError(f" {object_name} does not match any function or class in {module}.")
+        raise ValueError(
+            f" {object_name} does not match any function or class in {module}."
+        )
 
     # We found the beginning of the class / func, now let's find the end (when the indent diminishes).
     start_index = line_index
-    while line_index < len(lines) and (lines[line_index].startswith(indent) or len(lines[line_index]) <= 1):
+    while line_index < len(lines) and (lines[line_index].startswith(indent)
+                                       or len(lines[line_index]) <= 1):
         line_index += 1
     # Clean up empty lines at the end (if any).
     while len(lines[line_index - 1]) <= 1:
@@ -72,7 +80,8 @@ def find_code_in_transformers(object_name):
     return "".join(code_lines)
 
 
-_re_copy_warning = re.compile(r"^(\s*)#\s*Copied from\s+transformers\.(\S+\.\S+)\s*($|\S.*$)")
+_re_copy_warning = re.compile(
+    r"^(\s*)#\s*Copied from\s+transformers\.(\S+\.\S+)\s*($|\S.*$)")
 _re_replace_pattern = re.compile(r"with\s+(\S+)->(\S+)(?:\s|$)")
 
 
@@ -90,7 +99,7 @@ def blackify(code):
         os.system(f"black -q --line-length 119 --target-version py35 {fname}")
         with open(fname, "r", encoding="utf-8", newline="\n") as f:
             result = f.read()
-            return result[len("class Bla:\n") :] if has_indent else result
+            return result[len("class Bla:\n"):] if has_indent else result
 
 
 def is_copy_consistent(filename, overwrite=False):
@@ -113,7 +122,8 @@ def is_copy_consistent(filename, overwrite=False):
         # There is some copied code here, let's retrieve the original.
         indent, object_name, replace_pattern = search.groups()
         theoretical_code = find_code_in_transformers(object_name)
-        theoretical_indent = re.search(r"^(\s*)\S", theoretical_code).groups()[0]
+        theoretical_indent = re.search(r"^(\s*)\S",
+                                       theoretical_code).groups()[0]
 
         start_index = line_index + 1 if indent == theoretical_indent else line_index + 2
         indent = theoretical_indent
@@ -126,9 +136,9 @@ def is_copy_consistent(filename, overwrite=False):
             if line_index >= len(lines):
                 break
             line = lines[line_index]
-            should_continue = (len(line) <= 1 or line.startswith(indent)) and re.search(
-                f"^{indent}# End copy", line
-            ) is None
+            should_continue = (len(line) <= 1
+                               or line.startswith(indent)) and re.search(
+                                   f"^{indent}# End copy", line) is None
         # Clean up empty lines at the end (if any).
         while len(lines[line_index - 1]) <= 1:
             line_index -= 1
@@ -147,7 +157,8 @@ def is_copy_consistent(filename, overwrite=False):
         if observed_code != theoretical_code:
             diffs.append([object_name, start_index])
             if overwrite:
-                lines = lines[:start_index] + [theoretical_code] + lines[line_index:]
+                lines = lines[:start_index] + [theoretical_code
+                                               ] + lines[line_index:]
                 line_index = start_index + 1
 
     if overwrite and len(diffs) > 0:
@@ -159,27 +170,33 @@ def is_copy_consistent(filename, overwrite=False):
 
 
 def check_copies(overwrite: bool = False):
-    all_files = glob.glob(os.path.join(TRANSFORMERS_PATH, "**/*.py"), recursive=True)
+    all_files = glob.glob(os.path.join(TRANSFORMERS_PATH, "**/*.py"),
+                          recursive=True)
     diffs = []
     for filename in all_files:
         new_diffs = is_copy_consistent(filename, overwrite)
-        diffs += [f"- {filename}: copy does not match {d[0]} at line {d[1]}" for d in new_diffs]
+        diffs += [
+            f"- {filename}: copy does not match {d[0]} at line {d[1]}"
+            for d in new_diffs
+        ]
     if not overwrite and len(diffs) > 0:
         diff = "\n".join(diffs)
         raise Exception(
-            "Found the following copy inconsistencies:\n"
-            + diff
-            + "\nRun `make fix-copies` or `python utils/check_copies.py --fix_and_overwrite` to fix them."
+            "Found the following copy inconsistencies:\n" + diff +
+            "\nRun `make fix-copies` or `python utils/check_copies.py --fix_and_overwrite` to fix them."
         )
     check_model_list_copy(overwrite=overwrite)
 
 
 def get_model_list():
-    """ Extracts the model list from the README. """
+    """Extracts the model list from the README."""
     # If the introduction or the conclusion of the list change, the prompts may need to be updated.
     _start_prompt = "🤗 Transformers currently provides the following architectures"
     _end_prompt = "1. Want to contribute a new model?"
-    with open(os.path.join(REPO_PATH, "README.md"), "r", encoding="utf-8", newline="\n") as f:
+    with open(os.path.join(REPO_PATH, "README.md"),
+              "r",
+              encoding="utf-8",
+              newline="\n") as f:
         lines = f.readlines()
     # Find the start of the list.
     start_index = 0
@@ -206,7 +223,7 @@ def get_model_list():
 
 
 def split_long_line_with_indent(line, max_per_line, indent):
-    """ Split the `line` so that it doesn't go over `max_per_line` and adds `indent` to new lines. """
+    """Split the `line` so that it doesn't go over `max_per_line` and adds `indent` to new lines."""
     words = line.split(" ")
     lines = []
     current_line = words[0]
@@ -221,22 +238,27 @@ def split_long_line_with_indent(line, max_per_line, indent):
 
 
 def convert_to_rst(model_list, max_per_line=None):
-    """ Convert `model_list` to rst format. """
+    """Convert `model_list` to rst format."""
+
     # Convert **[description](link)** to `description <link>`__
     def _rep_link(match):
         title, link = match.groups()
         # Keep hard links for the models not released yet
-        if "master" in link or not link.startswith("https://huggingface.co/transformers"):
+        if "master" in link or not link.startswith(
+                "https://huggingface.co/transformers"):
             return f"`{title} <{link}>`__"
         # Convert links to relative links otherwise
         else:
-            link = link[len("https://huggingface.co/transformers/") : -len(".html")]
+            link = link[len("https://huggingface.co/transformers/"
+                            ):-len(".html")]
             return f":doc:`{title} <{link}>`"
 
-    model_list = re.sub(r"\*\*\[([^\]]*)\]\(([^\)]*)\)\*\*", _rep_link, model_list)
+    model_list = re.sub(r"\*\*\[([^\]]*)\]\(([^\)]*)\)\*\*", _rep_link,
+                        model_list)
 
     # Convert [description](link) to `description <link>`__
-    model_list = re.sub(r"\[([^\]]*)\]\(([^\)]*)\)", r"`\1 <\2>`__", model_list)
+    model_list = re.sub(r"\[([^\]]*)\]\(([^\)]*)\)", r"`\1 <\2>`__",
+                        model_list)
 
     # Enumerate the lines properly
     lines = model_list.split("\n")
@@ -280,7 +302,7 @@ def _find_text_in_file(filename, start_prompt, end_prompt):
 
 
 def check_model_list_copy(overwrite=False, max_per_line=119):
-    """ Check the model lists in the README and index.rst are consistent and maybe `overwrite`. """
+    """Check the model lists in the README and index.rst are consistent and maybe `overwrite`."""
     rst_list, start_index, end_index, lines = _find_text_in_file(
         filename=os.path.join(PATH_TO_DOCS, "index.rst"),
         start_prompt="    This list is updated automatically from the README",
@@ -291,18 +313,27 @@ def check_model_list_copy(overwrite=False, max_per_line=119):
 
     if converted_list != rst_list:
         if overwrite:
-            with open(os.path.join(PATH_TO_DOCS, "index.rst"), "w", encoding="utf-8", newline="\n") as f:
-                f.writelines(lines[:start_index] + [converted_list] + lines[end_index:])
+            with open(
+                    os.path.join(PATH_TO_DOCS, "index.rst"),
+                    "w",
+                    encoding="utf-8",
+                    newline="\n",
+            ) as f:
+                f.writelines(lines[:start_index] + [converted_list] +
+                             lines[end_index:])
         else:
             raise ValueError(
                 "The model list in the README changed and the list in `index.rst` has not been updated. Run "
-                "`make fix-copies` to fix this."
-            )
+                "`make fix-copies` to fix this.")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fix_and_overwrite", action="store_true", help="Whether to fix inconsistencies.")
+    parser.add_argument(
+        "--fix_and_overwrite",
+        action="store_true",
+        help="Whether to fix inconsistencies.",
+    )
     args = parser.parse_args()
 
     check_copies(args.fix_and_overwrite)

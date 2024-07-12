@@ -23,13 +23,13 @@ class IndexBuilder(object):
         self.model = None
         self.dataloader = None
         self.evidence_embedder_obj = None
-        self.biencoder_shared_query_context_model = \
-            args.biencoder_shared_query_context_model
+        self.biencoder_shared_query_context_model = (
+            args.biencoder_shared_query_context_model)
 
         # need to know whether we're using a REALM checkpoint (args.load)
         # or ICT checkpoint
         assert not (args.load and args.ict_load)
-        #self.using_realm_chkpt = args.ict_load is None
+        # self.using_realm_chkpt = args.ict_load is None
 
         self.log_interval = args.indexer_log_interval
         self.batch_size = args.indexer_batch_size
@@ -47,21 +47,23 @@ class IndexBuilder(object):
         if self.biencoder_shared_query_context_model:
             only_context_model = False
 
-        model = get_model(lambda: biencoder_model_provider(only_context_model \
-            = only_context_model, biencoder_shared_query_context_model = \
-            self.biencoder_shared_query_context_model))
+        model = get_model(lambda: biencoder_model_provider(
+            only_context_model=only_context_model,
+            biencoder_shared_query_context_model=self.
+            biencoder_shared_query_context_model,
+        ))
 
-        self.model = load_biencoder_checkpoint(model,
-                only_context_model=only_context_model)
+        self.model = load_biencoder_checkpoint(
+            model, only_context_model=only_context_model)
 
         assert len(self.model) == 1
         self.model[0].eval()
 
         self.dataset = get_open_retrieval_wiki_dataset()
-        self.dataloader = iter(get_one_epoch_dataloader(self.dataset, \
-            self.batch_size))
+        self.dataloader = iter(
+            get_one_epoch_dataloader(self.dataset, self.batch_size))
 
-        self.evidence_embedder_obj = OpenRetreivalDataStore( \
+        self.evidence_embedder_obj = OpenRetreivalDataStore(
             load_from_path=False)
 
     def track_and_report_progress(self, batch_size):
@@ -71,8 +73,11 @@ class IndexBuilder(object):
         self.iteration += 1
         self.total_processed += batch_size * self.num_total_builders
         if self.is_main_builder and self.iteration % self.log_interval == 0:
-            print('Batch {:10d} | Total {:10d}'.format(self.iteration,
-                self.total_processed), flush=True)
+            print(
+                "Batch {:10d} | Total {:10d}".format(self.iteration,
+                                                     self.total_processed),
+                flush=True,
+            )
 
     def build_and_save_index(self):
         """
@@ -85,15 +90,19 @@ class IndexBuilder(object):
         """
         assert len(self.model) == 1
         unwrapped_model = self.model[0]
-        while not hasattr(unwrapped_model, 'embed_text'):
+        while not hasattr(unwrapped_model, "embed_text"):
             unwrapped_model = unwrapped_model.module
 
         while True:
             try:
                 # batch also has query_tokens and query_pad_data
-                row_id, context_tokens, context_mask, context_types, \
-                    context_pad_mask = get_open_retrieval_batch( \
-                    self.dataloader)
+                (
+                    row_id,
+                    context_tokens,
+                    context_mask,
+                    context_types,
+                    context_pad_mask,
+                ) = get_open_retrieval_batch(self.dataloader)
             except (StopIteration, IndexError):
                 break
 
@@ -101,8 +110,11 @@ class IndexBuilder(object):
             # detach, separate fields and add to BlockData
             assert context_mask.dtype == torch.bool
             context_logits = unwrapped_model.embed_text(
-                unwrapped_model.context_model, context_tokens, context_mask,
-                context_types)
+                unwrapped_model.context_model,
+                context_tokens,
+                context_mask,
+                context_types,
+            )
             context_logits = detach(context_logits)
             row_id = detach(row_id)
 
@@ -119,8 +131,8 @@ class IndexBuilder(object):
         if self.is_main_builder:
             self.evidence_embedder_obj.merge_shards_and_save()
             # make sure that every single piece of data was embedded
-            assert len(self.evidence_embedder_obj.embed_data) == \
-                len(self.dataset)
+            assert len(self.evidence_embedder_obj.embed_data) == len(
+                self.dataset)
         self.evidence_embedder_obj.clear()
 
         # complete building the final copy

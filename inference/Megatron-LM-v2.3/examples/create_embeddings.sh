@@ -29,4 +29,3 @@ python tools/create_doc_index.py \
     --vocab-file bert-vocab.txt \
     --num-workers 2 \
     --fp16
-

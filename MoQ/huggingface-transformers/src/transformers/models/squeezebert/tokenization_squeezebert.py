@@ -17,16 +17,18 @@
 from ...utils import logging
 from ..bert.tokenization_bert import BertTokenizer
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "squeezebert/squeezebert-uncased": "https://huggingface.co/squeezebert/squeezebert-uncased/resolve/main/vocab.txt",
-        "squeezebert/squeezebert-mnli": "https://huggingface.co/squeezebert/squeezebert-mnli/resolve/main/vocab.txt",
-        "squeezebert/squeezebert-mnli-headless": "https://huggingface.co/squeezebert/squeezebert-mnli-headless/resolve/main/vocab.txt",
+        "squeezebert/squeezebert-uncased":
+        "https://huggingface.co/squeezebert/squeezebert-uncased/resolve/main/vocab.txt",
+        "squeezebert/squeezebert-mnli":
+        "https://huggingface.co/squeezebert/squeezebert-mnli/resolve/main/vocab.txt",
+        "squeezebert/squeezebert-mnli-headless":
+        "https://huggingface.co/squeezebert/squeezebert-mnli-headless/resolve/main/vocab.txt",
     }
 }
 
@@ -36,11 +38,16 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "squeezebert/squeezebert-mnli-headless": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "squeezebert/squeezebert-uncased": {"do_lower_case": True},
-    "squeezebert/squeezebert-mnli": {"do_lower_case": True},
-    "squeezebert/squeezebert-mnli-headless": {"do_lower_case": True},
+    "squeezebert/squeezebert-uncased": {
+        "do_lower_case": True
+    },
+    "squeezebert/squeezebert-mnli": {
+        "do_lower_case": True
+    },
+    "squeezebert/squeezebert-mnli-headless": {
+        "do_lower_case": True
+    },
 }
 
 

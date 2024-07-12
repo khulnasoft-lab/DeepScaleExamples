@@ -29,12 +29,10 @@ import requests
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
 
-
 try:
     import regex as re
 except ImportError:
     raise ImportError("Please install regex with: pip install regex")
-
 
 logger = logging.get_logger(__name__)
 
@@ -42,8 +40,10 @@ VOCAB_FILES_NAMES = {"vocab_file": "bpe_encoder.bin"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "microsoft/deberta-base": "https://huggingface.co/microsoft/deberta-base/resolve/main/bpe_encoder.bin",
-        "microsoft/deberta-large": "https://huggingface.co/microsoft/deberta-large/resolve/main/bpe_encoder.bin",
+        "microsoft/deberta-base":
+        "https://huggingface.co/microsoft/deberta-base/resolve/main/bpe_encoder.bin",
+        "microsoft/deberta-large":
+        "https://huggingface.co/microsoft/deberta-large/resolve/main/bpe_encoder.bin",
     }
 }
 
@@ -53,8 +53,12 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "microsoft/deberta-base": {"do_lower_case": False},
-    "microsoft/deberta-large": {"do_lower_case": False},
+    "microsoft/deberta-base": {
+        "do_lower_case": False
+    },
+    "microsoft/deberta-large": {
+        "do_lower_case": False
+    },
 }
 
 __all__ = ["DebertaTokenizer"]
@@ -69,15 +73,17 @@ def bytes_to_unicode():
     percentage of your normal, say, 32K bpe vocab. To avoid that, we want lookup tables between utf-8 bytes and unicode
     strings. And avoids mapping to whitespace/control characters the bpe code barfs on.
     """
-    bs = (
-        list(range(ord("!"), ord("~") + 1)) + list(range(ord("¡"), ord("¬") + 1)) + list(range(ord("®"), ord("ÿ") + 1))
-    )
+    bs = (list(range(ord("!"),
+                     ord("~") + 1)) + list(range(ord("¡"),
+                                                 ord("¬") + 1)) +
+          list(range(ord("®"),
+                     ord("ÿ") + 1)))
     cs = bs[:]
     n = 0
-    for b in range(2 ** 8):
+    for b in range(2**8):
         if b not in bs:
             bs.append(b)
-            cs.append(2 ** 8 + n)
+            cs.append(2**8 + n)
             n += 1
     cs = [chr(n) for n in cs]
     return dict(zip(bs, cs))
@@ -103,12 +109,15 @@ class Encoder:
         self.errors = errors  # how to handle errors in decoding
         self.byte_encoder = bytes_to_unicode()
         self.byte_decoder = {v: k for k, v in self.byte_encoder.items()}
-        self.bpe_ranks = dict(zip([tuple(k) for k in bpe_merges], range(len(bpe_merges))))
+        self.bpe_ranks = dict(
+            zip([tuple(k) for k in bpe_merges], range(len(bpe_merges))))
         self.cache = {}
         self.random = random.Random(0)
 
         # Should haved added re.IGNORECASE so BPE merges can happen for capitalized versions of contractions
-        self.pat = re.compile(r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+        self.pat = re.compile(
+            r"""'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
+        )
 
     def bpe(self, token):
         if token in self.cache:
@@ -120,7 +129,8 @@ class Encoder:
             return token
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -135,7 +145,8 @@ class Encoder:
                     new_word.extend(word[i:])
                     break
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -157,13 +168,16 @@ class Encoder:
     def encode(self, text):
         bpe_tokens = []
         for token in self.split_to_words(text):
-            token = "".join(self.byte_encoder[b] for b in token.encode("utf-8"))
-            bpe_tokens.extend(self.encoder[bpe_token] for bpe_token in self.bpe(token).split(" "))
+            token = "".join(self.byte_encoder[b]
+                            for b in token.encode("utf-8"))
+            bpe_tokens.extend(self.encoder[bpe_token]
+                              for bpe_token in self.bpe(token).split(" "))
         return bpe_tokens
 
     def decode(self, tokens):
         text = "".join([self.decoder[token] for token in tokens])
-        text = bytearray([self.byte_decoder[c] for c in text]).decode("utf-8", errors=self.errors)
+        text = bytearray([self.byte_decoder[c]
+                          for c in text]).decode("utf-8", errors=self.errors)
         return text
 
 
@@ -205,7 +219,8 @@ def _is_punctuation(char):
     # Characters such as "^", "$", and "`" are not in the Unicode
     # Punctuation class but we treat them as punctuation anyways, for
     # consistency.
-    if (cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64) or (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126):
+    if ((cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64)
+            or (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126)):
         return True
     cat = unicodedata.category(char)
     if cat.startswith("P"):
@@ -218,7 +233,8 @@ def download_asset(name, tag=None, no_cache=False, cache_dir=None):
     if _tag is None:
         _tag = "latest"
     if not cache_dir:
-        cache_dir = os.path.join(pathlib.Path.home(), f".~DeBERTa/assets/{_tag}/")
+        cache_dir = os.path.join(pathlib.Path.home(),
+                                 f".~DeBERTa/assets/{_tag}/")
     os.makedirs(cache_dir, exist_ok=True)
     output = os.path.join(cache_dir, name)
     if os.path.exists(output) and (not no_cache):
@@ -240,11 +256,13 @@ def download_asset(name, tag=None, no_cache=False, cache_dir=None):
     headers["Accept"] = "application/octet-stream"
     resp = requests.get(url, stream=True, headers=headers)
     if resp.status_code != 200:
-        raise Exception(f"Request for {url} return {resp.status_code}, {resp.text}")
+        raise Exception(
+            f"Request for {url} return {resp.status_code}, {resp.text}")
     try:
         with open(output, "wb") as fs:
             progress = tqdm(
-                total=int(resp.headers["Content-Length"]) if "Content-Length" in resp.headers else -1,
+                total=(int(resp.headers["Content-Length"])
+                       if "Content-Length" in resp.headers else -1),
                 ncols=80,
                 desc=f"Downloading {name}",
             )
@@ -266,17 +284,22 @@ def load_vocab(name=None, tag=None, no_cache=False, cache_dir=None):
         name = "bpe_encoder"
 
     model_path = name
-    if model_path and (not os.path.exists(model_path)) and not (("/" in model_path) or ("\\" in model_path)):
+    if (model_path and (not os.path.exists(model_path))
+            and not (("/" in model_path) or ("\\" in model_path))):
         _tag = tag
         if _tag is None:
             _tag = "latest"
         if not cache_dir:
-            cache_dir = os.path.join(pathlib.Path.home(), f".~DeBERTa/assets/{_tag}/")
+            cache_dir = os.path.join(pathlib.Path.home(),
+                                     f".~DeBERTa/assets/{_tag}/")
         os.makedirs(cache_dir, exist_ok=True)
         out_dir = os.path.join(cache_dir, name)
         model_path = os.path.join(out_dir, "bpe_encoder.bin")
         if (not os.path.exists(model_path)) or no_cache:
-            asset = download_asset(name + ".zip", tag=tag, no_cache=no_cache, cache_dir=cache_dir)
+            asset = download_asset(name + ".zip",
+                                   tag=tag,
+                                   no_cache=no_cache,
+                                   cache_dir=cache_dir)
             with ZipFile(asset, "r") as zipf:
                 for zip_info in zipf.infolist():
                     if zip_info.filename[-1] == "/":
@@ -314,7 +337,6 @@ class GPT2Tokenizer(object):
         special_tokens (:obj:`list`, optional):
             List of special tokens to be added to the end of the vocabulary.
     """
-
     def __init__(self, vocab_file=None, special_tokens=None):
         self.pad_token = "[PAD]"
         self.sep_token = "[SEP]"
@@ -330,7 +352,8 @@ class GPT2Tokenizer(object):
         self.unk_token_id = self.add_symbol(self.unk_token)
 
         self.gpt2_encoder = load_vocab(vocab_file)
-        self.bpe = get_encoder(self.gpt2_encoder["encoder"], self.gpt2_encoder["vocab"])
+        self.bpe = get_encoder(self.gpt2_encoder["encoder"],
+                               self.gpt2_encoder["vocab"])
         for w, n in self.gpt2_encoder["dict_map"]:
             self.add_symbol(w, n)
 
@@ -416,7 +439,8 @@ class GPT2Tokenizer(object):
           >>> tokenizer.decode(tokens)
           'Hello world!'
         """
-        return self.bpe.decode([int(t) for t in tokens if t not in self.special_tokens])
+        return self.bpe.decode(
+            [int(t) for t in tokens if t not in self.special_tokens])
 
     def add_special_token(self, token):
         """
@@ -436,7 +460,8 @@ class GPT2Tokenizer(object):
         if is_bos:
             return True
         s = self._decode(token)
-        if len(s) == 1 and (_is_whitespace(list(s)[0]) or _is_control(list(s)[0]) or _is_punctuation(list(s)[0])):
+        if len(s) == 1 and (_is_whitespace(list(s)[0]) or _is_control(
+                list(s)[0]) or _is_punctuation(list(s)[0])):
             return False
 
         return not s.startswith(" ")
@@ -484,7 +509,7 @@ class GPT2Tokenizer(object):
             filename = filename_prefix + "-" + filename
         full_path = os.path.join(path, filename)
         torch.save(self.gpt2_encoder, full_path)
-        return (full_path,)
+        return (full_path, )
 
 
 class DebertaTokenizer(PreTrainedTokenizer):
@@ -527,7 +552,7 @@ class DebertaTokenizer(PreTrainedTokenizer):
         pad_token="[PAD]",
         cls_token="[CLS]",
         mask_token="[MASK]",
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             do_lower_case=do_lower_case,
@@ -542,8 +567,8 @@ class DebertaTokenizer(PreTrainedTokenizer):
         if not os.path.isfile(vocab_file):
             raise ValueError(
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
-                "model use `tokenizer = XxxTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file)
-            )
+                "model use `tokenizer = XxxTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`"
+                .format(vocab_file))
         self.do_lower_case = do_lower_case
         self.gpt2_tokenizer = GPT2Tokenizer(vocab_file)
 
@@ -567,15 +592,16 @@ class DebertaTokenizer(PreTrainedTokenizer):
         return self.gpt2_tokenizer.tokenize(text)
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.vocab.get(token, self.vocab.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
         """Converts an index (integer) in a token (str) using the vocab."""
-        return self.gpt2_tokenizer.sym(index) if index < self.vocab_size else self.unk_token
+        return (self.gpt2_tokenizer.sym(index)
+                if index < self.vocab_size else self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         return self.gpt2_tokenizer.decode(tokens)
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
@@ -602,7 +628,10 @@ class DebertaTokenizer(PreTrainedTokenizer):
         sep = [self.sep_token_id]
         return cls + token_ids_0 + sep + token_ids_1 + sep
 
-    def get_special_tokens_mask(self, token_ids_0, token_ids_1=None, already_has_special_tokens=False):
+    def get_special_tokens_mask(self,
+                                token_ids_0,
+                                token_ids_1=None,
+                                already_has_special_tokens=False):
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
         special tokens using the tokenizer ``prepare_for_model`` or ``encode_plus`` methods.
@@ -627,16 +656,19 @@ class DebertaTokenizer(PreTrainedTokenizer):
                 )
             return list(
                 map(
-                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
                     token_ids_0,
-                )
-            )
+                ))
 
         if token_ids_1 is not None:
-            return [1] + ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
+            return [1] + ([0] * len(token_ids_0)) + [1] + (
+                [0] * len(token_ids_1)) + [1]
         return [1] + ([0] * len(token_ids_0)) + [1]
 
-    def create_token_type_ids_from_sequences(self, token_ids_0, token_ids_1=None):
+    def create_token_type_ids_from_sequences(self,
+                                             token_ids_0,
+                                             token_ids_1=None):
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. A DeBERTa
         sequence pair mask has the following format:
@@ -662,13 +694,20 @@ class DebertaTokenizer(PreTrainedTokenizer):
         cls = [self.cls_token_id]
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
-        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
+        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 +
+                                                        sep) * [1]
 
-    def prepare_for_tokenization(self, text, is_split_into_words=False, **kwargs):
+    def prepare_for_tokenization(self,
+                                 text,
+                                 is_split_into_words=False,
+                                 **kwargs):
         add_prefix_space = kwargs.pop("add_prefix_space", False)
         if is_split_into_words or add_prefix_space:
             text = " " + text
         return (text, kwargs)
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
-        return self.gpt2_tokenizer.save_pretrained(save_directory, filename_prefix=filename_prefix)
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
+        return self.gpt2_tokenizer.save_pretrained(
+            save_directory, filename_prefix=filename_prefix)

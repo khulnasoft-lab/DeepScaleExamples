@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import io
 import os
 from os.path import expanduser
@@ -23,7 +22,6 @@ from tqdm import tqdm
 
 import requests
 
-
 ENDPOINT = "https://huggingface.co"
 
 
@@ -31,8 +29,8 @@ class RepoObj:
     """
     HuggingFace git-based system, data structure that represents a file belonging to the current user.
     """
-
-    def __init__(self, filename: str, lastModified: str, commit: str, size: int, **kwargs):
+    def __init__(self, filename: str, lastModified: str, commit: str,
+                 size: int, **kwargs):
         self.filename = filename
         self.lastModified = lastModified
         self.commit = commit
@@ -43,7 +41,6 @@ class ModelSibling:
     """
     Data structure that represents a public file inside a model, accessible from huggingface.co
     """
-
     def __init__(self, rfilename: str, **kwargs):
         self.rfilename = rfilename  # filename relative to the model root
         for k, v in kwargs.items():
@@ -54,19 +51,19 @@ class ModelInfo:
     """
     Info about a public model accessible from huggingface.co
     """
-
     def __init__(
-        self,
-        modelId: Optional[str] = None,  # id of model
-        tags: List[str] = [],
-        pipeline_tag: Optional[str] = None,
-        siblings: Optional[List[Dict]] = None,  # list of files that constitute the model
-        **kwargs
-    ):
+            self,
+            modelId: Optional[str] = None,  # id of model
+            tags: List[str] = [],
+            pipeline_tag: Optional[str] = None,
+            siblings: Optional[
+                List[Dict]] = None,  # list of files that constitute the model
+            **kwargs):
         self.modelId = modelId
         self.tags = tags
         self.pipeline_tag = pipeline_tag
-        self.siblings = [ModelSibling(**x) for x in siblings] if siblings is not None else None
+        self.siblings = ([ModelSibling(**x)
+                          for x in siblings] if siblings is not None else None)
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -84,7 +81,11 @@ class HfApi:
         Throws: requests.exceptions.HTTPError if credentials are invalid
         """
         path = "{}/api/login".format(self.endpoint)
-        r = requests.post(path, json={"username": username, "password": password})
+        r = requests.post(path,
+                          json={
+                              "username": username,
+                              "password": password
+                          })
         r.raise_for_status()
         d = r.json()
         return d["token"]
@@ -94,7 +95,8 @@ class HfApi:
         Call HF API to know "whoami"
         """
         path = "{}/api/whoami".format(self.endpoint)
-        r = requests.get(path, headers={"authorization": "Bearer {}".format(token)})
+        r = requests.get(path,
+                         headers={"authorization": "Bearer {}".format(token)})
         r.raise_for_status()
         d = r.json()
         return d["user"], d["orgs"]
@@ -104,7 +106,8 @@ class HfApi:
         Call HF API to log out.
         """
         path = "{}/api/logout".format(self.endpoint)
-        r = requests.post(path, headers={"authorization": "Bearer {}".format(token)})
+        r = requests.post(path,
+                          headers={"authorization": "Bearer {}".format(token)})
         r.raise_for_status()
 
     def model_list(self) -> List[ModelInfo]:
@@ -117,15 +120,21 @@ class HfApi:
         d = r.json()
         return [ModelInfo(**x) for x in d]
 
-    def list_repos_objs(self, token: str, organization: Optional[str] = None) -> List[RepoObj]:
+    def list_repos_objs(self,
+                        token: str,
+                        organization: Optional[str] = None) -> List[RepoObj]:
         """
         HuggingFace git-based system, used for models.
 
         Call HF API to list all stored files for user (or one of their organizations).
         """
         path = "{}/api/repos/ls".format(self.endpoint)
-        params = {"organization": organization} if organization is not None else None
-        r = requests.get(path, params=params, headers={"authorization": "Bearer {}".format(token)})
+        params = {
+            "organization": organization
+        } if organization is not None else None
+        r = requests.get(path,
+                         params=params,
+                         headers={"authorization": "Bearer {}".format(token)})
         r.raise_for_status()
         d = r.json()
         return [RepoObj(**x) for x in d]
@@ -166,7 +175,10 @@ class HfApi:
         d = r.json()
         return d["url"]
 
-    def delete_repo(self, token: str, name: str, organization: Optional[str] = None):
+    def delete_repo(self,
+                    token: str,
+                    name: str,
+                    organization: Optional[str] = None):
         """
         HuggingFace git-based system, used for models.
 
@@ -178,7 +190,10 @@ class HfApi:
         r = requests.delete(
             path,
             headers={"authorization": "Bearer {}".format(token)},
-            json={"name": name, "organization": organization},
+            json={
+                "name": name,
+                "organization": organization
+            },
         )
         r.raise_for_status()
 
@@ -190,7 +205,6 @@ class TqdmProgressFileReader:
 
     see github.com/huggingface/transformers/pull/2078#discussion_r354739608 for implementation details.
     """
-
     def __init__(self, f: io.BufferedReader):
         self.f = f
         self.total_size = os.fstat(f.fileno()).st_size

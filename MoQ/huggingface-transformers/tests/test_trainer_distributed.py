@@ -15,13 +15,20 @@
 import sys
 from typing import Dict
 
-from transformers import EvalPrediction, HfArgumentParser, TrainingArguments, is_torch_available
-from transformers.testing_utils import TestCasePlus, execute_subprocess_async, require_torch_multi_gpu
+from transformers import (
+    EvalPrediction,
+    HfArgumentParser,
+    TrainingArguments,
+    is_torch_available,
+)
+from transformers.testing_utils import (
+    TestCasePlus,
+    execute_subprocess_async,
+    require_torch_multi_gpu,
+)
 from transformers.utils import logging
 
-
 logger = logging.get_logger(__name__)
-
 
 if is_torch_available():
     import torch
@@ -42,7 +49,10 @@ if is_torch_available():
 
     class DummyDataCollator:
         def __call__(self, features):
-            return {"input_ids": torch.tensor(features), "labels": torch.tensor(features)}
+            return {
+                "input_ids": torch.tensor(features),
+                "labels": torch.tensor(features),
+            }
 
     class DummyModel(nn.Module):
         def __init__(self):
@@ -78,7 +88,7 @@ if __name__ == "__main__":
     #
     # PYTHONPATH="src" python -m torch.distributed.launch --nproc_per_node 2 --output_dir output_dir ./tests/test_trainer_distributed.py
 
-    parser = HfArgumentParser((TrainingArguments,))
+    parser = HfArgumentParser((TrainingArguments, ))
     training_args = parser.parse_args_into_dataclasses()[0]
 
     logger.warning(
@@ -96,7 +106,8 @@ if __name__ == "__main__":
 
         def compute_metrics(p: EvalPrediction) -> Dict:
             sequential = list(range(len(dataset)))
-            success = p.predictions.tolist() == sequential and p.label_ids.tolist() == sequential
+            success = (p.predictions.tolist() == sequential
+                       and p.label_ids.tolist() == sequential)
             return {"success": success}
 
         trainer = Trainer(

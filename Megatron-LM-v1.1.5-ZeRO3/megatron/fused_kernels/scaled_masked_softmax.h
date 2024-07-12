@@ -73,19 +73,19 @@ __device__ __forceinline__ void warp_reduce(acc_t* sum) {
  * Extended softmax (from native aten pytorch) with following additional features
  * 1) input scaling
  * 2) Explicit masking
- */	
+ */
 template <typename input_t, typename output_t, typename acc_t, int log2_elements>
 __global__ void scaled_masked_softmax_warp_forward(
-    output_t *dst, 
+    output_t *dst,
     const input_t *src,
-    const uint8_t *mask, 
-    const acc_t scale, 
-    int batch_size, 
-    int stride, 
+    const uint8_t *mask,
+    const acc_t scale,
+    int batch_size,
+    int stride,
     int element_count,
-    int pad_batches) 
+    int pad_batches)
 {
-    // WARP_SIZE and WARP_BATCH must match the return values batches_per_warp and 
+    // WARP_SIZE and WARP_BATCH must match the return values batches_per_warp and
     // warp_size of method warp_softmax_forward_kernel.
     constexpr int next_power_of_two = 1 << log2_elements;
     constexpr int WARP_SIZE = (next_power_of_two < C10_WARP_SIZE) ? next_power_of_two : C10_WARP_SIZE;
@@ -93,7 +93,7 @@ __global__ void scaled_masked_softmax_warp_forward(
     constexpr int WARP_BATCH = (next_power_of_two <= 128) ? 2 : 1;
 
     // blockDim/threadIdx = (WARP_SIZE, WARPS_PER_BLOCK, )
-    // gridDim/blockIdx = (seq_len, attn_heads, batches) 
+    // gridDim/blockIdx = (seq_len, attn_heads, batches)
     int first_batch = (blockDim.y * (blockIdx.x + gridDim.x * (blockIdx.y + gridDim.y * blockIdx.z))+ threadIdx.y) * WARP_BATCH;
     int pad_first_batch = 0;
     if (pad_batches != 1) { // bert style
@@ -131,7 +131,7 @@ __global__ void scaled_masked_softmax_warp_forward(
 		    elements[i][it] = (acc_t)src[itr_idx] * scale;
 		} else {
                     elements[i][it] = -10000.0;
-		} 
+		}
             } else {
                 elements[i][it] = -std::numeric_limits<acc_t>::infinity();
             }
@@ -173,22 +173,22 @@ __global__ void scaled_masked_softmax_warp_forward(
                 dst[i*element_count+it*WARP_SIZE] = (output_t)(elements[i][it] / sum[i]);
             } else {
                 break;
-            } 
+            }
         }
     }
 }
 
 template <typename input_t, typename output_t, typename acc_t, int log2_elements>
 __global__ void scaled_masked_softmax_warp_backward(
-    output_t *gradInput, 
-    input_t *grad, 
+    output_t *gradInput,
+    input_t *grad,
     const input_t *output,
-    acc_t scale, 
-    int batch_size, 
-    int stride, 
+    acc_t scale,
+    int batch_size,
+    int stride,
     int element_count)
 {
-    // WARP_SIZE and WARP_BATCH must match the return values batches_per_warp and 
+    // WARP_SIZE and WARP_BATCH must match the return values batches_per_warp and
     // warp_size of method warp_softmax_backward_kernel.
     constexpr int next_power_of_two = 1 << log2_elements;
     constexpr int WARP_SIZE = (next_power_of_two < C10_WARP_SIZE) ? next_power_of_two : C10_WARP_SIZE;
@@ -196,9 +196,9 @@ __global__ void scaled_masked_softmax_warp_backward(
     constexpr int WARP_BATCH = (next_power_of_two <= 128) ? 2 : 1;
 
     // blockDim/threadIdx = (WARP_SIZE, WARPS_PER_BLOCK, )
-    // gridDim/blockIdx = (seq_len, attn_heads, batches) 
+    // gridDim/blockIdx = (seq_len, attn_heads, batches)
     int first_batch = (blockDim.y * blockIdx.x + threadIdx.y) * WARP_BATCH;
-    
+
     // batch_size might not be a multiple of WARP_BATCH. Check how
     // many batches have to computed within this WARP.
     int local_batches = batch_size - first_batch;
@@ -241,7 +241,7 @@ __global__ void scaled_masked_softmax_warp_backward(
 	    }
         }
     }
-   
+
     acc_t sum[WARP_BATCH];
     #pragma unroll
     for (int i = 0;  i < WARP_BATCH;  ++i) {
@@ -264,7 +264,7 @@ __global__ void scaled_masked_softmax_warp_backward(
             if (element_index < element_count) {
                 // compute gradients
                 gradInput[i*element_count+it*WARP_SIZE] = (output_t)(scale * (grad_reg[i][it] - output_reg[i][it] * sum[i]));
-            } 
+            }
         }
     }
 }
@@ -273,12 +273,12 @@ __global__ void scaled_masked_softmax_warp_backward(
 
 template<typename input_t, typename output_t, typename acc_t>
 void dispatch_scaled_masked_softmax_forward(
-    output_t *dst, 
-    const input_t *src, 
+    output_t *dst,
+    const input_t *src,
     const uint8_t *mask,
-    const input_t scale, 
-    int softmax_elements, 
-    int softmax_elements_stride, 
+    const input_t scale,
+    int softmax_elements,
+    int softmax_elements_stride,
     int batches,
     int attn_heads,
     int pad_batches)
@@ -364,12 +364,12 @@ void dispatch_scaled_masked_softmax_forward(
 
 template<typename input_t, typename output_t, typename acc_t>
 void dispatch_scaled_masked_softmax_backward(
-    output_t *grad_input, 
-    input_t *grad, 
-    const input_t *output, 
-    const acc_t scale, 
-    int softmax_elements, 
-    int softmax_elements_stride, 
+    output_t *grad_input,
+    input_t *grad,
+    const input_t *output,
+    const acc_t scale,
+    int softmax_elements,
+    int softmax_elements_stride,
     int batches,
     int attn_heads)
 {

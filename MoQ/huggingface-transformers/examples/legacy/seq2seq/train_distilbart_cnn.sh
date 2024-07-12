@@ -19,7 +19,7 @@ export tok=facebook/bart-large
 export MAX_TGT_LEN=142
 
 python finetune_trainer.py \
-    --model_name_or_path $m --tokenizer_name $tok \ 
+    --model_name_or_path $m --tokenizer_name $tok \
     --data_dir cnn_dm \
     --output_dir distilbart-cnn-12-6 --overwrite_output_dir \
     --learning_rate=3e-5 \

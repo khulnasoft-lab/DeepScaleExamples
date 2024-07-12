@@ -17,7 +17,7 @@ python finetune_trainer.py \
     --data_dir $ENRO_DIR \
     --output_dir mbart_cc25_enro --overwrite_output_dir \
     --learning_rate=3e-5 \
-    --warmup_steps 500 \ 
+    --warmup_steps 500 \
     --fp16 \
     --label_smoothing 0.1 \
     --adam_eps 1e-06 \

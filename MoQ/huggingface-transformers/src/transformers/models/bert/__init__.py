@@ -26,10 +26,10 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
     "configuration_bert": ["BERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "BertConfig"],
-    "tokenization_bert": ["BasicTokenizer", "BertTokenizer", "WordpieceTokenizer"],
+    "tokenization_bert":
+    ["BasicTokenizer", "BertTokenizer", "WordpieceTokenizer"],
 }
 
 if is_tokenizers_available():
@@ -70,8 +70,9 @@ if is_tf_available():
     ]
 
 if is_flax_available():
-    _import_structure["modeling_flax_bert"] = ["FlaxBertForMaskedLM", "FlaxBertModel"]
-
+    _import_structure["modeling_flax_bert"] = [
+        "FlaxBertForMaskedLM", "FlaxBertModel"
+    ]
 
 if TYPE_CHECKING:
     from .configuration_bert import BERT_PRETRAINED_CONFIG_ARCHIVE_MAP, BertConfig

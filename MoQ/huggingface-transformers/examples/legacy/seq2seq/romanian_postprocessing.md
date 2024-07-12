@@ -11,12 +11,12 @@ Note: You need to have your test_generations.txt before you start this process.
 ```bash
 cd $HOME
 git clone git@github.com:moses-smt/mosesdecoder.git
-cd mosesdecoder  
+cd mosesdecoder
 git clone git@github.com:rsennrich/wmt16-scripts.git
 ```
 
 (2) define a function for post processing.
- It removes diacritics and does other things I don't understand 
+ It removes diacritics and does other things I don't understand
 ```bash
 ro_post_process () {
   sys=$1

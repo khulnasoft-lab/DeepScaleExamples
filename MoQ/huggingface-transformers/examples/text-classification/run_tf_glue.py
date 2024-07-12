@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Fine-tuning the library models for sequence classification."""
 
-
 import logging
 import os
 from dataclasses import dataclass, field
@@ -42,7 +41,6 @@ from transformers import (
     glue_tasks_num_labels,
 )
 from transformers.utils import logging as hf_logging
-
 
 hf_logging.set_verbosity_info()
 hf_logging.enable_default_handler()
@@ -75,9 +73,15 @@ def get_tfds(
     else:
         tfds_name = task_name
 
-    ds, info = tfds.load("glue/" + tfds_name, split=mode.value, with_info=True, data_dir=data_dir)
-    ds = glue_convert_examples_to_features(ds, tokenizer, max_seq_length, task_name)
-    ds = ds.apply(tf.data.experimental.assert_cardinality(info.splits[mode.value].num_examples))
+    ds, info = tfds.load("glue/" + tfds_name,
+                         split=mode.value,
+                         with_info=True,
+                         data_dir=data_dir)
+    ds = glue_convert_examples_to_features(ds, tokenizer, max_seq_length,
+                                           task_name)
+    ds = ds.apply(
+        tf.data.experimental.assert_cardinality(
+            info.splits[mode.value].num_examples))
 
     return ds
 
@@ -95,17 +99,25 @@ class GlueDataTrainingArguments:
     the command line.
     """
 
-    task_name: str = field(metadata={"help": "The name of the task to train on: " + ", ".join(glue_processors.keys())})
-    data_dir: Optional[str] = field(default=None, metadata={"help": "The input/output data dir for TFDS."})
+    task_name: str = field(
+        metadata={
+            "help":
+            "The name of the task to train on: " +
+            ", ".join(glue_processors.keys())
+        })
+    data_dir: Optional[str] = field(
+        default=None, metadata={"help": "The input/output data dir for TFDS."})
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
 
     def __post_init__(self):
@@ -119,20 +131,35 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        })
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
-    use_fast: bool = field(default=False, metadata={"help": "Set this flag to use fast tokenization."})
+    use_fast: bool = field(
+        default=False,
+        metadata={"help": "Set this flag to use fast tokenization."})
     # If you want to tweak more attributes on your tokenizer, you should do it in a distinct script,
     # or just modify its tokenizer_config.json.
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
 
 
@@ -140,15 +167,13 @@ def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
-    parser = HfArgumentParser((ModelArguments, GlueDataTrainingArguments, TFTrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, GlueDataTrainingArguments, TFTrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
+    if (os.path.exists(training_args.output_dir)
+            and os.listdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
@@ -168,7 +193,8 @@ def main():
     logger.info("Training/evaluation parameters %s", training_args)
 
     try:
-        num_labels = glue_tasks_num_labels["mnli" if data_args.task_name == "mnli-mm" else data_args.task_name]
+        num_labels = glue_tasks_num_labels["mnli" if data_args.task_name ==
+                                           "mnli-mm" else data_args.task_name]
         output_mode = glue_output_modes[data_args.task_name]
     except KeyError:
         raise ValueError("Task not found: %s" % (data_args.task_name))
@@ -180,13 +206,15 @@ def main():
     # download model & vocab.
 
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         num_labels=num_labels,
         finetuning_task=data_args.task_name,
         cache_dir=model_args.cache_dir,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
     )
 
@@ -199,27 +227,19 @@ def main():
         )
 
     # Get datasets
-    train_dataset = (
-        get_tfds(
-            task_name=data_args.task_name,
-            tokenizer=tokenizer,
-            max_seq_length=data_args.max_seq_length,
-            data_dir=data_args.data_dir,
-        )
-        if training_args.do_train
-        else None
-    )
-    eval_dataset = (
-        get_tfds(
-            task_name=data_args.task_name,
-            tokenizer=tokenizer,
-            max_seq_length=data_args.max_seq_length,
-            mode=Split.dev,
-            data_dir=data_args.data_dir,
-        )
-        if training_args.do_eval
-        else None
-    )
+    train_dataset = (get_tfds(
+        task_name=data_args.task_name,
+        tokenizer=tokenizer,
+        max_seq_length=data_args.max_seq_length,
+        data_dir=data_args.data_dir,
+    ) if training_args.do_train else None)
+    eval_dataset = (get_tfds(
+        task_name=data_args.task_name,
+        tokenizer=tokenizer,
+        max_seq_length=data_args.max_seq_length,
+        mode=Split.dev,
+        data_dir=data_args.data_dir,
+    ) if training_args.do_eval else None)
 
     def compute_metrics(p: EvalPrediction) -> Dict:
         if output_mode == "classification":
@@ -249,7 +269,8 @@ def main():
         logger.info("*** Evaluate ***")
 
         result = trainer.evaluate()
-        output_eval_file = os.path.join(training_args.output_dir, "eval_results.txt")
+        output_eval_file = os.path.join(training_args.output_dir,
+                                        "eval_results.txt")
 
         with open(output_eval_file, "w") as writer:
             logger.info("***** Eval results *****")

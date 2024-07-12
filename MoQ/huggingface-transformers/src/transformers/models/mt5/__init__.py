@@ -26,7 +26,6 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 if is_sentencepiece_available():
     from ..t5.tokenization_t5 import T5Tokenizer
 
@@ -42,11 +41,18 @@ _import_structure = {
 }
 
 if is_torch_available():
-    _import_structure["modeling_mt5"] = ["MT5EncoderModel", "MT5ForConditionalGeneration", "MT5Model"]
+    _import_structure["modeling_mt5"] = [
+        "MT5EncoderModel",
+        "MT5ForConditionalGeneration",
+        "MT5Model",
+    ]
 
 if is_tf_available():
-    _import_structure["modeling_tf_mt5"] = ["TFMT5EncoderModel", "TFMT5ForConditionalGeneration", "TFMT5Model"]
-
+    _import_structure["modeling_tf_mt5"] = [
+        "TFMT5EncoderModel",
+        "TFMT5ForConditionalGeneration",
+        "TFMT5Model",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_mt5 import MT5Config
@@ -65,7 +71,11 @@ if TYPE_CHECKING:
         from .modeling_mt5 import MT5EncoderModel, MT5ForConditionalGeneration, MT5Model
 
     if is_tf_available():
-        from .modeling_tf_mt5 import TFMT5EncoderModel, TFMT5ForConditionalGeneration, TFMT5Model
+        from .modeling_tf_mt5 import (
+            TFMT5EncoderModel,
+            TFMT5ForConditionalGeneration,
+            TFMT5Model,
+        )
 
 else:
     import importlib

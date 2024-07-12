@@ -25,23 +25,32 @@ from ...tokenization_utils import AddedToken, BatchEncoding
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 
-
 if is_sentencepiece_available():
     from .tokenization_mbart50 import MBart50Tokenizer
 else:
     MBart50Tokenizer = None
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "sentencepiece.bpe.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "sentencepiece.bpe.model",
+    "tokenizer_file": "tokenizer.json",
+}
 
 _all_mbart50_models = ["facebook/mbart-large-50-one-to-many-mmt"]
 SPM_URL = "https://huggingface.co/facebook/mbart-large-50-one-to-many-mmt/resolve/main/sentencepiece.bpe.model"
 tokenizer_URL = "https://huggingface.co/facebook/mbart-large-50-one-to-many-mmt/resolve/main/tokenizer.json"
 
 # fmt: off
-FAIRSEQ_LANGUAGE_CODES = ["ar_AR", "cs_CZ", "de_DE", "en_XX", "es_XX", "et_EE", "fi_FI", "fr_XX", "gu_IN", "hi_IN", "it_IT", "ja_XX", "kk_KZ", "ko_KR", "lt_LT", "lv_LV", "my_MM", "ne_NP", "nl_XX", "ro_RO", "ru_RU", "si_LK", "tr_TR", "vi_VN", "zh_CN", "af_ZA", "az_AZ", "bn_IN", "fa_IR", "he_IL", "hr_HR", "id_ID", "ka_GE", "km_KH", "mk_MK", "ml_IN", "mn_MN", "mr_IN", "pl_PL", "ps_AF", "pt_XX", "sv_SE", "sw_KE", "ta_IN", "te_IN", "th_TH", "tl_XX", "uk_UA", "ur_PK", "xh_ZA", "gl_ES", "sl_SI"]
+FAIRSEQ_LANGUAGE_CODES = [
+    "ar_AR", "cs_CZ", "de_DE", "en_XX", "es_XX", "et_EE", "fi_FI", "fr_XX",
+    "gu_IN", "hi_IN", "it_IT", "ja_XX", "kk_KZ", "ko_KR", "lt_LT", "lv_LV",
+    "my_MM", "ne_NP", "nl_XX", "ro_RO", "ru_RU", "si_LK", "tr_TR", "vi_VN",
+    "zh_CN", "af_ZA", "az_AZ", "bn_IN", "fa_IR", "he_IL", "hr_HR", "id_ID",
+    "ka_GE", "km_KH", "mk_MK", "ml_IN", "mn_MN", "mr_IN", "pl_PL", "ps_AF",
+    "pt_XX", "sv_SE", "sw_KE", "ta_IN", "te_IN", "th_TH", "tl_XX", "uk_UA",
+    "ur_PK", "xh_ZA", "gl_ES", "sl_SI"
+]
 # fmt: on
 
 
@@ -92,7 +101,10 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
 
     vocab_files_names = VOCAB_FILES_NAMES
     max_model_input_sizes = {m: 1024 for m in _all_mbart50_models}
-    pretrained_vocab_files_map = {"vocab_file": {m: SPM_URL for m in _all_mbart50_models}}
+    pretrained_vocab_files_map = {
+        "vocab_file": {m: SPM_URL
+                       for m in _all_mbart50_models}
+    }
     model_input_names = ["input_ids", "attention_mask"]
     slow_tokenizer_class = MBart50Tokenizer
 
@@ -111,10 +123,11 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
         unk_token="<unk>",
         pad_token="<pad>",
         mask_token="<mask>",
-        **kwargs
+        **kwargs,
     ):
         # Mask token behave like a normal word, i.e. include the space before it
-        mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
+        mask_token = (AddedToken(mask_token, lstrip=True, rstrip=False)
+                      if isinstance(mask_token, str) else mask_token)
 
         super().__init__(
             vocab_file,
@@ -132,9 +145,11 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
 
         self.vocab_file = vocab_file
 
-        self.add_special_tokens({"additional_special_tokens": FAIRSEQ_LANGUAGE_CODES})
+        self.add_special_tokens(
+            {"additional_special_tokens": FAIRSEQ_LANGUAGE_CODES})
         self.lang_code_to_id = {
-            lang_code: self.convert_tokens_to_ids(lang_code) for lang_code in FAIRSEQ_LANGUAGE_CODES
+            lang_code: self.convert_tokens_to_ids(lang_code)
+            for lang_code in FAIRSEQ_LANGUAGE_CODES
         }
 
         self._src_lang = src_lang if src_lang is not None else "en_XX"
@@ -152,7 +167,10 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
         self.set_src_lang_special_tokens(self._src_lang)
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -176,16 +194,23 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
         prefix_ones = [1] * len(self.prefix_tokens)
         suffix_ones = [1] * len(self.suffix_tokens)
         if token_ids_1 is None:
             return prefix_ones + ([0] * len(token_ids_0)) + suffix_ones
-        return prefix_ones + ([0] * len(token_ids_0)) + ([0] * len(token_ids_1)) + suffix_ones
+        return (prefix_ones + ([0] * len(token_ids_0)) +
+                ([0] * len(token_ids_1)) + suffix_ones)
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. The special tokens depend on calling set_lang.
@@ -246,7 +271,11 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
         self._tokenizer.post_processor = processors.TemplateProcessing(
             single=prefix_tokens_str + ["$A"] + suffix_tokens_str,
             pair=prefix_tokens_str + ["$A", "$B"] + suffix_tokens_str,
-            special_tokens=list(zip(prefix_tokens_str + suffix_tokens_str, self.prefix_tokens + self.suffix_tokens)),
+            special_tokens=list(
+                zip(
+                    prefix_tokens_str + suffix_tokens_str,
+                    self.prefix_tokens + self.suffix_tokens,
+                )),
         )
 
     def set_tgt_lang_special_tokens(self, tgt_lang: str) -> None:
@@ -261,18 +290,27 @@ class MBart50TokenizerFast(PreTrainedTokenizerFast):
         self._tokenizer.post_processor = processors.TemplateProcessing(
             single=prefix_tokens_str + ["$A"] + suffix_tokens_str,
             pair=prefix_tokens_str + ["$A", "$B"] + suffix_tokens_str,
-            special_tokens=list(zip(prefix_tokens_str + suffix_tokens_str, self.prefix_tokens + self.suffix_tokens)),
+            special_tokens=list(
+                zip(
+                    prefix_tokens_str + suffix_tokens_str,
+                    self.prefix_tokens + self.suffix_tokens,
+                )),
         )
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

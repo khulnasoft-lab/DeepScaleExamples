@@ -24,9 +24,7 @@ import sys
 
 import requests
 
-
 REGEXP_FIND_S3_LINKS = r"""([\"'])(https:\/\/s3)(.*)?\1"""
-
 
 S3_BUCKET_PREFIX = "https://s3.amazonaws.com/models.huggingface.co/bert"
 
@@ -87,7 +85,8 @@ if __name__ == "__main__":
     file_paths = list_python_files_in_repository()
     links = find_all_links(file_paths)
     broken_links = check_all_links(links)
-    print("Looking for broken links to pre-trained models/configs/tokenizers...")
+    print(
+        "Looking for broken links to pre-trained models/configs/tokenizers...")
     if broken_links:
         print("The following links did not respond:")
         for link in broken_links:

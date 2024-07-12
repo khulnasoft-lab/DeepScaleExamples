@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for FSMT."""
 
-
 import json
 import os
 import re
@@ -26,7 +25,6 @@ import sacremoses as sm
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {
@@ -36,9 +34,18 @@ VOCAB_FILES_NAMES = {
 }
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "src_vocab_file": {"stas/tiny-wmt19-en-de": "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/vocab-src.json"},
-    "tgt_vocab_file": {"stas/tiny-wmt19-en-de": "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/vocab-tgt.json"},
-    "merges_file": {"stas/tiny-wmt19-en-de": "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/merges.txt"},
+    "src_vocab_file": {
+        "stas/tiny-wmt19-en-de":
+        "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/vocab-src.json"
+    },
+    "tgt_vocab_file": {
+        "stas/tiny-wmt19-en-de":
+        "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/vocab-tgt.json"
+    },
+    "merges_file": {
+        "stas/tiny-wmt19-en-de":
+        "https://cdn.huggingface.co/stas/tiny-wmt19-en-de/merges.txt"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {"stas/tiny-wmt19-en-de": 1024}
@@ -190,7 +197,7 @@ class FSMTTokenizer(PreTrainedTokenizer):
         bos_token="<s>",
         sep_token="</s>",
         pad_token="<pad>",
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             langs=langs,
@@ -256,8 +263,7 @@ class FSMTTokenizer(PreTrainedTokenizer):
             moses_tokenizer = sm.MosesTokenizer(lang=lang)
             self.cache_moses_tokenizer[lang] = moses_tokenizer
         return self.cache_moses_tokenizer[lang].tokenize(
-            text, aggressive_dash_splits=True, return_str=False, escape=True
-        )
+            text, aggressive_dash_splits=True, return_str=False, escape=True)
 
     def moses_detokenize(self, tokens, lang):
         if lang not in self.cache_moses_tokenizer:
@@ -286,7 +292,7 @@ class FSMTTokenizer(PreTrainedTokenizer):
         return dict(self.decoder, **self.added_tokens_decoder)
 
     def bpe(self, token):
-        word = tuple(token[:-1]) + (token[-1] + "</w>",)
+        word = tuple(token[:-1]) + (token[-1] + "</w>", )
         if token in self.cache:
             return self.cache[token]
         pairs = get_pairs(word)
@@ -295,7 +301,8 @@ class FSMTTokenizer(PreTrainedTokenizer):
             return token + "</w>"
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -311,7 +318,8 @@ class FSMTTokenizer(PreTrainedTokenizer):
                     new_word.extend(word[i:j])
                     i = j
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -370,7 +378,7 @@ class FSMTTokenizer(PreTrainedTokenizer):
         return split_tokens
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.encoder.get(token, self.encoder.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -378,7 +386,7 @@ class FSMTTokenizer(PreTrainedTokenizer):
         return self.decoder.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
 
         # remove BPE
         tokens = [t.replace(" ", "").replace("</w>", " ") for t in tokens]
@@ -388,8 +396,9 @@ class FSMTTokenizer(PreTrainedTokenizer):
         return text
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A FAIRSEQ Transformer sequence has the following format:
@@ -414,7 +423,10 @@ class FSMTTokenizer(PreTrainedTokenizer):
         return token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -440,18 +452,20 @@ class FSMTTokenizer(PreTrainedTokenizer):
                 )
             return list(
                 map(
-                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
                     token_ids_0,
-                )
-            )
+                ))
         # no bos used in fairseq
         if token_ids_1 is not None:
-            return ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
+            return ([0] * len(token_ids_0)) + [1] + ([0] *
+                                                     len(token_ids_1)) + [1]
         return ([0] * len(token_ids_0)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. A FAIRSEQ
         Transformer sequence pair mask has the following format:
@@ -483,19 +497,28 @@ class FSMTTokenizer(PreTrainedTokenizer):
             return len(token_ids_0 + sep) * [0]
         return len(token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
 
         src_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["src_vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["src_vocab_file"],
         )
         tgt_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["tgt_vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["tgt_vocab_file"],
         )
         merges_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["merges_file"],
         )
 
         with open(src_vocab_file, "w", encoding="utf-8") as f:
@@ -507,12 +530,13 @@ class FSMTTokenizer(PreTrainedTokenizer):
 
         index = 0
         with open(merges_file, "w", encoding="utf-8") as writer:
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(),
+                                                  key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: BPE merge indices are not consecutive."
-                        " Please check that the tokenizer is not corrupted!".format(merges_file)
-                    )
+                        " Please check that the tokenizer is not corrupted!".
+                        format(merges_file))
                     index = token_index
                 writer.write(" ".join(bpe_tokens) + "\n")
                 index += 1

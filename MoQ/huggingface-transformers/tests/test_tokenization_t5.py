@@ -13,15 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 
 from transformers import SPIECE_UNDERLINE, BatchEncoding, T5Tokenizer, T5TokenizerFast
 from transformers.file_utils import cached_property, is_torch_available
-from transformers.testing_utils import get_tests_dir, require_sentencepiece, require_tokenizers
+from transformers.testing_utils import (
+    get_tests_dir,
+    require_sentencepiece,
+    require_tokenizers,
+)
 
 from .test_tokenization_common import TokenizerTesterMixin
-
 
 SAMPLE_VOCAB = get_tests_dir("fixtures/test_sentencepiece.model")
 
@@ -49,7 +51,8 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         tokens = tokenizer.tokenize("This is a test")
         self.assertListEqual(tokens, ["▁This", "▁is", "▁a", "▁t", "est"])
 
-        self.assertListEqual(tokenizer.convert_tokens_to_ids(tokens), [285, 46, 10, 170, 382])
+        self.assertListEqual(tokenizer.convert_tokens_to_ids(tokens),
+                             [285, 46, 10, 170, 382])
 
         tokens = tokenizer.tokenize("I was born in 92000, and this is falsé.")
         self.assertListEqual(
@@ -79,7 +82,32 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
             ],
         )
         ids = tokenizer.convert_tokens_to_ids(tokens)
-        self.assertListEqual(ids, [8, 21, 84, 55, 24, 19, 7, 0, 602, 347, 347, 347, 3, 12, 66, 46, 72, 80, 6, 0, 4])
+        self.assertListEqual(
+            ids,
+            [
+                8,
+                21,
+                84,
+                55,
+                24,
+                19,
+                7,
+                0,
+                602,
+                347,
+                347,
+                347,
+                3,
+                12,
+                66,
+                46,
+                72,
+                80,
+                6,
+                0,
+                4,
+            ],
+        )
 
         back_tokens = tokenizer.convert_ids_to_tokens(ids)
         self.assertListEqual(
@@ -118,10 +146,14 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         return T5TokenizerFast.from_pretrained("t5-base")
 
     def get_tokenizer(self, **kwargs) -> T5Tokenizer:
-        return self.tokenizer_class.from_pretrained(self.tmpdirname, pad_token=None, **kwargs)
+        return self.tokenizer_class.from_pretrained(self.tmpdirname,
+                                                    pad_token=None,
+                                                    **kwargs)
 
     def get_rust_tokenizer(self, **kwargs) -> T5TokenizerFast:
-        return self.rust_tokenizer_class.from_pretrained(self.tmpdirname, pad_token=None, **kwargs)
+        return self.rust_tokenizer_class.from_pretrained(self.tmpdirname,
+                                                         pad_token=None,
+                                                         **kwargs)
 
     def test_rust_and_python_full_tokenizers(self):
         if not self.test_rust_tokenizer:
@@ -147,18 +179,33 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
     def test_eos_treatment(self):
         tokenizer = self.t5_base_tokenizer
-        batch_with_eos_added = tokenizer(["hi</s>", "I went to the gym</s>", "</s>"])
+        batch_with_eos_added = tokenizer(
+            ["hi</s>", "I went to the gym</s>", "</s>"])
         batch_without_eos_added = tokenizer(["hi", "I went to the gym", ""])
-        self.assertListEqual(batch_with_eos_added["input_ids"], batch_without_eos_added["input_ids"])
+        self.assertListEqual(batch_with_eos_added["input_ids"],
+                             batch_without_eos_added["input_ids"])
 
     def test_prepare_seq2seq_batch(self):
         tokenizer = self.t5_base_tokenizer
-        src_text = ["A long paragraph for summarization.", "Another paragraph for summarization."]
+        src_text = [
+            "A long paragraph for summarization.",
+            "Another paragraph for summarization.",
+        ]
         tgt_text = [
             "Summary of the text.",
             "Another summary.",
         ]
-        expected_src_tokens = [71, 307, 8986, 21, 4505, 1635, 1707, 5, tokenizer.eos_token_id]
+        expected_src_tokens = [
+            71,
+            307,
+            8986,
+            21,
+            4505,
+            1635,
+            1707,
+            5,
+            tokenizer.eos_token_id,
+        ]
         batch = tokenizer.prepare_seq2seq_batch(
             src_text,
             tgt_texts=tgt_text,
@@ -173,8 +220,12 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
     def test_empty_target_text(self):
         tokenizer = self.t5_base_tokenizer
-        src_text = ["A long paragraph for summarization.", "Another paragraph for summarization."]
-        batch = tokenizer.prepare_seq2seq_batch(src_text, return_tensors=FRAMEWORK)
+        src_text = [
+            "A long paragraph for summarization.",
+            "Another paragraph for summarization.",
+        ]
+        batch = tokenizer.prepare_seq2seq_batch(src_text,
+                                                return_tensors=FRAMEWORK)
         # check if input_ids are returned and no decoder_input_ids
         self.assertIn("input_ids", batch)
         self.assertIn("attention_mask", batch)
@@ -183,19 +234,30 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
     def test_max_target_length(self):
         tokenizer = self.t5_base_tokenizer
-        src_text = ["A short paragraph for summarization.", "Another short paragraph for summarization."]
+        src_text = [
+            "A short paragraph for summarization.",
+            "Another short paragraph for summarization.",
+        ]
         tgt_text = [
             "Summary of the text.",
             "Another summary.",
         ]
         batch = tokenizer.prepare_seq2seq_batch(
-            src_text, tgt_texts=tgt_text, max_target_length=32, padding="max_length", return_tensors=FRAMEWORK
+            src_text,
+            tgt_texts=tgt_text,
+            max_target_length=32,
+            padding="max_length",
+            return_tensors=FRAMEWORK,
         )
         self.assertEqual(32, batch["labels"].shape[1])
 
         # test None max_target_length
         batch = tokenizer.prepare_seq2seq_batch(
-            src_text, tgt_texts=tgt_text, max_length=32, padding="max_length", return_tensors=FRAMEWORK
+            src_text,
+            tgt_texts=tgt_text,
+            max_length=32,
+            padding="max_length",
+            return_tensors=FRAMEWORK,
         )
         self.assertEqual(32, batch["labels"].shape[1])
 
@@ -203,8 +265,8 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         tokenizer = self.t5_base_tokenizer
 
         batch = tokenizer.prepare_seq2seq_batch(
-            ["I am a small frog" * 1000, "I am a small frog"], return_tensors=FRAMEWORK
-        )
+            ["I am a small frog" * 1000, "I am a small frog"],
+            return_tensors=FRAMEWORK)
         self.assertIsInstance(batch, BatchEncoding)
         self.assertEqual(batch.input_ids.shape, (2, 512))
 
@@ -215,7 +277,9 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         expected_src_tokens = [71, 307, 8986, 21, 4505, 1635, 1707, 5, 1]
         expected_tgt_tokens = [20698, 13, 8, 1499, 5, 1]
 
-        batch = tokenizer.prepare_seq2seq_batch(src_text, tgt_texts=tgt_text, return_tensors=FRAMEWORK)
+        batch = tokenizer.prepare_seq2seq_batch(src_text,
+                                                tgt_texts=tgt_text,
+                                                return_tensors=FRAMEWORK)
 
         src_ids = list(batch.input_ids.numpy()[0])
         tgt_ids = list(batch.labels.numpy()[0])
@@ -228,11 +292,15 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         src_text_2 = ["A second paragraph for summarization."]
 
         fast_token_type_ids = self.t5_base_tokenizer_fast(
-            src_text_1, src_text_2, add_special_tokens=True, return_token_type_ids=True
-        ).token_type_ids
+            src_text_1,
+            src_text_2,
+            add_special_tokens=True,
+            return_token_type_ids=True).token_type_ids
         slow_token_type_ids = self.t5_base_tokenizer(
-            src_text_1, src_text_2, add_special_tokens=True, return_token_type_ids=True
-        ).token_type_ids
+            src_text_1,
+            src_text_2,
+            add_special_tokens=True,
+            return_token_type_ids=True).token_type_ids
 
         self.assertEqual(slow_token_type_ids, fast_token_type_ids)
         self.assertEqual(len(slow_token_type_ids[0]), 18)
@@ -242,8 +310,10 @@ class T5TokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         tgt_ids = [0, 1960, 19, 2, 1245, 239, 1]
         tgt_text = "<pad> Today is<unk> nice day</s>"
 
-        fast_ids = self.t5_base_tokenizer_fast(src_text, add_special_tokens=False).input_ids
-        slow_ids = self.t5_base_tokenizer(src_text, add_special_tokens=False).input_ids
+        fast_ids = self.t5_base_tokenizer_fast(
+            src_text, add_special_tokens=False).input_ids
+        slow_ids = self.t5_base_tokenizer(src_text,
+                                          add_special_tokens=False).input_ids
         self.assertEqual(tgt_ids, fast_ids)
         self.assertEqual(tgt_ids, slow_ids)
 

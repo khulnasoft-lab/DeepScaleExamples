@@ -21,7 +21,14 @@
 
 from typing import Dict, List, Tuple
 
-from tokenizers import Regex, Tokenizer, decoders, normalizers, pre_tokenizers, processors
+from tokenizers import (
+    Regex,
+    Tokenizer,
+    decoders,
+    normalizers,
+    pre_tokenizers,
+    processors,
+)
 from tokenizers.models import BPE, Unigram, WordPiece
 
 from .file_utils import requires_protobuf, requires_sentencepiece
@@ -31,7 +38,6 @@ class SentencePieceExtractor:
     """
     Extractor implementation for SentencePiece trained models. https://github.com/google/sentencepiece
     """
-
     def __init__(self, model: str):
         requires_sentencepiece(self)
         from sentencepiece import SentencePieceProcessor
@@ -41,7 +47,10 @@ class SentencePieceExtractor:
 
     def extract(self) -> Tuple[Dict[str, int], List[Tuple]]:
         sp = self.sp
-        vocab = {sp.id_to_piece(index): index for index in range(sp.GetPieceSize())}
+        vocab = {
+            sp.id_to_piece(index): index
+            for index in range(sp.GetPieceSize())
+        }
 
         # Merges
         merges = []
@@ -72,13 +81,15 @@ class Converter:
 class BertConverter(Converter):
     def converted(self) -> Tokenizer:
         vocab = self.original_tokenizer.vocab
-        tokenizer = Tokenizer(WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
+        tokenizer = Tokenizer(
+            WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
 
         tokenize_chinese_chars = False
         strip_accents = False
         do_lower_case = False
         if hasattr(self.original_tokenizer, "basic_tokenizer"):
-            tokenize_chinese_chars = self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars
+            tokenize_chinese_chars = (
+                self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars)
             strip_accents = self.original_tokenizer.basic_tokenizer.strip_accents
             do_lower_case = self.original_tokenizer.basic_tokenizer.do_lower_case
 
@@ -111,13 +122,15 @@ class BertConverter(Converter):
 class FunnelConverter(Converter):
     def converted(self) -> Tokenizer:
         vocab = self.original_tokenizer.vocab
-        tokenizer = Tokenizer(WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
+        tokenizer = Tokenizer(
+            WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
 
         tokenize_chinese_chars = False
         strip_accents = False
         do_lower_case = False
         if hasattr(self.original_tokenizer, "basic_tokenizer"):
-            tokenize_chinese_chars = self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars
+            tokenize_chinese_chars = (
+                self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars)
             strip_accents = self.original_tokenizer.basic_tokenizer.strip_accents
             do_lower_case = self.original_tokenizer.basic_tokenizer.do_lower_case
 
@@ -135,7 +148,8 @@ class FunnelConverter(Converter):
         sep_token_id = self.original_tokenizer.sep_token_id
 
         tokenizer.post_processor = processors.TemplateProcessing(
-            single=f"{cls}:2 $A:0 {sep}:0",  # token_type_id is 2 for Funnel transformer
+            single=
+            f"{cls}:2 $A:0 {sep}:0",  # token_type_id is 2 for Funnel transformer
             pair=f"{cls}:2 $A:0 {sep}:0 $B:1 {sep}:1",
             special_tokens=[
                 (cls, cls_token_id),
@@ -150,13 +164,15 @@ class FunnelConverter(Converter):
 class MPNetConverter(Converter):
     def converted(self) -> Tokenizer:
         vocab = self.original_tokenizer.vocab
-        tokenizer = Tokenizer(WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
+        tokenizer = Tokenizer(
+            WordPiece(vocab, unk_token=str(self.original_tokenizer.unk_token)))
 
         tokenize_chinese_chars = False
         strip_accents = False
         do_lower_case = False
         if hasattr(self.original_tokenizer, "basic_tokenizer"):
-            tokenize_chinese_chars = self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars
+            tokenize_chinese_chars = (
+                self.original_tokenizer.basic_tokenizer.tokenize_chinese_chars)
             strip_accents = self.original_tokenizer.basic_tokenizer.strip_accents
             do_lower_case = self.original_tokenizer.basic_tokenizer.do_lower_case
 
@@ -175,7 +191,8 @@ class MPNetConverter(Converter):
 
         tokenizer.post_processor = processors.TemplateProcessing(
             single=f"{cls}:0 $A:0 {sep}:0",
-            pair=f"{cls}:0 $A:0 {sep}:0 {sep}:0 $B:1 {sep}:1",  # MPNet uses two [SEP] tokens
+            pair=
+            f"{cls}:0 $A:0 {sep}:0 {sep}:0 $B:1 {sep}:1",  # MPNet uses two [SEP] tokens
             special_tokens=[
                 (cls, cls_token_id),
                 (sep, sep_token_id),
@@ -200,8 +217,7 @@ class OpenAIGPTConverter(Converter):
                 unk_token=str(unk_token),
                 end_of_word_suffix="</w>",
                 fuse_unk=False,
-            )
-        )
+            ))
 
         if tokenizer.token_to_id(str(unk_token)) is not None:
             tokenizer.add_special_tokens([str(unk_token)])
@@ -226,10 +242,10 @@ class GPT2Converter(Converter):
                 continuing_subword_prefix="",
                 end_of_word_suffix="",
                 fuse_unk=False,
-            )
-        )
+            ))
 
-        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=self.original_tokenizer.add_prefix_space)
+        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(
+            add_prefix_space=self.original_tokenizer.add_prefix_space)
         tokenizer.decoder = decoders.ByteLevel()
         tokenizer.post_processor = processors.ByteLevel(trim_offsets=False)
 
@@ -253,15 +269,21 @@ class HerbertConverter(Converter):
                 dropout=None,
                 unk_token=self.original_tokenizer.unk_token,
                 end_of_word_suffix=token_suffix,
-            )
-        )
+            ))
 
-        tokenizer.normalizer = normalizers.BertNormalizer(lowercase=False, strip_accents=False)
+        tokenizer.normalizer = normalizers.BertNormalizer(lowercase=False,
+                                                          strip_accents=False)
         tokenizer.pre_tokenizer = pre_tokenizers.BertPreTokenizer()
         tokenizer.decoder = decoders.BPEDecoder(suffix=token_suffix)
         tokenizer.post_processor = processors.BertProcessing(
-            sep=(self.original_tokenizer.sep_token, self.original_tokenizer.sep_token_id),
-            cls=(self.original_tokenizer.cls_token, self.original_tokenizer.cls_token_id),
+            sep=(
+                self.original_tokenizer.sep_token,
+                self.original_tokenizer.sep_token_id,
+            ),
+            cls=(
+                self.original_tokenizer.cls_token,
+                self.original_tokenizer.cls_token_id,
+            ),
         )
 
         return tokenizer
@@ -281,10 +303,10 @@ class RobertaConverter(Converter):
                 continuing_subword_prefix="",
                 end_of_word_suffix="",
                 fuse_unk=False,
-            )
-        )
+            ))
 
-        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(add_prefix_space=ot.add_prefix_space)
+        tokenizer.pre_tokenizer = pre_tokenizers.ByteLevel(
+            add_prefix_space=ot.add_prefix_space)
         tokenizer.decoder = decoders.ByteLevel()
         tokenizer.post_processor = processors.RobertaProcessing(
             sep=(ot.sep_token, ot.sep_token_id),
@@ -305,7 +327,8 @@ class SpmConverter(Converter):
         from .utils import sentencepiece_model_pb2 as model_pb2
 
         m = model_pb2.ModelProto()
-        m.ParseFromString(open(self.original_tokenizer.vocab_file, "rb").read())
+        m.ParseFromString(
+            open(self.original_tokenizer.vocab_file, "rb").read())
         self.proto = m
 
     def vocab(self, proto):
@@ -322,7 +345,8 @@ class SpmConverter(Converter):
         if model_type == 1:
             tokenizer = Tokenizer(Unigram(vocab, unk_id))
         elif model_type == 2:
-            _, merges = SentencePieceExtractor(self.original_tokenizer.vocab_file).extract()
+            _, merges = SentencePieceExtractor(
+                self.original_tokenizer.vocab_file).extract()
             bpe_vocab = {word: i for i, (word, score) in enumerate(vocab)}
             tokenizer = Tokenizer(
                 BPE(
@@ -330,8 +354,7 @@ class SpmConverter(Converter):
                     merges,
                     unk_token=proto.trainer_spec.unk_piece,
                     fuse_unk=True,
-                )
-            )
+                ))
         else:
             raise Exception(
                 "You're trying to run a `Unigram` model but you're file was trained with a different algorithm"
@@ -341,12 +364,14 @@ class SpmConverter(Converter):
 
     def normalizer(self, proto):
         precompiled_charsmap = proto.normalizer_spec.precompiled_charsmap
-        return normalizers.Sequence(
-            [normalizers.Precompiled(precompiled_charsmap), normalizers.Replace(Regex(" {2,}"), " ")]
-        )
+        return normalizers.Sequence([
+            normalizers.Precompiled(precompiled_charsmap),
+            normalizers.Replace(Regex(" {2,}"), " "),
+        ])
 
     def pre_tokenizer(self, replacement, add_prefix_space):
-        return pre_tokenizers.Metaspace(replacement=replacement, add_prefix_space=add_prefix_space)
+        return pre_tokenizers.Metaspace(replacement=replacement,
+                                        add_prefix_space=add_prefix_space)
 
     def post_processor(self):
         return None
@@ -359,8 +384,10 @@ class SpmConverter(Converter):
 
         replacement = "▁"
         add_prefix_space = True
-        tokenizer.pre_tokenizer = self.pre_tokenizer(replacement, add_prefix_space)
-        tokenizer.decoder = decoders.Metaspace(replacement=replacement, add_prefix_space=add_prefix_space)
+        tokenizer.pre_tokenizer = self.pre_tokenizer(replacement,
+                                                     add_prefix_space)
+        tokenizer.decoder = decoders.Metaspace(
+            replacement=replacement, add_prefix_space=add_prefix_space)
         post_processor = self.post_processor()
         if post_processor:
             tokenizer.post_processor = post_processor
@@ -370,10 +397,9 @@ class SpmConverter(Converter):
 
 class AlbertConverter(SpmConverter):
     def vocab(self, proto):
-        return [
-            (piece.piece, piece.score) if check_number_comma(piece.piece) else (piece.piece, piece.score - 100)
-            for piece in proto.pieces
-        ]
+        return [((piece.piece,
+                  piece.score) if check_number_comma(piece.piece) else
+                 (piece.piece, piece.score - 100)) for piece in proto.pieces]
 
     def normalizer(self, proto):
         list_normalizers = [
@@ -396,8 +422,10 @@ class AlbertConverter(SpmConverter):
             single="[CLS]:0 $A:0 [SEP]:0",
             pair="[CLS]:0 $A:0 [SEP]:0 $B:1 [SEP]:1",
             special_tokens=[
-                ("[CLS]", self.original_tokenizer.convert_tokens_to_ids("[CLS]")),
-                ("[SEP]", self.original_tokenizer.convert_tokens_to_ids("[SEP]")),
+                ("[CLS]",
+                 self.original_tokenizer.convert_tokens_to_ids("[CLS]")),
+                ("[SEP]",
+                 self.original_tokenizer.convert_tokens_to_ids("[SEP]")),
             ],
         )
 
@@ -413,7 +441,8 @@ class BarthezConverter(SpmConverter):
             pair="<s> $A </s> </s> $B </s>",
             special_tokens=[
                 ("<s>", self.original_tokenizer.convert_tokens_to_ids("<s>")),
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 
@@ -442,7 +471,8 @@ class CamembertConverter(SpmConverter):
             pair="<s> $A </s> </s> $B </s>",
             special_tokens=[
                 ("<s>", self.original_tokenizer.convert_tokens_to_ids("<s>")),
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 
@@ -494,8 +524,10 @@ class MBartConverter(SpmConverter):
             single="$A </s> en_XX",
             pair="$A $B </s> en_XX",
             special_tokens=[
-                ("en_XX", self.original_tokenizer.convert_tokens_to_ids("en_XX")),
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("en_XX",
+                 self.original_tokenizer.convert_tokens_to_ids("en_XX")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 
@@ -510,7 +542,21 @@ class MBart50Converter(SpmConverter):
         ]
         vocab += [(piece.piece, piece.score) for piece in proto.pieces[3:]]
         # fmt: off
-        vocab += [("ar_AR", 0.0), ("cs_CZ", 0.0), ("de_DE", 0.0), ("en_XX", 0.0), ("es_XX", 0.0), ("et_EE", 0.0), ("fi_FI", 0.0), ("fr_XX", 0.0), ("gu_IN", 0.0), ("hi_IN", 0.0), ("it_IT", 0.0), ("ja_XX", 0.0), ("kk_KZ", 0.0), ("ko_KR", 0.0), ("lt_LT", 0.0), ("lv_LV", 0.0), ("my_MM", 0.0), ("ne_NP", 0.0), ("nl_XX", 0.0), ("ro_RO", 0.0), ("ru_RU", 0.0), ("si_LK", 0.0), ("tr_TR", 0.0), ("vi_VN", 0.0), ("zh_CN", 0.0), ("af_ZA", 0.0), ("az_AZ", 0.0), ("bn_IN", 0.0), ("fa_IR", 0.0), ("he_IL", 0.0), ("hr_HR", 0.0), ("id_ID", 0.0), ("ka_GE", 0.0), ("km_KH", 0.0), ("mk_MK", 0.0), ("ml_IN", 0.0), ("mn_MN", 0.0), ("mr_IN", 0.0), ("pl_PL", 0.0), ("ps_AF", 0.0), ("pt_XX", 0.0), ("sv_SE", 0.0), ("sw_KE", 0.0), ("ta_IN", 0.0), ("te_IN", 0.0), ("th_TH", 0.0), ("tl_XX", 0.0), ("uk_UA", 0.0), ("ur_PK", 0.0), ("xh_ZA", 0.0), ("gl_ES", 0.0), ("sl_SI", 0.0)]
+        vocab += [
+            ("ar_AR", 0.0), ("cs_CZ", 0.0), ("de_DE", 0.0), ("en_XX", 0.0),
+            ("es_XX", 0.0), ("et_EE", 0.0), ("fi_FI", 0.0), ("fr_XX", 0.0),
+            ("gu_IN", 0.0), ("hi_IN", 0.0), ("it_IT", 0.0), ("ja_XX", 0.0),
+            ("kk_KZ", 0.0), ("ko_KR", 0.0), ("lt_LT", 0.0), ("lv_LV", 0.0),
+            ("my_MM", 0.0), ("ne_NP", 0.0), ("nl_XX", 0.0), ("ro_RO", 0.0),
+            ("ru_RU", 0.0), ("si_LK", 0.0), ("tr_TR", 0.0), ("vi_VN", 0.0),
+            ("zh_CN", 0.0), ("af_ZA", 0.0), ("az_AZ", 0.0), ("bn_IN", 0.0),
+            ("fa_IR", 0.0), ("he_IL", 0.0), ("hr_HR", 0.0), ("id_ID", 0.0),
+            ("ka_GE", 0.0), ("km_KH", 0.0), ("mk_MK", 0.0), ("ml_IN", 0.0),
+            ("mn_MN", 0.0), ("mr_IN", 0.0), ("pl_PL", 0.0), ("ps_AF", 0.0),
+            ("pt_XX", 0.0), ("sv_SE", 0.0), ("sw_KE", 0.0), ("ta_IN", 0.0),
+            ("te_IN", 0.0), ("th_TH", 0.0), ("tl_XX", 0.0), ("uk_UA", 0.0),
+            ("ur_PK", 0.0), ("xh_ZA", 0.0), ("gl_ES", 0.0), ("sl_SI", 0.0)
+        ]
         # fmt: on
         vocab += [("<mask>", 0.0)]
         return vocab
@@ -523,8 +569,10 @@ class MBart50Converter(SpmConverter):
             single="en_XX $A </s>",
             pair="en_XX $A $B </s>",
             special_tokens=[
-                ("en_XX", self.original_tokenizer.convert_tokens_to_ids("en_XX")),
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("en_XX",
+                 self.original_tokenizer.convert_tokens_to_ids("en_XX")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 
@@ -551,17 +599,17 @@ class XLMRobertaConverter(SpmConverter):
             pair="<s> $A </s> </s> $B </s>",
             special_tokens=[
                 ("<s>", self.original_tokenizer.convert_tokens_to_ids("<s>")),
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 
 
 class XLNetConverter(SpmConverter):
     def vocab(self, proto):
-        return [
-            (piece.piece, piece.score) if check_number_comma(piece.piece) else (piece.piece, piece.score - 100)
-            for piece in proto.pieces
-        ]
+        return [((piece.piece,
+                  piece.score) if check_number_comma(piece.piece) else
+                 (piece.piece, piece.score - 100)) for piece in proto.pieces]
 
     def normalizer(self, proto):
         list_normalizers = [
@@ -584,8 +632,10 @@ class XLNetConverter(SpmConverter):
             single="$A:0 <sep>:0 <cls>:2",
             pair="$A:0 <sep>:0 $B:1 <sep>:1 <cls>:2",
             special_tokens=[
-                ("<sep>", self.original_tokenizer.convert_tokens_to_ids("<sep>")),
-                ("<cls>", self.original_tokenizer.convert_tokens_to_ids("<cls>")),
+                ("<sep>",
+                 self.original_tokenizer.convert_tokens_to_ids("<sep>")),
+                ("<cls>",
+                 self.original_tokenizer.convert_tokens_to_ids("<cls>")),
             ],
         )
 
@@ -606,7 +656,8 @@ class PegasusConverter(SpmConverter):
             (self.original_tokenizer.mask_token_sent, 0.0),
             (self.original_tokenizer.mask_token, 0.0),
         ]
-        vocab += [(f"<unk_{i}>", -100.0) for i in range(2, self.original_tokenizer.offset)]
+        vocab += [(f"<unk_{i}>", -100.0)
+                  for i in range(2, self.original_tokenizer.offset)]
         vocab += [(piece.piece, piece.score) for piece in proto.pieces[2:]]
         return vocab
 
@@ -614,26 +665,28 @@ class PegasusConverter(SpmConverter):
         return proto.trainer_spec.unk_id + self.original_tokenizer.offset
 
     def pre_tokenizer(self, replacement, add_prefix_space):
-        return pre_tokenizers.Sequence(
-            [
-                pre_tokenizers.WhitespaceSplit(),
-                pre_tokenizers.Metaspace(replacement=replacement, add_prefix_space=add_prefix_space),
-            ]
-        )
+        return pre_tokenizers.Sequence([
+            pre_tokenizers.WhitespaceSplit(),
+            pre_tokenizers.Metaspace(replacement=replacement,
+                                     add_prefix_space=add_prefix_space),
+        ])
 
     def post_processor(self):
         eos = self.original_tokenizer.eos_token
         special_tokens = [
             (eos, self.original_tokenizer.eos_token_id),
         ]
-        return processors.TemplateProcessing(single=["$A", eos], pair=["$A", "$B", eos], special_tokens=special_tokens)
+        return processors.TemplateProcessing(single=["$A", eos],
+                                             pair=["$A", "$B", eos],
+                                             special_tokens=special_tokens)
 
 
 class T5Converter(SpmConverter):
     def vocab(self, proto):
         num_extra_ids = self.original_tokenizer._extra_ids
         vocab = [(piece.piece, piece.score) for piece in proto.pieces]
-        vocab += [("<extra_id_{}>".format(i), 0.0) for i in range(num_extra_ids - 1, -1, -1)]
+        vocab += [("<extra_id_{}>".format(i), 0.0)
+                  for i in range(num_extra_ids - 1, -1, -1)]
         return vocab
 
     def post_processor(self):
@@ -641,7 +694,8 @@ class T5Converter(SpmConverter):
             single=["$A", "</s>"],
             pair=["$A", "</s>", "$B", "</s>"],
             special_tokens=[
-                ("</s>", self.original_tokenizer.convert_tokens_to_ids("</s>")),
+                ("</s>",
+                 self.original_tokenizer.convert_tokens_to_ids("</s>")),
             ],
         )
 

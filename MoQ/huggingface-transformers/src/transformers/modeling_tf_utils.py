@@ -42,20 +42,18 @@ from .generation_tf_utils import TFGenerationMixin
 from .tokenization_utils_base import BatchEncoding
 from .utils import logging
 
-
 logger = logging.get_logger(__name__)
 tf_logger = tf.get_logger()
 
-TFModelInputType = Union[
-    List[tf.Tensor], List[np.ndarray], Dict[str, tf.Tensor], Dict[str, np.ndarray], np.ndarray, tf.Tensor
-]
+TFModelInputType = Union[List[tf.Tensor], List[np.ndarray], Dict[str,
+                                                                 tf.Tensor],
+                         Dict[str, np.ndarray], np.ndarray, tf.Tensor, ]
 
 
 class TFModelUtilsMixin:
     """
     A few utilities for :obj:`tf.keras.Model`, to be used as a mixin.
     """
-
     def num_parameters(self, only_trainable: bool = False) -> int:
         """
         Get the number of (optionally, trainable) parameters in the model.
@@ -68,7 +66,10 @@ class TFModelUtilsMixin:
             :obj:`int`: The number of parameters.
         """
         if only_trainable:
-            return int(sum(np.prod(w.shape.as_list()) for w in self.trainable_variables))
+            return int(
+                sum(
+                    np.prod(w.shape.as_list())
+                    for w in self.trainable_variables))
         else:
             return self.count_params()
 
@@ -98,11 +99,13 @@ def keras_serializable(cls):
 
     config_class = getattr(cls, "config_class", None)
     if config_class is None:
-        raise AttributeError("Must set `config_class` to use @keras_serializable")
+        raise AttributeError(
+            "Must set `config_class` to use @keras_serializable")
 
     @functools.wraps(initializer)
     def wrapped_init(self, *args, **kwargs):
-        config = args[0] if args and isinstance(args[0], PretrainedConfig) else kwargs.pop("config", None)
+        config = (args[0] if args and isinstance(args[0], PretrainedConfig)
+                  else kwargs.pop("config", None))
 
         if isinstance(config, dict):
             config = config_class.from_dict(config)
@@ -113,7 +116,9 @@ def keras_serializable(cls):
             else:
                 initializer(self, config, *args, **kwargs)
         else:
-            raise ValueError("Must pass either `config` (PretrainedConfig) or `config` (dict)")
+            raise ValueError(
+                "Must pass either `config` (PretrainedConfig) or `config` (dict)"
+            )
 
         self._config = config
         self._kwargs = kwargs
@@ -121,7 +126,8 @@ def keras_serializable(cls):
     cls.__init__ = wrapped_init
 
     if not hasattr(cls, "get_config"):
-        raise TypeError("Only use @keras_serializable on tf.keras.layers.Layer subclasses")
+        raise TypeError(
+            "Only use @keras_serializable on tf.keras.layers.Layer subclasses")
     if hasattr(cls.get_config, "_is_default"):
 
         def get_config(self):
@@ -147,15 +153,14 @@ class TFCausalLanguageModelingLoss:
         Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
 
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-        )
+            from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
         # make sure only labels that are not equal to -100 affect the loss
-        active_loss = tf.not_equal(tf.reshape(labels, (-1,)), -100)
-        reduced_logits = tf.boolean_mask(tf.reshape(logits, (-1, shape_list(logits)[2])), active_loss)
-        labels = tf.boolean_mask(tf.reshape(labels, (-1,)), active_loss)
+        active_loss = tf.not_equal(tf.reshape(labels, (-1, )), -100)
+        reduced_logits = tf.boolean_mask(
+            tf.reshape(logits, (-1, shape_list(logits)[2])), active_loss)
+        labels = tf.boolean_mask(tf.reshape(labels, (-1, )), active_loss)
         return loss_fn(labels, reduced_logits)
 
 
@@ -163,11 +168,9 @@ class TFQuestionAnsweringLoss:
     """
     Loss function suitable for question answering.
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-        )
+            from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
         start_loss = loss_fn(labels["start_position"], logits[0])
         end_loss = loss_fn(labels["end_position"], logits[1])
 
@@ -183,20 +186,21 @@ class TFTokenClassificationLoss:
         Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
 
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-        )
+            from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
         # make sure only labels that are not equal to -100
         # are taken into account as loss
         if tf.math.reduce_any(labels == -1):
-            warnings.warn("Using `-1` to mask the loss for the token is deprecated. Please use `-100` instead.")
-            active_loss = tf.reshape(labels, (-1,)) != -1
+            warnings.warn(
+                "Using `-1` to mask the loss for the token is deprecated. Please use `-100` instead."
+            )
+            active_loss = tf.reshape(labels, (-1, )) != -1
         else:
-            active_loss = tf.reshape(labels, (-1,)) != -100
-        reduced_logits = tf.boolean_mask(tf.reshape(logits, (-1, shape_list(logits)[2])), active_loss)
-        labels = tf.boolean_mask(tf.reshape(labels, (-1,)), active_loss)
+            active_loss = tf.reshape(labels, (-1, )) != -100
+        reduced_logits = tf.boolean_mask(
+            tf.reshape(logits, (-1, shape_list(logits)[2])), active_loss)
+        labels = tf.boolean_mask(tf.reshape(labels, (-1, )), active_loss)
 
         return loss_fn(labels, reduced_logits)
 
@@ -205,14 +209,13 @@ class TFSequenceClassificationLoss:
     """
     Loss function suitable for sequence classification.
     """
-
     def compute_loss(self, labels, logits):
         if len(shape_list(logits)) == 1 or shape_list(logits)[1] == 1:
-            loss_fn = tf.keras.losses.MeanSquaredError(reduction=tf.keras.losses.Reduction.NONE)
+            loss_fn = tf.keras.losses.MeanSquaredError(
+                reduction=tf.keras.losses.Reduction.NONE)
         else:
             loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-                from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-            )
+                from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
 
         return loss_fn(labels, logits)
 
@@ -238,16 +241,17 @@ class TFNextSentencePredictionLoss:
     .. note::
          Any label of -100 will be ignored (along with the corresponding logits) in the loss computation.
     """
-
     def compute_loss(self, labels, logits):
         loss_fn = tf.keras.losses.SparseCategoricalCrossentropy(
-            from_logits=True, reduction=tf.keras.losses.Reduction.NONE
-        )
+            from_logits=True, reduction=tf.keras.losses.Reduction.NONE)
         # make sure only labels that are not equal to -100
         # are taken into account as loss
-        next_sentence_active_loss = tf.not_equal(tf.reshape(labels, (-1,)), -100)
-        next_sentence_reduced_logits = tf.boolean_mask(tf.reshape(logits, (-1, 2)), next_sentence_active_loss)
-        next_sentence_label = tf.boolean_mask(tf.reshape(labels, (-1,)), next_sentence_active_loss)
+        next_sentence_active_loss = tf.not_equal(tf.reshape(labels, (-1, )),
+                                                 -100)
+        next_sentence_reduced_logits = tf.boolean_mask(
+            tf.reshape(logits, (-1, 2)), next_sentence_active_loss)
+        next_sentence_label = tf.boolean_mask(tf.reshape(labels, (-1, )),
+                                              next_sentence_active_loss)
 
         return loss_fn(next_sentence_label, next_sentence_reduced_logits)
 
@@ -270,25 +274,23 @@ def booleans_processing(config, **kwargs):
 
     if tf.executing_eagerly():
         final_booleans["output_attentions"] = (
-            kwargs["output_attentions"] if kwargs["output_attentions"] is not None else config.output_attentions
-        )
+            kwargs["output_attentions"] if kwargs["output_attentions"]
+            is not None else config.output_attentions)
         final_booleans["output_hidden_states"] = (
-            kwargs["output_hidden_states"]
-            if kwargs["output_hidden_states"] is not None
-            else config.output_hidden_states
-        )
-        final_booleans["return_dict"] = (
-            kwargs["return_dict"] if kwargs["return_dict"] is not None else config.return_dict
-        )
+            kwargs["output_hidden_states"] if kwargs["output_hidden_states"]
+            is not None else config.output_hidden_states)
+        final_booleans["return_dict"] = (kwargs["return_dict"]
+                                         if kwargs["return_dict"] is not None
+                                         else config.return_dict)
 
         if "use_cache" in kwargs:
-            final_booleans["use_cache"] = kwargs["use_cache"] if kwargs["use_cache"] is not None else config.use_cache
+            final_booleans["use_cache"] = (kwargs["use_cache"]
+                                           if kwargs["use_cache"] is not None
+                                           else config.use_cache)
     else:
-        if (
-            kwargs["output_attentions"] is not None
-            or kwargs["output_hidden_states"] is not None
-            or ("use_cache" in kwargs and kwargs["use_cache"] is not None)
-        ):
+        if (kwargs["output_attentions"] is not None
+                or kwargs["output_hidden_states"] is not None or
+            ("use_cache" in kwargs and kwargs["use_cache"] is not None)):
             tf_logger.warn(
                 "The parameters `output_attentions`, `output_hidden_states` and `use_cache` cannot be updated when calling a model."
                 "They have to be set to True/False in the config object (i.e.: `config=XConfig.from_pretrained('name', output_attentions=True)`)."
@@ -298,7 +300,9 @@ def booleans_processing(config, **kwargs):
         final_booleans["output_hidden_states"] = config.output_hidden_states
 
         if kwargs["return_dict"] is not None:
-            tf_logger.warn("The parameter `return_dict` cannot be set in graph mode and will always be set to `True`.")
+            tf_logger.warn(
+                "The parameter `return_dict` cannot be set in graph mode and will always be set to `True`."
+            )
         final_booleans["return_dict"] = True
 
         if "use_cache" in kwargs:
@@ -329,7 +333,8 @@ def input_processing(func, config, input_ids, **kwargs):
     signature.pop("self", None)
     parameter_names = list(signature.keys())
     output = {}
-    allowed_types = (tf.Tensor, bool, int, ModelOutput, tuple, list, dict, np.ndarray)
+    allowed_types = (tf.Tensor, bool, int, ModelOutput, tuple, list, dict,
+                     np.ndarray)
 
     if "inputs" in kwargs["kwargs_call"]:
         warnings.warn(
@@ -344,7 +349,8 @@ def input_processing(func, config, input_ids, **kwargs):
             "The `decoder_cached_states` argument is deprecated and will be removed in a future version, use `past_key_values` instead.",
             FutureWarning,
         )
-        output["past_key_values"] = kwargs["kwargs_call"].pop("decoder_cached_states")
+        output["past_key_values"] = kwargs["kwargs_call"].pop(
+            "decoder_cached_states")
 
     if len(kwargs["kwargs_call"]) > 0:
         raise ValueError(
@@ -357,7 +363,9 @@ def input_processing(func, config, input_ids, **kwargs):
         if isinstance(v, allowed_types) or v is None:
             output[k] = v
         else:
-            raise ValueError(f"Data of type {type(v)} is not allowed only {allowed_types} is accepted for {k}.")
+            raise ValueError(
+                f"Data of type {type(v)} is not allowed only {allowed_types} is accepted for {k}."
+            )
 
     if isinstance(input_ids, (tuple, list)):
         for i, input in enumerate(input_ids):
@@ -402,7 +410,9 @@ def input_processing(func, config, input_ids, **kwargs):
                 )
                 continue
             else:
-                raise ValueError(f"Data of type {type(v)} is not allowed only {allowed_types} is accepted for {k}.")
+                raise ValueError(
+                    f"Data of type {type(v)} is not allowed only {allowed_types} is accepted for {k}."
+                )
     else:
         if isinstance(input_ids, tf.Tensor) or input_ids is None:
             output[parameter_names[0]] = input_ids
@@ -432,16 +442,16 @@ def input_processing(func, config, input_ids, **kwargs):
 
     boolean_dict = {
         k: v
-        for k, v in output.items()
-        if k in ["return_dict", "output_attentions", "output_hidden_states", "use_cache"]
+        for k, v in output.items() if k in [
+            "return_dict", "output_attentions", "output_hidden_states",
+            "use_cache"
+        ]
     }
 
-    output.update(
-        booleans_processing(
-            config=config,
-            **boolean_dict,
-        )
-    )
+    output.update(booleans_processing(
+        config=config,
+        **boolean_dict,
+    ))
 
     return output
 
@@ -465,13 +475,17 @@ def load_tf_weights(model, resolved_archive_file):
     # Read the H5 file
     with h5py.File(resolved_archive_file, "r") as f:
         # Retrieve the name of each layer from the H5 file
-        saved_h5_model_layers_name = set(hdf5_format.load_attributes_from_hdf5_group(f, "layer_names"))
+        saved_h5_model_layers_name = set(
+            hdf5_format.load_attributes_from_hdf5_group(f, "layer_names"))
 
         # Find the missing layers from the high level list of layers
-        missing_layers = list(set([layer.name for layer in model.layers]) - saved_h5_model_layers_name)
+        missing_layers = list(
+            set([layer.name
+                 for layer in model.layers]) - saved_h5_model_layers_name)
 
         # Find the unexpected layers from the high level list of layers
-        unexpected_layers = list(saved_h5_model_layers_name - set([layer.name for layer in model.layers]))
+        unexpected_layers = list(saved_h5_model_layers_name -
+                                 set([layer.name for layer in model.layers]))
         saved_weight_names_set = set()
         symbolic_weights_names = set()
         weight_value_tuples = []
@@ -489,10 +503,12 @@ def load_tf_weights(model, resolved_archive_file):
 
                 # Create a dict from the H5 saved model that looks like {"weight_name": weight_value}
                 # And a set with only the names
-                for weight_name in hdf5_format.load_attributes_from_hdf5_group(h5_layer_object, "weight_names"):
+                for weight_name in hdf5_format.load_attributes_from_hdf5_group(
+                        h5_layer_object, "weight_names"):
                     # TF names always start with the model name so we ignore it
                     name = "/".join(weight_name.split("/")[1:])
-                    saved_weights[name] = np.asarray(h5_layer_object[weight_name])
+                    saved_weights[name] = np.asarray(
+                        h5_layer_object[weight_name])
 
                     # Add the updated name to the final list for computing missing/unexpected values
                     saved_weight_names_set.add(name)
@@ -500,12 +516,14 @@ def load_tf_weights(model, resolved_archive_file):
                 # Loop over each weights from the instantiated model and compare with the weights from the H5 file
                 for symbolic_weight in symbolic_weights:
                     # TF names always start with the model name so we ignore it
-                    symbolic_weight_name = "/".join(symbolic_weight.name.split("/")[1:])
+                    symbolic_weight_name = "/".join(
+                        symbolic_weight.name.split("/")[1:])
 
                     # here we check if the current weight is among the weights from the H5 file
                     # If yes, get the weight_value of the corresponding weight from the H5 file
                     # If not, make the value to None
-                    saved_weight_value = saved_weights.get(symbolic_weight_name, None)
+                    saved_weight_value = saved_weights.get(
+                        symbolic_weight_name, None)
 
                     # Add the updated name to the final list for computing missing/unexpected values
                     symbolic_weights_names.add(symbolic_weight_name)
@@ -513,13 +531,19 @@ def load_tf_weights(model, resolved_archive_file):
                     # If the current weight is found
                     if saved_weight_value is not None:
                         # Check if the shape of the current weight and the one from the H5 file are different
-                        if K.int_shape(symbolic_weight) != saved_weight_value.shape:
+                        if K.int_shape(
+                                symbolic_weight) != saved_weight_value.shape:
                             # If yes we reshape the weight from the H5 file accordingly to the current weight
                             # If the two shapes are not compatible we raise an issue
                             try:
-                                array = np.reshape(saved_weight_value, K.int_shape(symbolic_weight))
+                                array = np.reshape(
+                                    saved_weight_value,
+                                    K.int_shape(symbolic_weight))
                             except AssertionError as e:
-                                e.args += (K.int_shape(symbolic_weight), saved_weight_value.shape)
+                                e.args += (
+                                    K.int_shape(symbolic_weight),
+                                    saved_weight_value.shape,
+                                )
                                 raise e
                         else:
                             array = saved_weight_value
@@ -531,8 +555,10 @@ def load_tf_weights(model, resolved_archive_file):
     K.batch_set_value(weight_value_tuples)
 
     # Compute the missing and unexpected layers
-    missing_layers.extend(list(symbolic_weights_names - saved_weight_names_set))
-    unexpected_layers.extend(list(saved_weight_names_set - symbolic_weights_names))
+    missing_layers.extend(list(symbolic_weights_names -
+                               saved_weight_names_set))
+    unexpected_layers.extend(
+        list(saved_weight_names_set - symbolic_weights_names))
 
     return missing_layers, unexpected_layers
 
@@ -560,11 +586,15 @@ def init_copy_embeddings(old_embeddings, new_num_tokens):
         # and we create a mask to properly identify the padded values and be replaced by the values of the newly created
         # embeddings
         current_weights = tf.pad(
-            old_embeddings.value(), tf.convert_to_tensor([[0, size_diff], [0, 0]]), constant_values=-1
+            old_embeddings.value(),
+            tf.convert_to_tensor([[0, size_diff], [0, 0]]),
+            constant_values=-1,
         )
         num_tokens_to_copy = min(old_num_tokens, new_num_tokens)
         mask = tf.fill(tf.convert_to_tensor([num_tokens_to_copy, 1]), True)
-        mask = tf.pad(mask, tf.convert_to_tensor([[0, size_diff], [0, 0]]), constant_values=False)
+        mask = tf.pad(mask,
+                      tf.convert_to_tensor([[0, size_diff], [0, 0]]),
+                      constant_values=False)
     else:
         # if the new size if lower than the old one, we take the current embeddings until the new size
         current_weights = tf.slice(
@@ -594,6 +624,7 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         - **base_model_prefix** (:obj:`str`) -- A string indicating the attribute associated to the base model in
           derived classes of the same architecture adding modules on top of the base model.
     """
+
     config_class = None
     base_model_prefix = ""
     # a list of re pattern of tensor names to ignore from the model when loading the model weights
@@ -622,22 +653,19 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
                 "Parameter config in `{}(config)` should be an instance of class `PretrainedConfig`. "
                 "To create a model from a pretrained model use "
                 "`model = {}.from_pretrained(PRETRAINED_MODEL_NAME)`".format(
-                    self.__class__.__name__, self.__class__.__name__
-                )
-            )
+                    self.__class__.__name__, self.__class__.__name__))
         # Save config and origin of the pretrained weights if given in model
         self.config = config
         self.name_or_path = config.name_or_path
 
-    @tf.function(
-        input_signature=[
-            {
-                "input_ids": tf.TensorSpec((None, None), tf.int32, name="input_ids"),
-                "attention_mask": tf.TensorSpec((None, None), tf.int32, name="attention_mask"),
-                "token_type_ids": tf.TensorSpec((None, None), tf.int32, name="token_type_ids"),
-            }
-        ]
-    )
+    @tf.function(input_signature=[{
+        "input_ids":
+        tf.TensorSpec((None, None), tf.int32, name="input_ids"),
+        "attention_mask":
+        tf.TensorSpec((None, None), tf.int32, name="attention_mask"),
+        "token_type_ids":
+        tf.TensorSpec((None, None), tf.int32, name="token_type_ids"),
+    }])
     def serving(self, inputs):
         """
         Method used for serving the model.
@@ -685,7 +713,9 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         main_layer = getattr(self, self.base_model_prefix)
 
         if main_layer is None:
-            raise NotImplementedError("The model does not implements the base_model_prefix attribute.")
+            raise NotImplementedError(
+                "The model does not implements the base_model_prefix attribute."
+            )
 
         try:
             main_layer.set_input_embeddings(value)
@@ -734,7 +764,8 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
             :obj:`tf.keras.layers.Layer`: The layer that handles the bias, None if not an LM model.
         """
         warnings.warn(
-            "The method get_output_layer_with_bias is deprecated. Please use `get_lm_head` instead.", FutureWarning
+            "The method get_output_layer_with_bias is deprecated. Please use `get_lm_head` instead.",
+            FutureWarning,
         )
         return self.get_lm_head()
 
@@ -745,7 +776,10 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         Return:
             :obj:`str`: The prefix name of the bias.
         """
-        warnings.warn("The method get_prefix_bias_name is deprecated. Please use `get_bias` instead.", FutureWarning)
+        warnings.warn(
+            "The method get_prefix_bias_name is deprecated. Please use `get_bias` instead.",
+            FutureWarning,
+        )
         return None
 
     def get_bias(self) -> Union[None, Dict[str, tf.Variable]]:
@@ -841,20 +875,25 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         return None
 
     def _resize_token_embeddings(self, new_num_tokens):
-        old_embeddings = self._get_word_embedding_weight(self.get_input_embeddings())
-        new_embeddings = self._get_resized_embeddings(old_embeddings, new_num_tokens)
+        old_embeddings = self._get_word_embedding_weight(
+            self.get_input_embeddings())
+        new_embeddings = self._get_resized_embeddings(old_embeddings,
+                                                      new_num_tokens)
 
         # if word embeddings are not tied, make sure that lm head bias is resized as well
         if self.get_bias() is not None:
             old_lm_head_bias = self.get_bias()
-            new_lm_head_bias = self._get_resized_lm_head_bias(old_lm_head_bias, new_num_tokens)
+            new_lm_head_bias = self._get_resized_lm_head_bias(
+                old_lm_head_bias, new_num_tokens)
 
             self.set_bias(new_lm_head_bias)
 
         # if word embeddings are not tied, make sure that lm head decoder is resized as well
         if self.get_output_embeddings() is not None:
-            old_lm_head_decoder = self._get_word_embedding_weight(self.get_output_embeddings())
-            new_lm_head_decoder = self._get_resized_lm_head_decoder(old_lm_head_decoder, new_num_tokens)
+            old_lm_head_decoder = self._get_word_embedding_weight(
+                self.get_output_embeddings())
+            new_lm_head_decoder = self._get_resized_lm_head_decoder(
+                old_lm_head_decoder, new_num_tokens)
 
             self.set_output_embeddings(new_lm_head_decoder)
 
@@ -882,22 +921,37 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         new_lm_head_bias = {}
 
         for attr, weight in old_lm_head_bias.items():
-            first_dim, old_num_tokens = (None, shape_list(weight)[0]) if tf.rank(weight) == 1 else shape_list(weight)
+            first_dim, old_num_tokens = ((None, shape_list(weight)[0])
+                                         if tf.rank(weight) == 1 else
+                                         shape_list(weight))
             size_diff = new_num_tokens - old_num_tokens
-            final_shape = [new_num_tokens] if first_dim is None else [first_dim, new_num_tokens]
+            final_shape = ([new_num_tokens] if first_dim is None else
+                           [first_dim, new_num_tokens])
 
             # initialize new bias
             if tf.math.greater(size_diff, 0):
-                padding_shape = [[0, size_diff]] if first_dim is None else [[0, 0], [0, size_diff]]
-                current_bias = tf.pad(weight.value(), tf.convert_to_tensor(padding_shape), constant_values=-1)
+                padding_shape = ([[0, size_diff]] if first_dim is None else
+                                 [[0, 0], [0, size_diff]])
+                current_bias = tf.pad(
+                    weight.value(),
+                    tf.convert_to_tensor(padding_shape),
+                    constant_values=-1,
+                )
                 num_tokens_to_copy = min(old_num_tokens, new_num_tokens)
-                mask_shape = [num_tokens_to_copy] if first_dim is None else [1, num_tokens_to_copy]
+                mask_shape = ([num_tokens_to_copy] if first_dim is None else
+                              [1, num_tokens_to_copy])
                 bias_mask = tf.fill(tf.convert_to_tensor(mask_shape), True)
-                bias_mask = tf.pad(bias_mask, tf.convert_to_tensor(padding_shape), constant_values=False)
+                bias_mask = tf.pad(
+                    bias_mask,
+                    tf.convert_to_tensor(padding_shape),
+                    constant_values=False,
+                )
             else:
                 slice_from = [0] if first_dim is None else [0, 0]
                 current_bias = tf.slice(
-                    weight.value(), tf.convert_to_tensor(slice_from), tf.convert_to_tensor(final_shape)
+                    weight.value(),
+                    tf.convert_to_tensor(slice_from),
+                    tf.convert_to_tensor(final_shape),
                 )
                 bias_mask = tf.fill(tf.convert_to_tensor(final_shape), True)
 
@@ -914,7 +968,8 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
 
         return new_lm_head_bias
 
-    def _get_resized_lm_head_decoder(self, old_lm_head_decoder, new_num_tokens):
+    def _get_resized_lm_head_decoder(self, old_lm_head_decoder,
+                                     new_num_tokens):
         """
         Build a resized decoder from the old ones. Increasing the size will add newly initialized vectors at the end.
         Reducing the size will remove vectors from the end
@@ -934,25 +989,29 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         """
         new_lm_head_decoder = old_lm_head_decoder
         is_input_output_equals = tf.reduce_any(
-            self._get_word_embedding_weight(self.get_input_embeddings()) == old_lm_head_decoder
-        )
+            self._get_word_embedding_weight(self.get_input_embeddings()) ==
+            old_lm_head_decoder)
 
         if old_lm_head_decoder is not None and not is_input_output_equals:
             old_embedding_dim = shape_list(old_lm_head_decoder)[1]
-            decoder_mask, current_decoder = init_copy_embeddings(old_lm_head_decoder, new_num_tokens)
+            decoder_mask, current_decoder = init_copy_embeddings(
+                old_lm_head_decoder, new_num_tokens)
             new_lm_head_decoder = self.add_weight(
                 shape=(new_num_tokens, old_embedding_dim),
                 initializer="zeros",
                 trainable=True,
                 name=old_lm_head_decoder.name.split(":")[0],
             )
-            init_decoder = tf.where(decoder_mask, current_decoder, new_lm_head_decoder.value())
+            init_decoder = tf.where(decoder_mask, current_decoder,
+                                    new_lm_head_decoder.value())
 
             new_lm_head_decoder.assign(init_decoder)
 
         return new_lm_head_decoder
 
-    def _get_resized_embeddings(self, old_embeddings, new_num_tokens=None) -> tf.Variable:
+    def _get_resized_embeddings(self,
+                                old_embeddings,
+                                new_num_tokens=None) -> tf.Variable:
         """
         Build a resized Embedding weights from a provided token Embedding weights. Increasing the size will add newly
         initialized vectors at the end. Reducing the size will remove vectors from the end
@@ -973,14 +1032,16 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         """
         old_embedding_dim = shape_list(old_embeddings)[1]
         init_range = getattr(self.config, "initializer_range", 0.02)
-        embeddings_mask, current_embeddings = init_copy_embeddings(old_embeddings, new_num_tokens)
+        embeddings_mask, current_embeddings = init_copy_embeddings(
+            old_embeddings, new_num_tokens)
         new_embeddings = self.add_weight(
             name=old_embeddings.name.split(":")[0],
             shape=[new_num_tokens, old_embedding_dim],
             initializer=get_initializer(init_range),
             dtype=tf.float32,
         )
-        init_embeddings = tf.where(embeddings_mask, current_embeddings, new_embeddings.value())
+        init_embeddings = tf.where(embeddings_mask, current_embeddings,
+                                   new_embeddings.value())
 
         new_embeddings.assign(init_embeddings)
 
@@ -1014,13 +1075,18 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
                 https://www.tensorflow.org/tfx/serving/serving_basic
         """
         if os.path.isfile(save_directory):
-            logger.error("Provided path ({}) should be a directory, not a file".format(save_directory))
+            logger.error(
+                "Provided path ({}) should be a directory, not a file".format(
+                    save_directory))
             return
         os.makedirs(save_directory, exist_ok=True)
 
         if saved_model:
-            saved_model_dir = os.path.join(save_directory, "saved_model", str(version))
-            self.save(saved_model_dir, include_optimizer=False, signatures=self.serving)
+            saved_model_dir = os.path.join(save_directory, "saved_model",
+                                           str(version))
+            self.save(saved_model_dir,
+                      include_optimizer=False,
+                      signatures=self.serving)
             logger.info(f"Saved model created in {saved_model_dir}")
 
         # Save configuration file
@@ -1032,7 +1098,8 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         logger.info("Model weights saved in {}".format(output_model_file))
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Instantiate a pretrained TF 2.0 model from a pre-trained model configuration.
 
@@ -1153,7 +1220,8 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
 
         # Load config if we don't provide a configuration
         if not isinstance(config, PretrainedConfig):
-            config_path = config if config is not None else pretrained_model_name_or_path
+            config_path = (config if config is not None else
+                           pretrained_model_name_or_path)
             config, model_kwargs = cls.config_class.from_pretrained(
                 config_path,
                 *model_args,
@@ -1173,19 +1241,28 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
         # Load model
         if pretrained_model_name_or_path is not None:
             if os.path.isdir(pretrained_model_name_or_path):
-                if from_pt and os.path.isfile(os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)):
+                if from_pt and os.path.isfile(
+                        os.path.join(pretrained_model_name_or_path,
+                                     WEIGHTS_NAME)):
                     # Load from a PyTorch checkpoint in priority if from_pt
-                    archive_file = os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)
-                elif os.path.isfile(os.path.join(pretrained_model_name_or_path, TF2_WEIGHTS_NAME)):
+                    archive_file = os.path.join(pretrained_model_name_or_path,
+                                                WEIGHTS_NAME)
+                elif os.path.isfile(
+                        os.path.join(pretrained_model_name_or_path,
+                                     TF2_WEIGHTS_NAME)):
                     # Load from a TF 2.0 checkpoint
-                    archive_file = os.path.join(pretrained_model_name_or_path, TF2_WEIGHTS_NAME)
+                    archive_file = os.path.join(pretrained_model_name_or_path,
+                                                TF2_WEIGHTS_NAME)
                 else:
                     raise EnvironmentError(
-                        "Error no file named {} found in directory {} or `from_pt` set to False".format(
-                            [WEIGHTS_NAME, TF2_WEIGHTS_NAME], pretrained_model_name_or_path
-                        )
-                    )
-            elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+                        "Error no file named {} found in directory {} or `from_pt` set to False"
+                        .format(
+                            [WEIGHTS_NAME, TF2_WEIGHTS_NAME],
+                            pretrained_model_name_or_path,
+                        ))
+            elif os.path.isfile(
+                    pretrained_model_name_or_path) or is_remote_url(
+                        pretrained_model_name_or_path):
                 archive_file = pretrained_model_name_or_path
             elif os.path.isfile(pretrained_model_name_or_path + ".index"):
                 archive_file = pretrained_model_name_or_path + ".index"
@@ -1219,7 +1296,8 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
             if resolved_archive_file == archive_file:
                 logger.info("loading weights file {}".format(archive_file))
             else:
-                logger.info("loading weights file {} from cache at {}".format(archive_file, resolved_archive_file))
+                logger.info("loading weights file {} from cache at {}".format(
+                    archive_file, resolved_archive_file))
         else:
             resolved_archive_file = None
 
@@ -1232,15 +1310,19 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
             from .modeling_tf_pytorch_utils import load_pytorch_checkpoint_in_tf2_model
 
             # Load from a PyTorch checkpoint
-            return load_pytorch_checkpoint_in_tf2_model(model, resolved_archive_file, allow_missing_keys=True)
+            return load_pytorch_checkpoint_in_tf2_model(
+                model, resolved_archive_file, allow_missing_keys=True)
 
         model(model.dummy_inputs)  # build the network with dummy inputs
 
-        assert os.path.isfile(resolved_archive_file), "Error retrieving file {}".format(resolved_archive_file)
+        assert os.path.isfile(
+            resolved_archive_file), "Error retrieving file {}".format(
+                resolved_archive_file)
         # 'by_name' allow us to do transfer learning by skipping/adding layers
         # see https://github.com/tensorflow/tensorflow/blob/00fad90125b18b80fe054de1055770cfb8fe4ba3/tensorflow/python/keras/engine/network.py#L1339-L1357
         try:
-            missing_keys, unexpected_keys = load_tf_weights(model, resolved_archive_file)
+            missing_keys, unexpected_keys = load_tf_weights(
+                model, resolved_archive_file)
         except OSError:
             raise OSError(
                 "Unable to load weights from h5 file. "
@@ -1251,11 +1333,15 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
 
         if cls._keys_to_ignore_on_load_missing is not None:
             for pat in cls._keys_to_ignore_on_load_missing:
-                missing_keys = [k for k in missing_keys if re.search(pat, k) is None]
+                missing_keys = [
+                    k for k in missing_keys if re.search(pat, k) is None
+                ]
 
         if cls._keys_to_ignore_on_load_unexpected is not None:
             for pat in cls._keys_to_ignore_on_load_unexpected:
-                unexpected_keys = [k for k in unexpected_keys if re.search(pat, k) is None]
+                unexpected_keys = [
+                    k for k in unexpected_keys if re.search(pat, k) is None
+                ]
 
         if len(unexpected_keys) > 0:
             logger.warning(
@@ -1267,7 +1353,9 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
                 f"to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model)."
             )
         else:
-            logger.warning(f"All model checkpoint layers were used when initializing {model.__class__.__name__}.\n")
+            logger.warning(
+                f"All model checkpoint layers were used when initializing {model.__class__.__name__}.\n"
+            )
 
         if len(missing_keys) > 0:
             logger.warning(
@@ -1283,7 +1371,10 @@ class TFPreTrainedModel(tf.keras.Model, TFModelUtilsMixin, TFGenerationMixin):
             )
 
         if output_loading_info:
-            loading_info = {"missing_keys": missing_keys, "unexpected_keys": unexpected_keys}
+            loading_info = {
+                "missing_keys": missing_keys,
+                "unexpected_keys": unexpected_keys,
+            }
 
             return model, loading_info
 
@@ -1306,7 +1397,6 @@ class TFConv1D(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
     def __init__(self, nf, nx, initializer_range=0.02, **kwargs):
         super().__init__(**kwargs)
         self.nf = nf
@@ -1315,9 +1405,13 @@ class TFConv1D(tf.keras.layers.Layer):
 
     def build(self, input_shape):
         self.weight = self.add_weight(
-            "weight", shape=[self.nx, self.nf], initializer=get_initializer(self.initializer_range)
+            "weight",
+            shape=[self.nx, self.nf],
+            initializer=get_initializer(self.initializer_range),
         )
-        self.bias = self.add_weight("bias", shape=[1, self.nf], initializer=tf.zeros_initializer())
+        self.bias = self.add_weight("bias",
+                                    shape=[1, self.nf],
+                                    initializer=tf.zeros_initializer())
 
     def call(self, x):
         bz, sl = shape_list(x)[:2]
@@ -1348,12 +1442,19 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
-    def __init__(self, vocab_size: int, hidden_size: int, initializer_range: Optional[float] = None, **kwargs):
+    def __init__(
+        self,
+        vocab_size: int,
+        hidden_size: int,
+        initializer_range: Optional[float] = None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
         self.hidden_size = hidden_size
-        self.initializer_range = hidden_size ** -0.5 if initializer_range is None else initializer_range
+        self.initializer_range = (hidden_size**-0.5
+                                  if initializer_range is None else
+                                  initializer_range)
 
     def build(self, input_shape):
         """
@@ -1361,7 +1462,9 @@ class TFSharedEmbeddings(tf.keras.layers.Layer):
         https://github.com/tensorflow/models/blob/a009f4fb9d2fc4949e32192a944688925ef78659/official/transformer/v2/embedding_layer.py#L24
         """
         self.weight = self.add_weight(
-            "weight", shape=[self.vocab_size, self.hidden_size], initializer=get_initializer(self.initializer_range)
+            "weight",
+            shape=[self.vocab_size, self.hidden_size],
+            initializer=get_initializer(self.initializer_range),
         )
         super().build(input_shape)
 
@@ -1459,38 +1562,51 @@ class TFSequenceSummary(tf.keras.layers.Layer):
         kwargs:
             Additional keyword arguments passed along to the :obj:`__init__` of :obj:`tf.keras.layers.Layer`.
     """
-
-    def __init__(self, config: PretrainedConfig, initializer_range: float = 0.02, **kwargs):
+    def __init__(self,
+                 config: PretrainedConfig,
+                 initializer_range: float = 0.02,
+                 **kwargs):
         super().__init__(**kwargs)
 
-        self.summary_type = config.summary_type if hasattr(config, "summary_use_proj") else "last"
+        self.summary_type = (config.summary_type if hasattr(
+            config, "summary_use_proj") else "last")
         if self.summary_type == "attn":
             # We should use a standard multi-head attention module with absolute positional embedding for that.
             # Cf. https://github.com/zihangdai/xlnet/blob/master/modeling.py#L253-L276
             # We can probably just use the multi-head attention module of PyTorch >=1.1.0
             raise NotImplementedError
 
-        self.has_summary = hasattr(config, "summary_use_proj") and config.summary_use_proj
+        self.has_summary = (hasattr(config, "summary_use_proj")
+                            and config.summary_use_proj)
         if self.has_summary:
-            if hasattr(config, "summary_proj_to_labels") and config.summary_proj_to_labels and config.num_labels > 0:
+            if (hasattr(config, "summary_proj_to_labels")
+                    and config.summary_proj_to_labels
+                    and config.num_labels > 0):
                 num_classes = config.num_labels
             else:
                 num_classes = config.hidden_size
             self.summary = tf.keras.layers.Dense(
-                num_classes, kernel_initializer=get_initializer(initializer_range), name="summary"
+                num_classes,
+                kernel_initializer=get_initializer(initializer_range),
+                name="summary",
             )
 
-        self.has_activation = hasattr(config, "summary_activation") and config.summary_activation == "tanh"
+        self.has_activation = (hasattr(config, "summary_activation")
+                               and config.summary_activation == "tanh")
         if self.has_activation:
             self.activation = tf.keras.activations.tanh
 
-        self.has_first_dropout = hasattr(config, "summary_first_dropout") and config.summary_first_dropout > 0
+        self.has_first_dropout = (hasattr(config, "summary_first_dropout")
+                                  and config.summary_first_dropout > 0)
         if self.has_first_dropout:
-            self.first_dropout = tf.keras.layers.Dropout(config.summary_first_dropout)
+            self.first_dropout = tf.keras.layers.Dropout(
+                config.summary_first_dropout)
 
-        self.has_last_dropout = hasattr(config, "summary_last_dropout") and config.summary_last_dropout > 0
+        self.has_last_dropout = (hasattr(config, "summary_last_dropout")
+                                 and config.summary_last_dropout > 0)
         if self.has_last_dropout:
-            self.last_dropout = tf.keras.layers.Dropout(config.summary_last_dropout)
+            self.last_dropout = tf.keras.layers.Dropout(
+                config.summary_last_dropout)
 
     def call(self, inputs, cls_index=None, training=False):
         if not isinstance(inputs, (dict, tuple, list)):
@@ -1510,7 +1626,9 @@ class TFSequenceSummary(tf.keras.layers.Layer):
         elif self.summary_type == "mean":
             output = tf.reduce_mean(hidden_states, axis=1)
         elif self.summary_type == "cls_index":
-            hidden_shape = shape_list(hidden_states)  # e.g. [batch, num choices, seq length, hidden dims]
+            hidden_shape = shape_list(
+                hidden_states
+            )  # e.g. [batch, num choices, seq length, hidden dims]
             if cls_index is None:
                 cls_index = tf.fill(
                     hidden_shape[:-2], hidden_shape[-2] - 1
@@ -1522,10 +1640,12 @@ class TFSequenceSummary(tf.keras.layers.Layer):
             # cls_index = cls_index[..., tf.newaxis]
             # cls_index = cls_index.expand((-1,) * (cls_index.dim()-1) + (hidden_states.size(-1),))
             # shape of cls_index: (bsz, XX, 1, hidden_size) where XX are optional leading dim of hidden_states
-            output = tf.gather(hidden_states, cls_index, batch_dims=len(hidden_shape) - 2)
+            output = tf.gather(hidden_states,
+                               cls_index,
+                               batch_dims=len(hidden_shape) - 2)
             output = tf.squeeze(
-                output, axis=len(hidden_shape) - 2
-            )  # shape of output: (batch, num choices, hidden_size)
+                output, axis=len(hidden_shape) -
+                2)  # shape of output: (batch, num choices, hidden_size)
         elif self.summary_type == "attn":
             raise NotImplementedError
 
@@ -1564,7 +1684,8 @@ def shape_list(tensor: tf.Tensor) -> List[int]:
     return [dynamic[i] if s is None else s for i, s in enumerate(static)]
 
 
-def get_initializer(initializer_range: float = 0.02) -> tf.initializers.TruncatedNormal:
+def get_initializer(
+        initializer_range: float = 0.02) -> tf.initializers.TruncatedNormal:
     """
     Creates a :obj:`tf.initializers.TruncatedNormal` with the given range.
 
@@ -1583,7 +1704,6 @@ class TFWrappedEmbeddings:
     weight restoring. Also it makes sure that the layer is called from the correct scope to avoid problem with
     saving/storing the correct weights
     """
-
     def __init__(self, layer, abs_scope_name=None):
         self._layer = layer
         self._abs_scope_name = abs_scope_name
@@ -1593,7 +1713,9 @@ class TFWrappedEmbeddings:
             return self._layer.call(inputs, mode)
 
         # if an abs scope name is given to the embedding variable, call variable from absolute scope
-        with tf.compat.v1.variable_scope(self._abs_scope_name, auxiliary_name_scope=False) as abs_scope_name:
+        with tf.compat.v1.variable_scope(
+                self._abs_scope_name,
+                auxiliary_name_scope=False) as abs_scope_name:
             with tf.name_scope(abs_scope_name.original_name_scope):
                 return self._layer.call(inputs, mode)
 
@@ -1602,6 +1724,8 @@ class TFWrappedEmbeddings:
             return self._layer(inputs, mode)
 
         # if an abs scope name is given to the embedding variable, call variable from absolute scope
-        with tf.compat.v1.variable_scope(self._abs_scope_name, auxiliary_name_scope=False) as abs_scope_name:
+        with tf.compat.v1.variable_scope(
+                self._abs_scope_name,
+                auxiliary_name_scope=False) as abs_scope_name:
             with tf.name_scope(abs_scope_name.original_name_scope):
                 return self._layer(inputs, mode)

@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Classification model."""
 
 import torch
@@ -29,7 +28,6 @@ from .module import MegatronModule
 
 
 class Classification(MegatronModule):
-
     def __init__(self,
                  num_classes,
                  num_tokentypes=2,
@@ -48,18 +46,18 @@ class Classification(MegatronModule):
             add_pooler=True,
             encoder_attn_mask_type=AttnMaskType.padding,
             init_method=init_method,
-            scaled_init_method=scaled_init_method_normal(args.init_method_std,
-                                                         args.num_layers),
+            scaled_init_method=scaled_init_method_normal(
+                args.init_method_std, args.num_layers),
             pre_process=self.pre_process,
-            post_process=self.post_process)
+            post_process=self.post_process,
+        )
 
         # Multi-choice head.
         if self.post_process:
             self.classification_dropout = torch.nn.Dropout(args.hidden_dropout)
-            self.classification_head = get_linear_layer(args.hidden_size,
-                                                        self.num_classes,
-                                                        init_method)
-            self._classification_head_key = 'classification_head'
+            self.classification_head = get_linear_layer(
+                args.hidden_size, self.num_classes, init_method)
+            self._classification_head_key = "classification_head"
 
     def set_input_tensor(self, input_tensor):
         """See megatron.model.transformer.set_input_tensor()"""
@@ -75,33 +73,37 @@ class Classification(MegatronModule):
             input_ids,
             position_ids,
             extended_attention_mask,
-            tokentype_ids=tokentype_ids
+            tokentype_ids=tokentype_ids,
         )
 
         if self.post_process:
             _, pooled_output = lm_output
             classification_output = self.classification_dropout(pooled_output)
-            classification_logits = self.classification_head(classification_output)
+            classification_logits = self.classification_head(
+                classification_output)
 
             # Reshape back to separate choices.
-            classification_logits = classification_logits.view(-1, self.num_classes)
+            classification_logits = classification_logits.view(
+                -1, self.num_classes)
 
             return classification_logits
         return lm_output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
+    def state_dict_for_save_checkpoint(self,
+                                       destination=None,
+                                       prefix="",
                                        keep_vars=False):
         """For easy load when model is combined with other heads,
         add an extra key."""
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-                destination, prefix, keep_vars)
+        state_dict_[self._language_model_key] = (
+            self.language_model.state_dict_for_save_checkpoint(
+                destination, prefix, keep_vars))
         if self.post_process:
-            state_dict_[self._classification_head_key] \
-                = self.classification_head.state_dict(
-                    destination, prefix, keep_vars)
+            state_dict_[self._classification_head_key] = (
+                self.classification_head.state_dict(destination, prefix,
+                                                    keep_vars))
         return state_dict_
 
     def load_state_dict(self, state_dict, strict=True):
@@ -114,6 +116,7 @@ class Classification(MegatronModule):
                 self.classification_head.load_state_dict(
                     state_dict[self._classification_head_key], strict=strict)
             else:
-                print_rank_last('***WARNING*** could not find {} in the checkpoint, '
-                                'initializing to random'.format(
-                                    self._classification_head_key))
+                print_rank_last(
+                    "***WARNING*** could not find {} in the checkpoint, "
+                    "initializing to random".format(
+                        self._classification_head_key))

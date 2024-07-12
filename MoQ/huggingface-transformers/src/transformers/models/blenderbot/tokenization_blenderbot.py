@@ -19,12 +19,10 @@ from typing import TYPE_CHECKING, List
 from ...utils import logging
 from ..roberta.tokenization_roberta import RobertaTokenizer
 
-
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
 
 logger = logging.get_logger(__name__)
-
 
 VOCAB_FILES_NAMES = {
     "vocab_file": "vocab.json",
@@ -45,21 +43,31 @@ class BlenderbotTokenizer(RobertaTokenizer):
     Refer to superclass :class:`~transformers.RobertaTokenizer` for usage examples and documentation concerning
     parameters.
     """
+
     vocab_files_names = {
         "vocab_file": "vocab.json",
         "merges_file": "merges.txt",
         "tokenizer_config_file": "tokenizer_config.json",
     }
     pretrained_vocab_files_map = {
-        "vocab_file": {CKPT_3B: "https://huggingface.co/facebook/blenderbot-3B/resolve/main/vocab.json"},
-        "merges_file": {CKPT_3B: "https://huggingface.co/facebook/blenderbot-3B/resolve/main/merges.txt"},
+        "vocab_file": {
+            CKPT_3B:
+            "https://huggingface.co/facebook/blenderbot-3B/resolve/main/vocab.json"
+        },
+        "merges_file": {
+            CKPT_3B:
+            "https://huggingface.co/facebook/blenderbot-3B/resolve/main/merges.txt"
+        },
         "tokenizer_config_file": {
-            CKPT_3B: "https://huggingface.co/facebook/blenderbot-3B/resolve/main/tokenizer_config.json"
+            CKPT_3B:
+            "https://huggingface.co/facebook/blenderbot-3B/resolve/main/tokenizer_config.json"
         },
     }
     max_model_input_sizes = {"facebook/blenderbot-3B": 128}
 
-    def build_inputs_with_special_tokens(self, token_ids_0: List[int], token_ids_1: List[int] = None):
+    def build_inputs_with_special_tokens(self,
+                                         token_ids_0: List[int],
+                                         token_ids_1: List[int] = None):
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A Blenderbot sequence has the following format:
@@ -77,7 +85,8 @@ class BlenderbotTokenizer(RobertaTokenizer):
         """
         return token_ids_0 + [self.eos_token_id]
 
-    def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
+    def _build_conversation_input_ids(
+            self, conversation: "Conversation") -> List[int]:
         inputs = []
         for is_user, text in conversation.iter_texts():
             if is_user:
@@ -90,8 +99,10 @@ class BlenderbotTokenizer(RobertaTokenizer):
         full_string = "  ".join(inputs)
         input_ids = self.encode(full_string)
         if len(input_ids) > self.model_max_length:
-            input_ids = input_ids[-self.model_max_length :]
-            logger.warning(f"Trimmed input from conversation as it was longer than {self.model_max_length} tokens.")
+            input_ids = input_ids[-self.model_max_length:]
+            logger.warning(
+                f"Trimmed input from conversation as it was longer than {self.model_max_length} tokens."
+            )
         return input_ids
 
 

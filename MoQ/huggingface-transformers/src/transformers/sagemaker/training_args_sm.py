@@ -21,7 +21,6 @@ from transformers.file_utils import cached_property, is_sagemaker_distributed_av
 from transformers.training_args import TrainingArguments
 from transformers.utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 
@@ -36,7 +35,10 @@ if is_smdistributed_available():
 @dataclass
 class SageMakerTrainingArguments(TrainingArguments):
     mp_parameters: str = field(
-        default="", metadata={"help": "Used by the SageMaker launcher to send mp-specific args."}
+        default="",
+        metadata={
+            "help": "Used by the SageMaker launcher to send mp-specific args."
+        },
     )
 
     def __post_init__(self):
@@ -68,7 +70,8 @@ class SageMakerTrainingArguments(TrainingArguments):
             # trigger an error that a device index is missing. Index 0 takes into account the
             # GPUs available in the environment, so `CUDA_VISIBLE_DEVICES=1,2` with `cuda:0`
             # will use the first GPU in that env, i.e. GPU#1
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            device = torch.device(
+                "cuda:0" if torch.cuda.is_available() else "cpu")
             # Sometimes the line in the postinit has not been run before we end up here, so just checking we're not at
             # the default value.
             self._n_gpu = torch.cuda.device_count()

@@ -18,16 +18,25 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
-    "configuration_distilbert": ["DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "DistilBertConfig"],
+    "configuration_distilbert": [
+        "DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "DistilBertConfig",
+    ],
     "tokenization_distilbert": ["DistilBertTokenizer"],
 }
 
 if is_tokenizers_available():
-    _import_structure["tokenization_distilbert_fast"] = ["DistilBertTokenizerFast"]
+    _import_structure["tokenization_distilbert_fast"] = [
+        "DistilBertTokenizerFast"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_distilbert"] = [
@@ -54,9 +63,11 @@ if is_tf_available():
         "TFDistilBertPreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_distilbert import DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, DistilBertConfig
+    from .configuration_distilbert import (
+        DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        DistilBertConfig,
+    )
     from .tokenization_distilbert import DistilBertTokenizer
 
     if is_tokenizers_available():

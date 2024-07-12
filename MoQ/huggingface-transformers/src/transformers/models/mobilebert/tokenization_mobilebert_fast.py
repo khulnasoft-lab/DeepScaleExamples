@@ -19,20 +19,25 @@ from ...utils import logging
 from ..bert.tokenization_bert_fast import BertTokenizerFast
 from .tokenization_mobilebert import MobileBertTokenizer
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.txt",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"mobilebert-uncased": "https://huggingface.co/google/mobilebert-uncased/resolve/main/vocab.txt"},
+    "vocab_file": {
+        "mobilebert-uncased":
+        "https://huggingface.co/google/mobilebert-uncased/resolve/main/vocab.txt"
+    },
     "tokenizer_file": {
-        "mobilebert-uncased": "https://huggingface.co/google/mobilebert-uncased/resolve/main/tokenizer.json"
+        "mobilebert-uncased":
+        "https://huggingface.co/google/mobilebert-uncased/resolve/main/tokenizer.json"
     },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {"mobilebert-uncased": 512}
-
 
 PRETRAINED_INIT_CONFIGURATION = {}
 

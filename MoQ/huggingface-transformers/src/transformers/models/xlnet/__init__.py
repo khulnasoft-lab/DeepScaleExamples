@@ -26,9 +26,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_xlnet": ["XLNET_PRETRAINED_CONFIG_ARCHIVE_MAP", "XLNetConfig"],
+    "configuration_xlnet":
+    ["XLNET_PRETRAINED_CONFIG_ARCHIVE_MAP", "XLNetConfig"],
 }
 
 if is_sentencepiece_available():
@@ -63,7 +63,6 @@ if is_tf_available():
         "TFXLNetModel",
         "TFXLNetPreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_xlnet import XLNET_PRETRAINED_CONFIG_ARCHIVE_MAP, XLNetConfig

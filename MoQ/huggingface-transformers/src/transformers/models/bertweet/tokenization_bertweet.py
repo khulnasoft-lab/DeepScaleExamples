@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Tokenization classes for BERTweet """
 
-
 import html
 import os
 import re
@@ -27,7 +26,6 @@ import regex
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {
@@ -37,10 +35,12 @@ VOCAB_FILES_NAMES = {
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "vinai/bertweet-base": "https://huggingface.co/vinai/bertweet-base/resolve/main/vocab.txt",
+        "vinai/bertweet-base":
+        "https://huggingface.co/vinai/bertweet-base/resolve/main/vocab.txt",
     },
     "merges_file": {
-        "vinai/bertweet-base": "https://huggingface.co/vinai/bertweet-base/resolve/main/bpe.codes",
+        "vinai/bertweet-base":
+        "https://huggingface.co/vinai/bertweet-base/resolve/main/bpe.codes",
     },
 }
 
@@ -114,20 +114,18 @@ class BertweetTokenizer(PreTrainedTokenizer):
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        normalization=False,
-        bos_token="<s>",
-        eos_token="</s>",
-        sep_token="</s>",
-        cls_token="<s>",
-        unk_token="<unk>",
-        pad_token="<pad>",
-        mask_token="<mask>",
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 normalization=False,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 sep_token="</s>",
+                 cls_token="<s>",
+                 unk_token="<unk>",
+                 pad_token="<pad>",
+                 mask_token="<mask>",
+                 **kwargs):
         super().__init__(
             normalization=normalization,
             bos_token=bos_token,
@@ -175,8 +173,9 @@ class BertweetTokenizer(PreTrainedTokenizer):
         self.special_puncts = {"’": "'", "…": "..."}
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A BERTweet sequence has the following format:
@@ -201,7 +200,10 @@ class BertweetTokenizer(PreTrainedTokenizer):
         return cls + token_ids_0 + sep + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -225,15 +227,22 @@ class BertweetTokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is None:
             return [1] + ([0] * len(token_ids_0)) + [1]
-        return [1] + ([0] * len(token_ids_0)) + [1, 1] + ([0] * len(token_ids_1)) + [1]
+        return [1] + ([0] * len(token_ids_0)) + [1, 1] + (
+            [0] * len(token_ids_1)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. BERTweet does
         not make use of token type ids, therefore a list of zeros is returned.
@@ -273,7 +282,8 @@ class BertweetTokenizer(PreTrainedTokenizer):
             return token
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -289,7 +299,8 @@ class BertweetTokenizer(PreTrainedTokenizer):
                     new_word.extend(word[i:j])
                     i = j
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -327,27 +338,16 @@ class BertweetTokenizer(PreTrainedTokenizer):
         tokens = self.tweetPreprocessor.tokenize(tweet)
         normTweet = " ".join([self.normalizeToken(token) for token in tokens])
 
-        normTweet = (
-            normTweet.replace("cannot ", "can not ")
-            .replace("n't ", " n't ")
-            .replace("n 't ", " n't ")
-            .replace("ca n't", "can't")
-            .replace("ai n't", "ain't")
-        )
-        normTweet = (
-            normTweet.replace("'m ", " 'm ")
-            .replace("'re ", " 're ")
-            .replace("'s ", " 's ")
-            .replace("'ll ", " 'll ")
-            .replace("'d ", " 'd ")
-            .replace("'ve ", " 've ")
-        )
-        normTweet = (
-            normTweet.replace(" p . m .", "  p.m.")
-            .replace(" p . m ", " p.m ")
-            .replace(" a . m .", " a.m.")
-            .replace(" a . m ", " a.m ")
-        )
+        normTweet = (normTweet.replace("cannot ", "can not ").replace(
+            "n't ", " n't ").replace("n 't ", " n't ").replace(
+                "ca n't", "can't").replace("ai n't", "ain't"))
+        normTweet = (normTweet.replace("'m ", " 'm ").replace(
+            "'re ",
+            " 're ").replace("'s ", " 's ").replace("'ll ", " 'll ").replace(
+                "'d ", " 'd ").replace("'ve ", " 've "))
+        normTweet = (normTweet.replace(" p . m .", "  p.m.").replace(
+            " p . m ", " p.m ").replace(" a . m .",
+                                        " a.m.").replace(" a . m ", " a.m "))
 
         return " ".join(normTweet.split())
 
@@ -358,7 +358,8 @@ class BertweetTokenizer(PreTrainedTokenizer):
         lowercased_token = token.lower()
         if token.startswith("@"):
             return "@USER"
-        elif lowercased_token.startswith("http") or lowercased_token.startswith("www"):
+        elif lowercased_token.startswith(
+                "http") or lowercased_token.startswith("www"):
             return "HTTPURL"
         elif len(token) == 1:
             if token in self.special_puncts:
@@ -371,7 +372,7 @@ class BertweetTokenizer(PreTrainedTokenizer):
             return token
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.encoder.get(token, self.encoder.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -379,25 +380,33 @@ class BertweetTokenizer(PreTrainedTokenizer):
         return self.decoder.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace("@@ ", "").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
         out_merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["merges_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        if os.path.abspath(self.merges_file) != os.path.abspath(out_merge_file):
+        if os.path.abspath(
+                self.merges_file) != os.path.abspath(out_merge_file):
             copyfile(self.merges_file, out_merge_file)
 
         return out_vocab_file, out_merge_file
@@ -419,7 +428,8 @@ class BertweetTokenizer(PreTrainedTokenizer):
             except FileNotFoundError as fnfe:
                 raise fnfe
             except UnicodeError:
-                raise Exception("Incorrect encoding detected in {}, please " "rebuild the dataset".format(f))
+                raise Exception("Incorrect encoding detected in {}, please "
+                                "rebuild the dataset".format(f))
             return
 
         lines = f.readlines()
@@ -427,7 +437,8 @@ class BertweetTokenizer(PreTrainedTokenizer):
             line = lineTmp.strip()
             idx = line.rfind(" ")
             if idx == -1:
-                raise ValueError("Incorrect dictionary format, expected '<token> <cnt>'")
+                raise ValueError(
+                    "Incorrect dictionary format, expected '<token> <cnt>'")
             word = line[:idx]
             self.encoder[word] = len(self.encoder)
 
@@ -441,8 +452,6 @@ class BertweetTokenizer(PreTrainedTokenizer):
 # URL: <http://nltk.org/>
 # For license information, see LICENSE.TXT
 #
-
-
 """
 Twitter-aware tokenizer, designed to be flexible and easy to adapt to new domains and tasks. The basic logic is this:
 
@@ -457,7 +466,6 @@ Twitter-aware tokenizer, designed to be flexible and easy to adapt to new domain
    is set to False, then the tokenizer will downcase everything except for emoticons.
 
 """
-
 
 ######################################################################
 #
@@ -592,7 +600,8 @@ REGEXPS = (
 ######################################################################
 # This is the core tokenizing regex:
 
-WORD_RE = regex.compile(r"""(%s)""" % "|".join(REGEXPS), regex.VERBOSE | regex.I | regex.UNICODE)
+WORD_RE = regex.compile(r"""(%s)""" % "|".join(REGEXPS),
+                        regex.VERBOSE | regex.I | regex.UNICODE)
 
 # WORD_RE performs poorly on these patterns:
 HANG_RE = regex.compile(r"([^a-zA-Z0-9])\1{3,}")
@@ -603,7 +612,6 @@ EMOTICON_RE = regex.compile(EMOTICONS, regex.VERBOSE | regex.I | regex.UNICODE)
 
 # These are for regularizing HTML entities to Unicode:
 ENT_RE = regex.compile(r"&(#?(x?))([^&;\s]+);")
-
 
 ######################################################################
 # Functions for converting html entities
@@ -618,7 +626,10 @@ def _str_to_unicode(text, encoding=None, errors="strict"):
     return text
 
 
-def _replace_html_entities(text, keep=(), remove_illegal=True, encoding="utf-8"):
+def _replace_html_entities(text,
+                           keep=(),
+                           remove_illegal=True,
+                           encoding="utf-8"):
     """
     Remove entities from text by converting them to their corresponding unicode character.
 
@@ -639,7 +650,6 @@ def _replace_html_entities(text, keep=(), remove_illegal=True, encoding="utf-8")
         >>> from nltk.tokenize.casual import _replace_html_entities >>> _replace_html_entities(b'Price: &pound;100')
         'Price: \\xa3100' >>> print(_replace_html_entities(b'Price: &pound;100')) Price: £100 >>>
     """
-
     def _convert_entity(match):
         entity_body = match.group(3)
         if match.group(1):
@@ -653,7 +663,7 @@ def _replace_html_entities(text, keep=(), remove_illegal=True, encoding="utf-8")
                 # to bytes 80-9F in the Windows-1252 encoding. For more info
                 # see: https://en.wikipedia.org/wiki/ISO/IEC_8859-1#Similar_character_sets
                 if 0x80 <= number <= 0x9F:
-                    return bytes((number,)).decode("cp1252")
+                    return bytes((number, )).decode("cp1252")
             except ValueError:
                 number = None
         else:
@@ -692,8 +702,10 @@ class TweetTokenizer:
         >>> tknzr.tokenize(s1)
         [':', 'This', 'is', 'waaayyy', 'too', 'much', 'for', 'you', '!', '!', '!']
     """
-
-    def __init__(self, preserve_case=True, reduce_len=False, strip_handles=False):
+    def __init__(self,
+                 preserve_case=True,
+                 reduce_len=False,
+                 strip_handles=False):
         self.preserve_case = preserve_case
         self.reduce_len = reduce_len
         self.strip_handles = strip_handles
@@ -720,7 +732,9 @@ class TweetTokenizer:
         words = WORD_RE.findall(safe_text)
         # Possibly alter the case, but avoid changing emoticons like :D into :d:
         if not self.preserve_case:
-            words = list(map((lambda x: x if EMOTICON_RE.search(x) else x.lower()), words))
+            words = list(
+                map((lambda x: x if EMOTICON_RE.search(x) else x.lower()),
+                    words))
         return words
 
 
@@ -753,13 +767,16 @@ def remove_handles(text):
 ######################################################################
 
 
-def casual_tokenize(text, preserve_case=True, reduce_len=False, strip_handles=False):
+def casual_tokenize(text,
+                    preserve_case=True,
+                    reduce_len=False,
+                    strip_handles=False):
     """
     Convenience function for wrapping the tokenizer.
     """
-    return TweetTokenizer(preserve_case=preserve_case, reduce_len=reduce_len, strip_handles=strip_handles).tokenize(
-        text
-    )
+    return TweetTokenizer(preserve_case=preserve_case,
+                          reduce_len=reduce_len,
+                          strip_handles=strip_handles).tokenize(text)
 
 
 ###############################################################################

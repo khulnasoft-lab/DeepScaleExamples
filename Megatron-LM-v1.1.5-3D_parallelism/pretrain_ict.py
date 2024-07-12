@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pretrain BERT for Inverse Cloze Task"""
 
 import torch
@@ -44,7 +43,6 @@ def get_group_world_size_rank():
 
 
 class AllgatherFromDataParallelRegion(torch.autograd.Function):
-
     @staticmethod
     def forward(ctx, input_):
         assert input_.dim() == 2
@@ -57,7 +55,6 @@ class AllgatherFromDataParallelRegion(torch.autograd.Function):
         output = torch.cat(tensor_list, dim=0).contiguous()
 
         return output
-
 
     @staticmethod
     def backward(ctx, grad_output):
@@ -78,34 +75,47 @@ def forward_step(data_iterator, model):
     timers = get_timers()
 
     # Get the batch.
-    timers('batch generator').start()
-    query_tokens, query_pad_mask, \
-    block_tokens, block_pad_mask, block_indices = get_ict_batch(data_iterator)
-    timers('batch generator').stop()
-
+    timers("batch generator").start()
+    query_tokens, query_pad_mask, block_tokens, block_pad_mask, block_indices = (
+        get_ict_batch(data_iterator))
+    timers("batch generator").stop()
 
     # Forward model.
-    query_logits, block_logits = model(query_tokens, query_pad_mask, block_tokens, block_pad_mask)
+    query_logits, block_logits = model(query_tokens, query_pad_mask,
+                                       block_tokens, block_pad_mask)
     local_batch_size = query_logits.shape[0]
-    global_batch_size = dist.get_world_size() * local_batch_size  # recall we assert that model_parallel_size == 1
+    global_batch_size = (dist.get_world_size() * local_batch_size
+                         )  # recall we assert that model_parallel_size == 1
 
     all_query_logits = AllgatherFromDataParallelRegion.apply(query_logits)
     all_block_logits = AllgatherFromDataParallelRegion.apply(block_logits)
 
     # scores are inner products between query and block embeddings
-    retrieval_scores = all_query_logits.float().matmul(torch.transpose(all_block_logits, 0, 1).float())
+    retrieval_scores = all_query_logits.float().matmul(
+        torch.transpose(all_block_logits, 0, 1).float())
     softmaxed = F.softmax(retrieval_scores, dim=1)
-    sorted_vals, sorted_indices = torch.topk(softmaxed, k=softmaxed.shape[1], sorted=True)
+    sorted_vals, sorted_indices = torch.topk(softmaxed,
+                                             k=softmaxed.shape[1],
+                                             sorted=True)
 
     def topk_accuracy(k):
-        return torch.cuda.FloatTensor([sum([int(i in sorted_indices[i, :k]) for i in range(global_batch_size)]) / global_batch_size])
+        return torch.cuda.FloatTensor([
+            sum([
+                int(i in sorted_indices[i, :k])
+                for i in range(global_batch_size)
+            ]) / global_batch_size
+        ])
 
     topk_accs = [topk_accuracy(int(k)) for k in args.report_topk_accuracies]
-    retrieval_loss = torch.nn.CrossEntropyLoss()(retrieval_scores, torch.arange(global_batch_size).long().cuda())
+    retrieval_loss = torch.nn.CrossEntropyLoss()(
+        retrieval_scores, torch.arange(global_batch_size).long().cuda())
     reduced_losses = reduce_losses([retrieval_loss, *topk_accs])
 
     # create stats_dict with retrieval loss and all specified top-k accuracies
-    topk_acc_dict = {'top{}_acc'.format(k): v for k, v in zip(args.report_topk_accuracies, reduced_losses[1:])}
+    topk_acc_dict = {
+        "top{}_acc".format(k): v
+        for k, v in zip(args.report_topk_accuracies, reduced_losses[1:])
+    }
     stats_dict = dict(retrieval_loss=reduced_losses[0], **topk_acc_dict)
 
     return retrieval_loss, stats_dict
@@ -114,8 +124,8 @@ def forward_step(data_iterator, model):
 def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid and test datasets."""
     args = get_args()
-    print_rank_0('> building train, validation, and test datasets '
-                 'for BERT ICT...')
+    print_rank_0("> building train, validation, and test datasets "
+                 "for BERT ICT...")
 
     train_ds, valid_ds, test_ds = build_train_valid_test_datasets(
         data_prefix=args.data_path,
@@ -127,12 +137,17 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
         short_seq_prob=args.short_seq_prob,
         seed=args.seed,
         skip_warmup=(not args.mmap_warmup),
-        dataset_type='ict')
+        dataset_type="ict",
+    )
     print_rank_0("> finished creating BERT ICT datasets ...")
 
     return train_ds, valid_ds, test_ds
 
 
 if __name__ == "__main__":
-    pretrain(train_valid_test_datasets_provider, pretrain_ict_model_provider, forward_step,
-             args_defaults={'tokenizer_type': 'BertWordPieceLowerCase'})
+    pretrain(
+        train_valid_test_datasets_provider,
+        pretrain_ict_model_provider,
+        forward_step,
+        args_defaults={"tokenizer_type": "BertWordPieceLowerCase"},
+    )

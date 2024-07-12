@@ -18,12 +18,13 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 REFORMER_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "google/reformer-crime-and-punishment": "https://cdn.huggingface.co/google/reformer-crime-and-punishment/config.json",
-    "google/reformer-enwik8": "https://cdn.huggingface.co/google/reformer-enwik8/config.json",
+    "google/reformer-crime-and-punishment":
+    "https://cdn.huggingface.co/google/reformer-crime-and-punishment/config.json",
+    "google/reformer-enwik8":
+    "https://cdn.huggingface.co/google/reformer-enwik8/config.json",
 }
 
 
@@ -154,45 +155,44 @@ class ReformerConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "reformer"
     keys_to_ignore_at_inference = ["past_buckets_states"]
 
-    def __init__(
-        self,
-        attention_head_size=64,
-        attn_layers=["local", "lsh", "local", "lsh", "local", "lsh"],
-        axial_norm_std=1.0,
-        axial_pos_embds=True,
-        axial_pos_shape=[64, 64],
-        axial_pos_embds_dim=[64, 192],
-        chunk_size_lm_head=0,
-        eos_token_id=2,
-        feed_forward_size=512,
-        hash_seed=None,
-        hidden_act="relu",
-        hidden_dropout_prob=0.05,
-        hidden_size=256,
-        initializer_range=0.02,
-        is_decoder=False,
-        layer_norm_eps=1e-12,
-        local_num_chunks_before=1,
-        local_num_chunks_after=0,
-        local_attention_probs_dropout_prob=0.05,
-        local_attn_chunk_length=64,
-        lsh_attn_chunk_length=64,
-        lsh_attention_probs_dropout_prob=0.0,
-        lsh_num_chunks_before=1,
-        lsh_num_chunks_after=0,
-        max_position_embeddings=4096,
-        num_attention_heads=12,
-        num_buckets=None,
-        num_hashes=1,
-        pad_token_id=0,
-        vocab_size=320,
-        tie_word_embeddings=False,
-        use_cache=True,
-        **kwargs
-    ):
+    def __init__(self,
+                 attention_head_size=64,
+                 attn_layers=["local", "lsh", "local", "lsh", "local", "lsh"],
+                 axial_norm_std=1.0,
+                 axial_pos_embds=True,
+                 axial_pos_shape=[64, 64],
+                 axial_pos_embds_dim=[64, 192],
+                 chunk_size_lm_head=0,
+                 eos_token_id=2,
+                 feed_forward_size=512,
+                 hash_seed=None,
+                 hidden_act="relu",
+                 hidden_dropout_prob=0.05,
+                 hidden_size=256,
+                 initializer_range=0.02,
+                 is_decoder=False,
+                 layer_norm_eps=1e-12,
+                 local_num_chunks_before=1,
+                 local_num_chunks_after=0,
+                 local_attention_probs_dropout_prob=0.05,
+                 local_attn_chunk_length=64,
+                 lsh_attn_chunk_length=64,
+                 lsh_attention_probs_dropout_prob=0.0,
+                 lsh_num_chunks_before=1,
+                 lsh_num_chunks_after=0,
+                 max_position_embeddings=4096,
+                 num_attention_heads=12,
+                 num_buckets=None,
+                 num_hashes=1,
+                 pad_token_id=0,
+                 vocab_size=320,
+                 tie_word_embeddings=False,
+                 use_cache=True,
+                 **kwargs):
         super().__init__(
             pad_token_id=pad_token_id,
             eos_token_id=eos_token_id,
@@ -208,7 +208,8 @@ class ReformerConfig(PretrainedConfig):
         self.num_attention_heads = num_attention_heads
         self.num_hashes = num_hashes
         self.num_hidden_layers = len(attn_layers)
-        self.num_buckets = tuple(num_buckets) if isinstance(num_buckets, list) else num_buckets
+        self.num_buckets = (tuple(num_buckets) if isinstance(
+            num_buckets, list) else num_buckets)
         self.lsh_attn_chunk_length = lsh_attn_chunk_length
         self.local_attn_chunk_length = local_attn_chunk_length
         self.lsh_num_chunks_after = lsh_num_chunks_after

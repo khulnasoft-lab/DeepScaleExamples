@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """
 Deduplicate downstream tasks from training dataset. 13-grams have been used.
 All split documents with less than 200 characters got filtered. Any document
@@ -28,21 +27,23 @@ import string
 import sys
 import time
 
+
 def get_words(text):
     # get all the lowercase words from text
     words, positions = [], []
-    for match in re.finditer(r'\w+', text.lower()):
+    for match in re.finditer(r"\w+", text.lower()):
         words.append(match.group(0))
         positions.append(match.start())
     return words, positions
 
-def free_ngram(line, ngrams, ngram_size, filter_text_len, 
-    splits_count, split_window_each_size):
+
+def free_ngram(line, ngrams, ngram_size, filter_text_len, splits_count,
+               split_window_each_size):
     # remove all the ngrams
 
     try:
         myjson = json.loads(line)
-        text_buf = [myjson['text']]
+        text_buf = [myjson["text"]]
     except Exception as e:
         print("Error: {}".format(e), flush=True)
         text_buf = []
@@ -53,12 +54,12 @@ def free_ngram(line, ngrams, ngram_size, filter_text_len,
         # get the first one from the buffer
         text = text_buf.pop(0)
         words, positions = get_words(text)
-        
+
         not_ngram_free = True
         punctuations = ".!?"
         # find n-grams
         for i in range(len(words) - ngram_size + 1):
-            seq = " ".join(words[i:i+ngram_size])
+            seq = " ".join(words[i:i + ngram_size])
             if seq in ngrams:
 
                 # splits the text
@@ -68,15 +69,15 @@ def free_ngram(line, ngrams, ngram_size, filter_text_len,
                 while pos > 0 and not text[pos] in punctuations:
                     pos -= 1
                 if pos > 0:
-                    text_first = text[0:pos+1]
+                    text_first = text[0:pos + 1]
                 pos = positions[i] + split_window_each_size
                 # last part of the text
                 text_second = ""
                 while pos < len(text) and not text[pos] in punctuations:
                     pos += 1
                 if pos + 1 < len(text):
-                    text_second = text[pos+1:len(text)]
-                
+                    text_second = text[pos + 1:len(text)]
+
                 # first part of ngrams free
                 if len(text_first) > filter_text_len:
                     text_buf_ngram_free.append(text_first)
@@ -94,12 +95,12 @@ def free_ngram(line, ngrams, ngram_size, filter_text_len,
     return text_buf_ngram_free
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    print('finding possible duplicate content ...')
-    main_file = sys.argv[1] # lambada file
-    dedup_file = sys.argv[2] # Book corpus
-    output_file = sys.argv[3] #Filtered book corpus
+    print("finding possible duplicate content ...")
+    main_file = sys.argv[1]  # lambada file
+    dedup_file = sys.argv[2]  # Book corpus
+    output_file = sys.argv[3]  # Filtered book corpus
     ngrams = {}
     id_prefix = "lambada"
 
@@ -110,41 +111,46 @@ if __name__ == '__main__':
     splits_count = 10
     split_window_each_size = 200
 
-    print('Reading file {} and computing ngrams'.format(main_file))
-    with open(main_file, 'r') as f:
+    print("Reading file {} and computing ngrams".format(main_file))
+    with open(main_file, "r") as f:
         for line in f:
             try:
                 myjson = json.loads(line)
-                words, positions = get_words(myjson['text'])
-                for i in range(len(words) - ngram_size+1):
-                    seq = " ".join(words[i:i+ngram_size])
+                words, positions = get_words(myjson["text"])
+                for i in range(len(words) - ngram_size + 1):
+                    seq = " ".join(words[i:i + ngram_size])
                     if seq not in ngrams:
                         ngrams[seq] = positions[i]
             except Exception as e:
-                print('Error:', e)
+                print("Error:", e)
     print("ngrams size {}".format(len(ngrams)))
 
-    print('Reading file {} and deduping n-grams'.format(dedup_file))
+    print("Reading file {} and deduping n-grams".format(dedup_file))
     counter = 0
     start_time = time.time()
-    out_f = open(output_file, 'wb')
+    out_f = open(output_file, "wb")
     splitted, ignored, split_mt_thld = 0, 0, 0
 
     # Setup multi-processing.
     num_workers = 40
-    fin = open(dedup_file, 'r', encoding='utf-8')
+    fin = open(dedup_file, "r", encoding="utf-8")
     pool = multiprocessing.Pool(num_workers)
-    free_ngram_x=partial(free_ngram, ngrams=ngrams, ngram_size=ngram_size, 
-        filter_text_len=filter_text_len, splits_count=splits_count,
-        split_window_each_size=split_window_each_size)
+    free_ngram_x = partial(
+        free_ngram,
+        ngrams=ngrams,
+        ngram_size=ngram_size,
+        filter_text_len=filter_text_len,
+        splits_count=splits_count,
+        split_window_each_size=split_window_each_size,
+    )
     free_ngrams = pool.imap(free_ngram_x, fin, 25)
 
     for text_buf_ngram_free in free_ngrams:
         counter += 1
         try:
-            
+
             if len(text_buf_ngram_free) > 1:
-                splitted += (len(text_buf_ngram_free) - 1)
+                splitted += len(text_buf_ngram_free) - 1
             if len(text_buf_ngram_free) == 0:
                 ignored += 1
             # more than 10 splits ignored
@@ -153,21 +159,33 @@ if __name__ == '__main__':
                 split_mt_thld += 1
 
             for i in range(len(text_buf_ngram_free)):
-                split_id_string = id_prefix + '-{:010d}'.format(int(counter)) \
-                    + '-{:010d}'.format(int(i))
-                outjson = json.dumps({"text":text_buf_ngram_free[i], 
-                    id_prefix+"_split_id":split_id_string},
-                    ensure_ascii=False)
-                out_f.write(outjson.encode('utf-8'))
-                out_f.write('\n'.encode('utf-8'))
+                split_id_string = (id_prefix +
+                                   "-{:010d}".format(int(counter)) +
+                                   "-{:010d}".format(int(i)))
+                outjson = json.dumps(
+                    {
+                        "text": text_buf_ngram_free[i],
+                        id_prefix + "_split_id": split_id_string,
+                    },
+                    ensure_ascii=False,
+                )
+                out_f.write(outjson.encode("utf-8"))
+                out_f.write("\n".encode("utf-8"))
 
             if counter % 1000 == 0:
-                print(' [search]> processed {} documents in {:.2f} seconds ...'.
-                    format(counter, time.time() - start_time), flush=True)
+                print(
+                    " [search]> processed {} documents in {:.2f} seconds ...".
+                    format(counter,
+                           time.time() - start_time),
+                    flush=True,
+                )
         except Exception as e:
-            print('Error:', e)
+            print("Error:", e)
 
     print("Deduped file written to: {}".format(output_file), flush=True)
-    print("Total docs {} splitted {} ignored {} docs with many splits {}".\
-        format(counter, splitted, ignored, split_mt_thld), flush=True)
-    print('done :-)')
+    print(
+        "Total docs {} splitted {} ignored {} docs with many splits {}".format(
+            counter, splitted, ignored, split_mt_thld),
+        flush=True,
+    )
+    print("done :-)")

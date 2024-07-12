@@ -16,12 +16,14 @@
 from ..bert.tokenization_bert_fast import BertTokenizerFast
 from .tokenization_lxmert import LxmertTokenizer
 
-
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
 # to file names for serializing Tokenizer instances
 ####################################################
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.txt",
+    "tokenizer_file": "tokenizer.json"
+}
 
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
@@ -29,10 +31,12 @@ VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.jso
 ####################################################
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "unc-nlp/lxmert-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
+        "unc-nlp/lxmert-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
     },
     "tokenizer_file": {
-        "unc-nlp/lxmert-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json",
+        "unc-nlp/lxmert-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/tokenizer.json",
     },
 }
 
@@ -48,7 +52,9 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 # To be used for checkpoint specific configurations.
 ####################################################
 PRETRAINED_INIT_CONFIGURATION = {
-    "unc-nlp/lxmert-base-uncased": {"do_lower_case": True},
+    "unc-nlp/lxmert-base-uncased": {
+        "do_lower_case": True
+    },
 }
 
 
@@ -62,6 +68,7 @@ class LxmertTokenizerFast(BertTokenizerFast):
     Refer to superclass :class:`~transformers.BertTokenizerFast` for usage examples and documentation concerning
     parameters.
     """
+
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES

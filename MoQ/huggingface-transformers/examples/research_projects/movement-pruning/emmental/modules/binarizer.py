@@ -32,7 +32,6 @@ class ThresholdBinarizer(autograd.Function):
         Piggyback: Adapting a Single Network to Multiple Tasks by Learning to Mask Weights
         Arun Mallya, Dillon Davis, Svetlana Lazebnik
     """
-
     @staticmethod
     def forward(ctx, inputs: torch.tensor, threshold: float, sigmoid: bool):
         """
@@ -57,7 +56,8 @@ class ThresholdBinarizer(autograd.Function):
             mask = (inputs > threshold).type(inputs.type())
         if mask.sum() < nb_min:
             # We limit the pruning so that at least 0.5% (half a percent) of the weights are remaining
-            k_threshold = inputs.flatten().kthvalue(max(nb_elems - nb_min, 1)).values
+            k_threshold = inputs.flatten().kthvalue(max(nb_elems - nb_min,
+                                                        1)).values
             mask = (inputs > k_threshold).type(inputs.type())
         return mask
 
@@ -77,7 +77,6 @@ class TopKBinarizer(autograd.Function):
         What's hidden in a randomly weighted neural network?
         Vivek Ramanujan*, Mitchell Wortsman*, Aniruddha Kembhavi, Ali Farhadi, Mohammad Rastegari
     """
-
     @staticmethod
     def forward(ctx, inputs: torch.tensor, threshold: float):
         """
@@ -116,7 +115,6 @@ class MagnitudeBinarizer(object):
 
     Implementation is inspired from https://github.com/NervanaSystems/distiller/blob/2291fdcc2ea642a98d4e20629acb5a9e2e04b4e6/distiller/pruning/automated_gradual_pruner.py#L24
     """
-
     @staticmethod
     def apply(inputs: torch.tensor, threshold: float):
         """

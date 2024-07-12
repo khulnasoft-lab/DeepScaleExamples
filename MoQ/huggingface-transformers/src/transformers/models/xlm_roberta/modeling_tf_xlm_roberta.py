@@ -27,13 +27,11 @@ from ..roberta.modeling_tf_roberta import (
 )
 from .configuration_xlm_roberta import XLMRobertaConfig
 
-
 logger = logging.get_logger(__name__)
 
 TF_XLM_ROBERTA_PRETRAINED_MODEL_ARCHIVE_LIST = [
     # See all XLM-RoBERTa models at https://huggingface.co/models?filter=xlm-roberta
 ]
-
 
 XLM_ROBERTA_START_DOCSTRING = r"""
 
@@ -105,7 +103,8 @@ class TFXLMRobertaForMaskedLM(TFRobertaForMaskedLM):
     """,
     XLM_ROBERTA_START_DOCSTRING,
 )
-class TFXLMRobertaForSequenceClassification(TFRobertaForSequenceClassification):
+class TFXLMRobertaForSequenceClassification(TFRobertaForSequenceClassification
+                                            ):
     """
     This class overrides :class:`~transformers.TFRobertaForSequenceClassification`. Please check the superclass for the
     appropriate documentation alongside usage examples.

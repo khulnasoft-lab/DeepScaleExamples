@@ -30,12 +30,12 @@ class BlockData(object):
             self.load_from_file()
 
         block_data_name = os.path.splitext(self.block_data_path)[0]
-        self.temp_dir_name = block_data_name + '_tmp'
+        self.temp_dir_name = block_data_name + "_tmp"
 
     def state(self):
         return {
-            'embed_data': self.embed_data,
-            'meta_data': self.meta_data,
+            "embed_data": self.embed_data,
+            "meta_data": self.meta_data,
         }
 
     def clear(self):
@@ -50,14 +50,18 @@ class BlockData(object):
 
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print("\n> Unpickling BlockData", flush=True)
-        state_dict = pickle.load(open(self.block_data_path, 'rb'))
+        state_dict = pickle.load(open(self.block_data_path, "rb"))
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print(">> Finished unpickling BlockData\n", flush=True)
 
-        self.embed_data = state_dict['embed_data']
-        self.meta_data = state_dict['meta_data']
+        self.embed_data = state_dict["embed_data"]
+        self.meta_data = state_dict["meta_data"]
 
-    def add_block_data(self, block_indices, block_embeds, block_metas, allow_overwrite=False):
+    def add_block_data(self,
+                       block_indices,
+                       block_embeds,
+                       block_metas,
+                       allow_overwrite=False):
         """Add data for set of blocks
         :param block_indices: 1D array of unique int ids for the blocks
         :param block_embeds: 2D array of embeddings of the blocks
@@ -77,7 +81,8 @@ class BlockData(object):
             os.makedirs(self.temp_dir_name, exist_ok=True)
 
         # save the data for each shard
-        with open('{}/{}.pkl'.format(self.temp_dir_name, self.rank), 'wb') as data_file:
+        with open("{}/{}.pkl".format(self.temp_dir_name, self.rank),
+                  "wb") as data_file:
             pickle.dump(self.state(), data_file)
 
     def merge_shards_and_save(self):
@@ -91,25 +96,28 @@ class BlockData(object):
                 seen_own_shard = True
                 continue
 
-            with open('{}/{}'.format(self.temp_dir_name, fname), 'rb') as f:
+            with open("{}/{}".format(self.temp_dir_name, fname), "rb") as f:
                 data = pickle.load(f)
                 old_size = len(self.embed_data)
-                shard_size = len(data['embed_data'])
+                shard_size = len(data["embed_data"])
 
                 # add the shard's data and check to make sure there is no overlap
-                self.embed_data.update(data['embed_data'])
-                self.meta_data.update(data['meta_data'])
+                self.embed_data.update(data["embed_data"])
+                self.meta_data.update(data["meta_data"])
                 assert len(self.embed_data) == old_size + shard_size
 
         assert seen_own_shard
 
         # save the consolidated shards and remove temporary directory
-        with open(self.block_data_path, 'wb') as final_file:
+        with open(self.block_data_path, "wb") as final_file:
             pickle.dump(self.state(), final_file)
         shutil.rmtree(self.temp_dir_name, ignore_errors=True)
 
-        print("Finished merging {} shards for a total of {} embeds".format(
-            len(shard_names), len(self.embed_data)), flush=True)
+        print(
+            "Finished merging {} shards for a total of {} embeds".format(
+                len(shard_names), len(self.embed_data)),
+            flush=True,
+        )
 
 
 class FaissMIPSIndex(object):
@@ -128,11 +136,13 @@ class FaissMIPSIndex(object):
         try:
             import faiss
         except ImportError:
-            raise Exception("Error: Please install faiss to use FaissMIPSIndex")
+            raise Exception(
+                "Error: Please install faiss to use FaissMIPSIndex")
 
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print("\n> Building index", flush=True)
-        self.block_mips_index = faiss.index_factory(self.embed_size, 'Flat', faiss.METRIC_INNER_PRODUCT)
+        self.block_mips_index = faiss.index_factory(self.embed_size, "Flat",
+                                                    faiss.METRIC_INNER_PRODUCT)
 
         if self.use_gpu:
             # create resources and config for GpuIndex
@@ -141,9 +151,15 @@ class FaissMIPSIndex(object):
             config.device = torch.cuda.current_device()
             config.useFloat16 = True
 
-            self.block_mips_index = faiss.GpuIndexFlat(res, self.block_mips_index, config)
+            self.block_mips_index = faiss.GpuIndexFlat(res,
+                                                       self.block_mips_index,
+                                                       config)
             if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
-                print(">> Initialized index on GPU {}".format(self.block_mips_index.getDevice()), flush=True)
+                print(
+                    ">> Initialized index on GPU {}".format(
+                        self.block_mips_index.getDevice()),
+                    flush=True,
+                )
         else:
             # CPU index supports IDs so wrap with IDMap
             self.block_mips_index = faiss.IndexIDMap(self.block_mips_index)
@@ -187,7 +203,8 @@ class FaissMIPSIndex(object):
         if self.use_gpu:
             self.block_mips_index.add(block_embeds_arr)
         else:
-            self.block_mips_index.add_with_ids(block_embeds_arr, block_indices_arr)
+            self.block_mips_index.add_with_ids(block_embeds_arr,
+                                               block_indices_arr)
 
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print(">>> Finished adding block data to index", flush=True)
@@ -202,12 +219,14 @@ class FaissMIPSIndex(object):
 
         if reconstruct:
             # get the vectors themselves
-            top_k_block_embeds = self.block_mips_index.search_and_reconstruct(query_embeds, top_k)
+            top_k_block_embeds = self.block_mips_index.search_and_reconstruct(
+                query_embeds, top_k)
             return top_k_block_embeds
 
         else:
             # get distances and indices of closest vectors
-            distances, block_indices = self.block_mips_index.search(query_embeds, top_k)
+            distances, block_indices = self.block_mips_index.search(
+                query_embeds, top_k)
             if self.use_gpu:
                 fresh_indices = np.zeros(block_indices.shape)
                 for i, j in itertools.product(block_indices.shape):

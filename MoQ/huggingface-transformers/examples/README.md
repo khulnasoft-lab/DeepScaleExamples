@@ -77,7 +77,7 @@ use the following command:
 ```bash
 python -m torch.distributed.launch \
     --nproc_per_node number_of_gpu_you_have path_to_script.py \
-	--all_arguments_of_the_script 
+	--all_arguments_of_the_script
 ```
 
 As an example, here is how you would fine-tune the BERT large model (with whole word masking) on the text
@@ -121,7 +121,7 @@ regular training script with its arguments (this is similar to the `torch.distri
 ```bash
 python xla_spawn.py --num_cores num_tpu_you_have \
     path_to_script.py \
-	--all_arguments_of_the_script 
+	--all_arguments_of_the_script
 ```
 
 As an example, here is how you would fine-tune the BERT large model (with whole word masking) on the text

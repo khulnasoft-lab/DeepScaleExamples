@@ -26,8 +26,7 @@ import sys
 import deepscale
 import numpy as np
 import torch
-from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
-                              TensorDataset)
+from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, TensorDataset
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 
@@ -42,40 +41,43 @@ from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
 from turing.loss import FocalLoss
 
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-    datefmt='%m/%d/%Y %H:%M:%S',
-    level=logging.INFO)
+    format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
+
 
 def checkpoint_model(PATH, ckpt_id, model, epoch, last_global_step,
                      last_global_data_samples, **kwargs):
     """Utility function for checkpointing model + optimizer dictionaries
-       The main purpose for this is to be able to resume training from that instant again
+    The main purpose for this is to be able to resume training from that instant again
     """
     checkpoint_state_dict = {
-        'epoch': epoch,
-        'last_global_step': last_global_step,
-        'last_global_data_samples': last_global_data_samples
+        "epoch": epoch,
+        "last_global_step": last_global_step,
+        "last_global_data_samples": last_global_data_samples,
     }
     # Add extra kwargs too
     checkpoint_state_dict.update(kwargs)
 
-    #success = model.network.save_checkpoint(PATH, ckpt_id,
-    success = model.save_checkpoint(PATH, ckpt_id,
-                                            checkpoint_state_dict)
-    status_msg = 'checkpointing: PATH={}, ckpt_id={}'.format(PATH, ckpt_id)
+    # success = model.network.save_checkpoint(PATH, ckpt_id,
+    success = model.save_checkpoint(PATH, ckpt_id, checkpoint_state_dict)
+    status_msg = "checkpointing: PATH={}, ckpt_id={}".format(PATH, ckpt_id)
     if success:
         logging.info(f"Success {status_msg}")
     else:
         logging.warning(f"Failure {status_msg}")
     return
 
+
 def load_checkpoint(model, PATH, ckpt_id):
     """Utility function for checkpointing model + optimizer dictionaries
-       The main purpose for this is to be able to resume training from that instant again
+    The main purpose for this is to be able to resume training from that instant again
     """
     model.load_checkpoint(PATH, ckpt_id)
     return
+
 
 class InputExample(object):
     """A single training/test example for simple sequence classification."""
@@ -123,12 +125,12 @@ class DataProcessor(object):
     @classmethod
     def _read_tsv(cls, input_file, quotechar=None):
         """Reads a tab separated value file."""
-        with open(input_file, "r", encoding='utf-8') as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t", quotechar=quotechar)
             lines = []
             for line in reader:
                 if sys.version_info[0] == 2:
-                    line = list(unicode(cell, 'utf-8') for cell in line)
+                    line = list(unicode(cell, "utf-8") for cell in line)
                 lines.append(line)
             return lines
 
@@ -154,7 +156,7 @@ class MrpcProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, i)
@@ -189,7 +191,7 @@ class MnliProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -232,7 +234,7 @@ class ColaProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             guid = "%s-%s" % (set_type, i)
             text_a = line[3]
             label = line[1]
@@ -263,7 +265,7 @@ class Sst2Processor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, i)
@@ -296,7 +298,7 @@ class StsbProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -330,7 +332,7 @@ class QqpProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -367,7 +369,7 @@ class QnliProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -401,7 +403,7 @@ class RteProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -435,7 +437,7 @@ class WnliProcessor(DataProcessor):
     def _create_examples(self, lines, set_type):
         """Creates examples for the training and dev sets."""
         examples = []
-        for (i, line) in enumerate(lines):
+        for i, line in enumerate(lines):
             if i == 0:
                 continue
             guid = "%s-%s" % (set_type, line[0])
@@ -457,7 +459,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
     label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
-    for (ex_index, example) in enumerate(examples):
+    for ex_index, example in enumerate(examples):
         if ex_index % 10000 == 0:
             logger.info("Writing example %d of %d" % (ex_index, len(examples)))
 
@@ -536,10 +538,12 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
             logger.info("label: %s (id = %d)" % (example.label, label_id))
 
         features.append(
-            InputFeatures(input_ids=input_ids,
-                          input_mask=input_mask,
-                          segment_ids=segment_ids,
-                          label_id=label_id))
+            InputFeatures(
+                input_ids=input_ids,
+                input_mask=input_mask,
+                segment_ids=segment_ids,
+                label_id=label_id,
+            ))
     return features
 
 
@@ -620,7 +624,7 @@ def main():
         type=str,
         required=True,
         help=
-        "The input data dir. Should contain the .tsv files (or other data files) for the task."
+        "The input data dir. Should contain the .tsv files (or other data files) for the task.",
     )
     parser.add_argument(
         "--bert_model",
@@ -629,19 +633,22 @@ def main():
         required=True,
         help="Bert pre-trained model selected in the list: bert-base-uncased, "
         "bert-large-uncased, bert-base-cased, bert-large-cased, bert-base-multilingual-uncased, "
-        "bert-base-multilingual-cased, bert-base-chinese.")
-    parser.add_argument("--task_name",
-                        default=None,
-                        type=str,
-                        required=True,
-                        help="The name of the task to train.")
+        "bert-base-multilingual-cased, bert-base-chinese.",
+    )
+    parser.add_argument(
+        "--task_name",
+        default=None,
+        type=str,
+        required=True,
+        help="The name of the task to train.",
+    )
     parser.add_argument(
         "--output_dir",
         default=None,
         type=str,
         required=True,
         help=
-        "The output directory where the model predictions and checkpoints will be written."
+        "The output directory where the model predictions and checkpoints will be written.",
     )
 
     # Other parameters
@@ -650,7 +657,8 @@ def main():
         default="",
         type=str,
         help=
-        "Where do you want to store the pre-trained models downloaded from s3")
+        "Where do you want to store the pre-trained models downloaded from s3",
+    )
     parser.add_argument(
         "--max_seq_length",
         default=128,
@@ -658,126 +666,153 @@ def main():
         help=
         "The maximum total input sequence length after WordPiece tokenization. \n"
         "Sequences longer than this will be truncated, and sequences shorter \n"
-        "than this will be padded.")
+        "than this will be padded.",
+    )
     parser.add_argument("--do_train",
-                        action='store_true',
+                        action="store_true",
                         help="Whether to run training.")
     parser.add_argument("--do_eval",
-                        action='store_true',
+                        action="store_true",
                         help="Whether to run eval on the dev set.")
     parser.add_argument(
         "--do_lower_case",
-        action='store_true',
-        help="Set this flag if you are using an uncased model.")
-    parser.add_argument("--train_batch_size",
-                        default=32,
-                        type=int,
-                        help="Total batch size for training.")
+        action="store_true",
+        help="Set this flag if you are using an uncased model.",
+    )
+    parser.add_argument(
+        "--train_batch_size",
+        default=32,
+        type=int,
+        help="Total batch size for training.",
+    )
     parser.add_argument("--eval_batch_size",
                         default=8,
                         type=int,
                         help="Total batch size for eval.")
-    parser.add_argument("--learning_rate",
-                        default=5e-5,
-                        type=float,
-                        help="The initial learning rate for Adam.")
-    parser.add_argument("--num_train_epochs",
-                        default=3.0,
-                        type=float,
-                        help="Total number of training epochs to perform.")
+    parser.add_argument(
+        "--learning_rate",
+        default=5e-5,
+        type=float,
+        help="The initial learning rate for Adam.",
+    )
+    parser.add_argument(
+        "--num_train_epochs",
+        default=3.0,
+        type=float,
+        help="Total number of training epochs to perform.",
+    )
     parser.add_argument(
         "--warmup_proportion",
         default=0.1,
         type=float,
         help=
         "Proportion of training to perform linear learning rate warmup for. "
-        "E.g., 0.1 = 10%% of training.")
+        "E.g., 0.1 = 10%% of training.",
+    )
     parser.add_argument("--no_cuda",
-                        action='store_true',
+                        action="store_true",
                         help="Whether not to use CUDA when available")
-    parser.add_argument("--local_rank",
-                        type=int,
-                        default=-1,
-                        help="local_rank for distributed training on gpus")
-    parser.add_argument('--seed',
+    parser.add_argument(
+        "--local_rank",
+        type=int,
+        default=-1,
+        help="local_rank for distributed training on gpus",
+    )
+    parser.add_argument("--seed",
                         type=int,
                         default=42,
                         help="random seed for initialization")
     parser.add_argument(
-        '--gradient_accumulation_steps',
+        "--gradient_accumulation_steps",
         type=int,
         default=1,
         help=
-        "Number of updates steps to accumulate before performing a backward/update pass."
+        "Number of updates steps to accumulate before performing a backward/update pass.",
     )
     parser.add_argument(
-        '--fp16',
-        action='store_true',
-        help="Whether to use 16-bit float precision instead of 32-bit")
-    #parser.add_argument(
+        "--fp16",
+        action="store_true",
+        help="Whether to use 16-bit float precision instead of 32-bit",
+    )
+    # parser.add_argument(
     #    '--deepscale',
     #    default=False,
     #    action='store_true',
     #    help="Whether to use 16-bit float precision instead of 32-bit")
     parser.add_argument(
-        '--loss_scale',
+        "--loss_scale",
         type=float,
         default=0,
         help=
         "Loss scaling to improve fp16 numeric stability. Only used when fp16 set to True.\n"
         "0 (default value): dynamic loss scaling.\n"
-        "Positive power of 2: static loss scaling value.\n")
-    parser.add_argument('--server_ip',
+        "Positive power of 2: static loss scaling value.\n",
+    )
+    parser.add_argument("--server_ip",
                         type=str,
-                        default='',
+                        default="",
                         help="Can be used for distant debugging.")
-    parser.add_argument('--server_port',
+    parser.add_argument("--server_port",
                         type=str,
-                        default='',
+                        default="",
                         help="Can be used for distant debugging.")
-    parser.add_argument("--model_file",
-                        type=str,
-                        default="0",
-                        help="Path to the Pretrained BERT Encoder File.")
-    parser.add_argument('--random',
-                        default=False,
-                        action='store_true',
-                        help="Whether to fientune for random initialization")
-    parser.add_argument('--focal',
-                        default=False,
-                        action='store_true',
-                        help="Whether to use Focal Loss for finetuning.")
-    parser.add_argument('--gamma',
-                        type=float,
-                        default=0.5,
-                        help="Gamma parameter to be used in focal loss.")
-    parser.add_argument('--deepscale_sparse_attention',
-                        default=False,
-                        action='store_true',
-                        help='Use DeepScale sparse self attention.')
     parser.add_argument(
-        '--preln',
-        action='store_true',
+        "--model_file",
+        type=str,
+        default="0",
+        help="Path to the Pretrained BERT Encoder File.",
+    )
+    parser.add_argument(
+        "--random",
+        default=False,
+        action="store_true",
+        help="Whether to fientune for random initialization",
+    )
+    parser.add_argument(
+        "--focal",
+        default=False,
+        action="store_true",
+        help="Whether to use Focal Loss for finetuning.",
+    )
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        default=0.5,
+        help="Gamma parameter to be used in focal loss.",
+    )
+    parser.add_argument(
+        "--deepscale_sparse_attention",
+        default=False,
+        action="store_true",
+        help="Use DeepScale sparse self attention.",
+    )
+    parser.add_argument(
+        "--preln",
+        action="store_true",
         default=False,
         help=
-        "Switching to the variant of Transformer blocks that use pre-LayerNorm."
+        "Switching to the variant of Transformer blocks that use pre-LayerNorm.",
     )
-    parser.add_argument('--deepscale_transformer_kernel',
-                        default=False,
-                        action='store_true',
-                        help='Use DeepScale transformer kernel to accelerate.')
     parser.add_argument(
-        '--progressive_layer_drop',
+        "--deepscale_transformer_kernel",
         default=False,
-        action='store_true',
-        help="Whether to enable progressive layer dropping or not")
+        action="store_true",
+        help="Use DeepScale transformer kernel to accelerate.",
+    )
+    parser.add_argument(
+        "--progressive_layer_drop",
+        default=False,
+        action="store_true",
+        help="Whether to enable progressive layer dropping or not",
+    )
     parser = deepscale.add_config_arguments(parser)
-    
+
     args = parser.parse_args()
 
     if args.server_ip and args.server_port:
         # Distant debugging - see https://code.visualstudio.com/docs/python/debugging#_attach-to-a-local-script
         import ptvsd
+
         print("Waiting for debugger attach")
         ptvsd.enable_attach(address=(args.server_ip, args.server_port),
                             redirect_output=True)
@@ -817,7 +852,7 @@ def main():
         device = torch.device("cuda", args.local_rank)
         n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        torch.distributed.init_process_group(backend='nccl')
+        torch.distributed.init_process_group(backend="nccl")
     logger.info(
         "device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".
         format(device, n_gpu, bool(args.local_rank != -1), args.fp16))
@@ -840,7 +875,7 @@ def main():
         raise ValueError(
             "At least one of `do_train` or `do_eval` must be True.")
 
-    if (torch.distributed.get_rank() == 0):
+    if torch.distributed.get_rank() == 0:
         # if os.path.exists(args.output_dir) and os.listdir(args.output_dir) and args.do_train:
         #     raise ValueError(
         #         "Output directory ({}) already exists and is not empty.".format(args.output_dir))
@@ -867,17 +902,17 @@ def main():
     num_train_optimization_steps = None
     if args.do_train:
         train_examples = processor.get_train_examples(args.data_dir)
-        num_train_optimization_steps = int(
+        num_train_optimization_steps = (int(
             len(train_examples) / args.train_batch_size /
-            args.gradient_accumulation_steps) * args.num_train_epochs
+            args.gradient_accumulation_steps) * args.num_train_epochs)
         if args.local_rank != -1:
-            num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size(
-            )
+            num_train_optimization_steps = (num_train_optimization_steps //
+                                            torch.distributed.get_world_size())
 
     # Prepare model
-    cache_dir = args.cache_dir if args.cache_dir else os.path.join(
-        str(PYTORCH_PRETRAINED_BERT_CACHE), 'distributed_{}'.format(
-            args.local_rank))
+    cache_dir = (args.cache_dir if args.cache_dir else os.path.join(
+        str(PYTORCH_PRETRAINED_BERT_CACHE), "distributed_{}".format(
+            args.local_rank)))
 
     bert_base_model_config = {
         "vocab_size_or_config_json_file": 119547,
@@ -890,14 +925,22 @@ def main():
         "attention_probs_dropout_prob": 0.1,
         "max_position_embeddings": 512,
         "type_vocab_size": 2,
-        "initializer_range": 0.02
+        "initializer_range": 0.02,
     }
 
     if args.progressive_layer_drop:
         print("BertBaseConfigPreLnLayerDrop")
-        from nvidia.modelingpreln_layerdrop import BertForSequenceClassification, BertConfig, BertLayer
+        from nvidia.modelingpreln_layerdrop import (
+            BertForSequenceClassification,
+            BertConfig,
+            BertLayer,
+        )
     elif args.preln:
-        from nvidia.modelingpreln import BertForSequenceClassification, BertConfig, BertLayer
+        from nvidia.modelingpreln import (
+            BertForSequenceClassification,
+            BertConfig,
+            BertLayer,
+        )
     else:
         from nvidia.modeling import BertForSequenceClassification, BertConfig, BertLayer
 
@@ -917,12 +960,12 @@ def main():
         # model.bert.load_state_dict(bert_state_dict)
         checkpoint_state_dict = torch.load(args.model_file,
                                            map_location=torch.device("cpu"))
-        if 'module' in checkpoint_state_dict:
-            logger.info('Loading DeepScale v2.0 style checkpoint')
-            model.load_state_dict(checkpoint_state_dict['module'],
+        if "module" in checkpoint_state_dict:
+            logger.info("Loading DeepScale v2.0 style checkpoint")
+            model.load_state_dict(checkpoint_state_dict["module"],
                                   strict=False)
-        elif 'model_state_dict' in checkpoint_state_dict:
-            model.load_state_dict(checkpoint_state_dict['model_state_dict'],
+        elif "model_state_dict" in checkpoint_state_dict:
+            model.load_state_dict(checkpoint_state_dict["model_state_dict"],
                                   strict=False)
         else:
             raise ValueError("Unable to find model state in checkpoint")
@@ -955,36 +998,44 @@ def main():
     # Patch model with deepscale transformer kernel
     if not args.deepscale_transformer_kernel:
         from deepscale import replace_transformer_layer
+
         model = deepscale.module_inject.replace_transformer_layer(
-               orig_layer_impl=BertLayer,
-               model=model,
-               micro_batch_size=args.train_batch_size,
-               bert_config=bert_config,
-               seed=args.seed,
-               preln=arg.preln,
-               fp16=args.fp16,
-               huggingface=False)
+            orig_layer_impl=BertLayer,
+            model=model,
+            micro_batch_size=args.train_batch_size,
+            bert_config=bert_config,
+            seed=args.seed,
+            preln=arg.preln,
+            fp16=args.fp16,
+            huggingface=False,
+        )
 
     # Prepare optimizer
     param_optimizer = list(model.named_parameters())
-    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-    optimizer_grouped_parameters = [{
-        'params':
-        [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
-        'weight_decay':
-        0.01
-    }, {
-        'params':
-        [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-        'weight_decay':
-        0.0
-    }]
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
+    optimizer_grouped_parameters = [
+        {
+            "params": [
+                p for n, p in param_optimizer
+                if not any(nd in n for nd in no_decay)
+            ],
+            "weight_decay":
+            0.01,
+        },
+        {
+            "params":
+            [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
+            "weight_decay":
+            0.0,
+        },
+    ]
 
     model, optimizer, _, _ = deepscale.initialize(
         args=args,
         model=model,
         model_parameters=optimizer_grouped_parameters,
-        dist_init_required=True)
+        dist_init_required=True,
+    )
 
     global_step = 0
     nb_tr_steps = 0
@@ -1073,24 +1124,29 @@ def main():
                     if args.fp16:
                         # modify learning rate with special warm up BERT uses
                         # if args.fp16 is False, BertAdam is used that handles this automatically
-                        lr_this_step = args.learning_rate * \
-                            warmup_linear(
-                                global_step/num_train_optimization_steps, args.warmup_proportion)
+                        lr_this_step = args.learning_rate * warmup_linear(
+                            global_step / num_train_optimization_steps,
+                            args.warmup_proportion,
+                        )
                         for param_group in optimizer.param_groups:
-                            param_group['lr'] = lr_this_step
+                            param_group["lr"] = lr_this_step
                     optimizer.step()
                     optimizer.zero_grad()
                     global_step += 1
-           
-        saved_path = os.path.join(args.output_dir, "finetuned_quantized_checkpoints")
 
-        checkpoint_model(PATH=saved_path,
-                             ckpt_id='epoch{}_step{}'.format(
-                                 args.num_train_epochs, global_step),
-                             model=model,
-                             epoch=args.num_train_epochs,
-                             last_global_step=global_step,
-                             last_global_data_samples=nb_tr_examples * torch.distributed.get_world_size())
+        saved_path = os.path.join(args.output_dir,
+                                  "finetuned_quantized_checkpoints")
+
+        checkpoint_model(
+            PATH=saved_path,
+            ckpt_id="epoch{}_step{}".format(args.num_train_epochs,
+                                            global_step),
+            model=model,
+            epoch=args.num_train_epochs,
+            last_global_step=global_step,
+            last_global_data_samples=nb_tr_examples *
+            torch.distributed.get_world_size(),
+        )
     if args.do_eval and (args.local_rank == -1
                          or torch.distributed.get_rank() == 0):
         eval_examples = processor.get_dev_examples(args.data_dir)
@@ -1175,9 +1231,9 @@ def main():
         result = compute_metrics(task_name, preds, all_label_ids.numpy())
         loss = tr_loss / nb_tr_steps if args.do_train else None
 
-        result['eval_loss'] = eval_loss
-        result['global_step'] = global_step
-        result['loss'] = loss
+        result["eval_loss"] = eval_loss
+        result["global_step"] = global_step
+        result["loss"] = loss
 
         output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
@@ -1191,14 +1247,13 @@ def main():
             task_name = "mnli-mm"
             processor = processors[task_name]()
 
-            if os.path.exists(args.output_dir +
-                              '-MM') and os.listdir(args.output_dir +
-                                                    '-MM') and args.do_train:
+            if (os.path.exists(args.output_dir + "-MM")
+                    and os.listdir(args.output_dir + "-MM") and args.do_train):
                 raise ValueError(
                     "Output directory ({}{}) already exists and is not empty.".
-                    format(args.output_dir, '-MM'))
-            if not os.path.exists(args.output_dir + '-MM'):
-                os.makedirs(args.output_dir + '-MM')
+                    format(args.output_dir, "-MM"))
+            if not os.path.exists(args.output_dir + "-MM"):
+                os.makedirs(args.output_dir + "-MM")
 
             eval_examples = processor.get_dev_examples(args.data_dir)
             eval_features = convert_examples_to_features(
@@ -1265,11 +1320,11 @@ def main():
             result = compute_metrics(task_name, preds, all_label_ids.numpy())
             loss = tr_loss / nb_tr_steps if args.do_train else None
 
-            result['eval_loss'] = eval_loss
-            result['global_step'] = global_step
-            result['loss'] = loss
+            result["eval_loss"] = eval_loss
+            result["global_step"] = global_step
+            result["loss"] = loss
 
-            output_eval_file = os.path.join(args.output_dir + '-MM',
+            output_eval_file = os.path.join(args.output_dir + "-MM",
                                             "eval_results.txt")
             with open(output_eval_file, "w") as writer:
                 logger.info("***** Eval results *****")

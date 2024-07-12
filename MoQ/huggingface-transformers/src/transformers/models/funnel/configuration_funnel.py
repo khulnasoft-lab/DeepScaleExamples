@@ -17,20 +17,29 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 FUNNEL_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "funnel-transformer/small": "https://huggingface.co/funnel-transformer/small/resolve/main/config.json",
-    "funnel-transformer/small-base": "https://huggingface.co/funnel-transformer/small-base/resolve/main/config.json",
-    "funnel-transformer/medium": "https://huggingface.co/funnel-transformer/medium/resolve/main/config.json",
-    "funnel-transformer/medium-base": "https://huggingface.co/funnel-transformer/medium-base/resolve/main/config.json",
-    "funnel-transformer/intermediate": "https://huggingface.co/funnel-transformer/intermediate/resolve/main/config.json",
-    "funnel-transformer/intermediate-base": "https://huggingface.co/funnel-transformer/intermediate-base/resolve/main/config.json",
-    "funnel-transformer/large": "https://huggingface.co/funnel-transformer/large/resolve/main/config.json",
-    "funnel-transformer/large-base": "https://huggingface.co/funnel-transformer/large-base/resolve/main/config.json",
-    "funnel-transformer/xlarge": "https://huggingface.co/funnel-transformer/xlarge/resolve/main/config.json",
-    "funnel-transformer/xlarge-base": "https://huggingface.co/funnel-transformer/xlarge-base/resolve/main/config.json",
+    "funnel-transformer/small":
+    "https://huggingface.co/funnel-transformer/small/resolve/main/config.json",
+    "funnel-transformer/small-base":
+    "https://huggingface.co/funnel-transformer/small-base/resolve/main/config.json",
+    "funnel-transformer/medium":
+    "https://huggingface.co/funnel-transformer/medium/resolve/main/config.json",
+    "funnel-transformer/medium-base":
+    "https://huggingface.co/funnel-transformer/medium-base/resolve/main/config.json",
+    "funnel-transformer/intermediate":
+    "https://huggingface.co/funnel-transformer/intermediate/resolve/main/config.json",
+    "funnel-transformer/intermediate-base":
+    "https://huggingface.co/funnel-transformer/intermediate-base/resolve/main/config.json",
+    "funnel-transformer/large":
+    "https://huggingface.co/funnel-transformer/large/resolve/main/config.json",
+    "funnel-transformer/large-base":
+    "https://huggingface.co/funnel-transformer/large-base/resolve/main/config.json",
+    "funnel-transformer/xlarge":
+    "https://huggingface.co/funnel-transformer/xlarge/resolve/main/config.json",
+    "funnel-transformer/xlarge-base":
+    "https://huggingface.co/funnel-transformer/xlarge-base/resolve/main/config.json",
 }
 
 
@@ -101,6 +110,7 @@ class FunnelConfig(PretrainedConfig):
         pool_q_only (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to apply the pooling only to the query or to query, key and values for the attention layers.
     """
+
     model_type = "funnel"
 
     def __init__(
@@ -127,13 +137,14 @@ class FunnelConfig(PretrainedConfig):
         separate_cls=True,
         truncate_seq=True,
         pool_q_only=True,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
         self.vocab_size = vocab_size
         self.block_sizes = block_sizes
-        self.block_repeats = [1] * len(block_sizes) if block_repeats is None else block_repeats
+        self.block_repeats = ([1] * len(block_sizes)
+                              if block_repeats is None else block_repeats)
         assert len(block_sizes) == len(
             self.block_repeats
         ), "`block_sizes` and `block_repeats` should have the same length."

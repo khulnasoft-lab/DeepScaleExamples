@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.import copy
  """
+
 import itertools
 import math
 import os
@@ -30,7 +31,14 @@ from torch.nn.modules.batchnorm import BatchNorm2d
 from torchvision.ops import RoIPool
 from torchvision.ops.boxes import batched_nms, nms
 
-from utils import WEIGHTS_NAME, Config, cached_path, hf_bucket_url, is_remote_url, load_checkpoint
+from utils import (
+    WEIGHTS_NAME,
+    Config,
+    cached_path,
+    hf_bucket_url,
+    is_remote_url,
+    load_checkpoint,
+)
 
 
 # other:
@@ -125,7 +133,8 @@ def do_nms(boxes, scores, image_shape, score_thresh, nms_thresh, mind, maxd):
     max_scores, max_classes = scores.max(1)  # R x C --> R
     num_objs = boxes.size(0)
     boxes = boxes.view(-1, 4)
-    idxs = torch.arange(num_objs).to(boxes.device) * num_bbox_reg_classes + max_classes
+    idxs = torch.arange(num_objs).to(
+        boxes.device) * num_bbox_reg_classes + max_classes
     max_boxes = boxes[idxs]  # Select max boxes according to the max scores.
 
     # Apply NMS
@@ -217,16 +226,28 @@ def build_backbone(cfg):
     out_channels = cfg.RESNETS.RES2_OUT_CHANNELS
     stride_in_1x1 = cfg.RESNETS.STRIDE_IN_1X1
     res5_dilation = cfg.RESNETS.RES5_DILATION
-    assert res5_dilation in {1, 2}, "res5_dilation cannot be {}.".format(res5_dilation)
+    assert res5_dilation in {
+        1, 2
+    }, "res5_dilation cannot be {}.".format(res5_dilation)
 
-    num_blocks_per_stage = {50: [3, 4, 6, 3], 101: [3, 4, 23, 3], 152: [3, 8, 36, 3]}[depth]
+    num_blocks_per_stage = {
+        50: [3, 4, 6, 3],
+        101: [3, 4, 23, 3],
+        152: [3, 8, 36, 3]
+    }[depth]
 
     stages = []
-    out_stage_idx = [{"res2": 2, "res3": 3, "res4": 4, "res5": 5}[f] for f in out_features]
+    out_stage_idx = [{
+        "res2": 2,
+        "res3": 3,
+        "res4": 4,
+        "res5": 5
+    }[f] for f in out_features]
     max_stage_idx = max(out_stage_idx)
     for idx, stage_idx in enumerate(range(2, max_stage_idx + 1)):
         dilation = res5_dilation if stage_idx == 5 else 1
-        first_stride = 1 if idx == 0 or (stage_idx == 5 and dilation == 2) else 2
+        first_stride = 1 if idx == 0 or (stage_idx == 5
+                                         and dilation == 2) else 2
         stage_kargs = {
             "num_blocks": num_blocks_per_stage[idx],
             "first_stride": first_stride,
@@ -283,7 +304,8 @@ def find_top_rpn_proposals(
     topk_proposals = []
     level_ids = []  # #lvl Tensor, each of shape (topk,)
     batch_idx = torch.arange(num_images, device=device)
-    for level_id, proposals_i, logits_i in zip(itertools.count(), proposals, pred_objectness_logits):
+    for level_id, proposals_i, logits_i in zip(itertools.count(), proposals,
+                                               pred_objectness_logits):
         Hi_Wi_A = logits_i.shape[1]
         num_proposals_i = min(pre_nms_topk, Hi_Wi_A)
 
@@ -294,11 +316,16 @@ def find_top_rpn_proposals(
         topk_idx = idx[batch_idx, :num_proposals_i]
 
         # each is N x topk
-        topk_proposals_i = proposals_i[batch_idx[:, None], topk_idx]  # N x topk x 4
+        topk_proposals_i = proposals_i[batch_idx[:, None],
+                                       topk_idx]  # N x topk x 4
 
         topk_proposals.append(topk_proposals_i)
         topk_scores.append(topk_scores_i)
-        level_ids.append(torch.full((num_proposals_i,), level_id, dtype=torch.int64, device=device))
+        level_ids.append(
+            torch.full((num_proposals_i, ),
+                       level_id,
+                       dtype=torch.int64,
+                       device=device))
 
     # 2. Concat all levels together
     topk_scores = torch.cat(topk_scores, dim=1)
@@ -394,10 +421,14 @@ def assign_boxes_to_levels(
 
     box_sizes = torch.sqrt(torch.cat([boxes.area() for boxes in box_lists]))
     # Eqn.(1) in FPN paper
-    level_assignments = torch.floor(canonical_level + torch.log2(box_sizes / canonical_box_size + 1e-8))
+    level_assignments = torch.floor(canonical_level +
+                                    torch.log2(box_sizes / canonical_box_size +
+                                               1e-8))
     # clamp level to (min, max), in case the box size is too large or too small
     # for the available feature maps
-    level_assignments = torch.clamp(level_assignments, min=min_level, max=max_level)
+    level_assignments = torch.clamp(level_assignments,
+                                    min=min_level,
+                                    max=max_level)
     return level_assignments.to(torch.int64) - min_level
 
 
@@ -414,7 +445,8 @@ class _NewEmptyTensorOp(torch.autograd.Function):
         return _NewEmptyTensorOp.apply(grad, shape), None
 
 
-class ShapeSpec(namedtuple("_ShapeSpec", ["channels", "height", "width", "stride"])):
+class ShapeSpec(
+        namedtuple("_ShapeSpec", ["channels", "height", "width", "stride"])):
     def __new__(cls, *, channels=None, height=None, width=None, stride=None):
         return super().__new__(cls, channels, height, width, stride)
 
@@ -425,8 +457,9 @@ class Box2BoxTransform(object):
     by exp(dw), exp(dh) and shifts a box's center by the offset
     (dx * width, dy * height).
     """
-
-    def __init__(self, weights: Tuple[float, float, float, float], scale_clamp: float = None):
+    def __init__(self,
+                 weights: Tuple[float, float, float, float],
+                 scale_clamp: float = None):
         """
         Args:
             weights (4-element tuple): Scaling factors that are applied to the
@@ -479,7 +512,8 @@ class Box2BoxTransform(object):
         dh = wh * torch.log(target_heights / src_heights)
 
         deltas = torch.stack((dx, dy, dw, dh), dim=1)
-        assert (src_widths > 0).all().item(), "Input boxes to Box2BoxTransform are not valid!"
+        assert ((src_widths > 0).all().item()
+                ), "Input boxes to Box2BoxTransform are not valid!"
         return deltas
 
     def apply_deltas(self, deltas, boxes):
@@ -534,7 +568,6 @@ class Matcher(object):
     ground-truth element m in [0, M) that matches to prediction n in [0, N).
     (b) a vector of length N containing the labels for each prediction.
     """
-
     def __init__(
         self,
         thresholds: List[float],
@@ -557,7 +590,9 @@ class Matcher(object):
         assert thresholds[0] > 0
         thresholds.insert(0, -float("inf"))
         thresholds.append(float("inf"))
-        assert all([low <= high for (low, high) in zip(thresholds[:-1], thresholds[1:])])
+        assert all([
+            low <= high for (low, high) in zip(thresholds[:-1], thresholds[1:])
+        ])
         assert all([label_i in [-1, 0, 1] for label_i in labels])
         assert len(labels) == len(thresholds) - 1
         self.thresholds = thresholds
@@ -575,14 +610,16 @@ class Matcher(object):
         """
         assert match_quality_matrix.dim() == 2
         if match_quality_matrix.numel() == 0:
-            default_matches = match_quality_matrix.new_full((match_quality_matrix.size(1),), 0, dtype=torch.int64)
+            default_matches = match_quality_matrix.new_full(
+                (match_quality_matrix.size(1), ), 0, dtype=torch.int64)
             # When no gt boxes exist, we define IOU = 0 and therefore set labels
             # to `self.labels[0]`, which usually defaults to background class 0
             # To choose to ignore instead,
             # can make labels=[-1,0,-1,1] + set appropriate thresholds
             default_match_labels = match_quality_matrix.new_full(
-                (match_quality_matrix.size(1),), self.labels[0], dtype=torch.int8
-            )
+                (match_quality_matrix.size(1), ),
+                self.labels[0],
+                dtype=torch.int8)
             return default_matches, default_match_labels
 
         assert torch.all(match_quality_matrix >= 0)
@@ -593,7 +630,8 @@ class Matcher(object):
 
         match_labels = matches.new_full(matches.size(), 1, dtype=torch.int8)
 
-        for (l, low, high) in zip(self.labels, self.thresholds[:-1], self.thresholds[1:]):
+        for l, low, high in zip(self.labels, self.thresholds[:-1],
+                                self.thresholds[1:]):
             low_high = (matched_vals >= low) & (matched_vals < high)
             match_labels[low_high] = l
 
@@ -616,11 +654,14 @@ class Matcher(object):
         # Find the highest quality match available, even if it is low, including ties.
         # Note that the matches qualities must be positive due to the use of
         # `torch.nonzero`.
-        of_quality_inds = match_quality_matrix == highest_quality_foreach_gt[:, None]
+        of_quality_inds = match_quality_matrix == highest_quality_foreach_gt[:,
+                                                                             None]
         if of_quality_inds.dim() == 0:
-            (_, pred_inds_with_highest_quality) = of_quality_inds.unsqueeze(0).nonzero().unbind(1)
+            (_, pred_inds_with_highest_quality) = (
+                of_quality_inds.unsqueeze(0).nonzero().unbind(1))
         else:
-            (_, pred_inds_with_highest_quality) = of_quality_inds.nonzero().unbind(1)
+            (_, pred_inds_with_highest_quality
+             ) = of_quality_inds.nonzero().unbind(1)
         match_labels[pred_inds_with_highest_quality] = 1
 
 
@@ -676,12 +717,15 @@ class RPNOutputs(object):
         # here we loop over specific feature map, NOT images
         proposals = []
         anchors = self.anchors.transpose(0, 1)
-        for anchors_i, pred_anchor_deltas_i in zip(anchors, self.pred_anchor_deltas):
+        for anchors_i, pred_anchor_deltas_i in zip(anchors,
+                                                   self.pred_anchor_deltas):
             B = anchors_i.size(-1)
             N, _, Hi, Wi = pred_anchor_deltas_i.shape
             anchors_i = anchors_i.flatten(start_dim=0, end_dim=1)
-            pred_anchor_deltas_i = pred_anchor_deltas_i.view(N, -1, B, Hi, Wi).permute(0, 3, 4, 1, 2).reshape(-1, B)
-            proposals_i = self.box2box_transform.apply_deltas(pred_anchor_deltas_i, anchors_i)
+            pred_anchor_deltas_i = (pred_anchor_deltas_i.view(
+                N, -1, B, Hi, Wi).permute(0, 3, 4, 1, 2).reshape(-1, B))
+            proposals_i = self.box2box_transform.apply_deltas(
+                pred_anchor_deltas_i, anchors_i)
             # Append feature map proposals with shape (N, Hi*Wi*A, B)
             proposals.append(proposals_i.view(N, -1, B))
         proposals = torch.stack(proposals)
@@ -715,16 +759,14 @@ class Conv2d(torch.nn.Conv2d):
             assert not isinstance(self.norm, torch.nn.SyncBatchNorm)
         if x.numel() == 0:
             assert not isinstance(self.norm, torch.nn.GroupNorm)
-            output_shape = [
-                (i + 2 * p - (di * (k - 1) + 1)) // s + 1
-                for i, p, di, k, s in zip(
-                    x.shape[-2:],
-                    self.padding,
-                    self.dilation,
-                    self.kernel_size,
-                    self.stride,
-                )
-            ]
+            output_shape = [(i + 2 * p - (di * (k - 1) + 1)) // s + 1
+                            for i, p, di, k, s in zip(
+                                x.shape[-2:],
+                                self.padding,
+                                self.dilation,
+                                self.kernel_size,
+                                self.stride,
+                            )]
             output_shape = [x.shape[0], self.weight.shape[0]] + output_shape
             empty = _NewEmptyTensorOp.apply(x, output_shape)
             if self.training:
@@ -745,7 +787,6 @@ class LastLevelMaxPool(nn.Module):
     """
     This module is used in the original FPN to generate a downsampled P6 feature from P5.
     """
-
     def __init__(self):
         super().__init__()
         self.num_levels = 1
@@ -759,7 +800,6 @@ class LastLevelP6P7(nn.Module):
     """
     This module is used in RetinaNet to generate extra layers, P6 and P7 from C5 feature.
     """
-
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.num_levels = 2
@@ -774,7 +814,11 @@ class LastLevelP6P7(nn.Module):
 
 
 class BasicStem(nn.Module):
-    def __init__(self, in_channels=3, out_channels=64, norm="BN", caffe_maxpool=False):
+    def __init__(self,
+                 in_channels=3,
+                 out_channels=64,
+                 norm="BN",
+                 caffe_maxpool=False):
         super().__init__()
         self.conv1 = Conv2d(
             in_channels,
@@ -792,7 +836,11 @@ class BasicStem(nn.Module):
         x = self.conv1(x)
         x = F.relu_(x)
         if self.caffe_maxpool:
-            x = F.max_pool2d(x, kernel_size=3, stride=2, padding=0, ceil_mode=True)
+            x = F.max_pool2d(x,
+                             kernel_size=3,
+                             stride=2,
+                             padding=0,
+                             ceil_mode=True)
         else:
             x = F.max_pool2d(x, kernel_size=3, stride=2, padding=1)
         return x
@@ -968,8 +1016,7 @@ class ResNet(Backbone):
             self.add_module(name, stage)
             self.stages_and_names.append((stage, name))
             self._out_feature_strides[name] = current_stride = int(
-                current_stride * np.prod([k.stride for k in blocks])
-            )
+                current_stride * np.prod([k.stride for k in blocks]))
             self._out_feature_channels[name] = blocks[-1].out_channels
 
         if num_classes is not None:
@@ -988,7 +1035,8 @@ class ResNet(Backbone):
         assert len(self._out_features)
         children = [x[0] for x in self.named_children()]
         for out_feature in self._out_features:
-            assert out_feature in children, "Available children: {}".format(", ".join(children))
+            assert out_feature in children, "Available children: {}".format(
+                ", ".join(children))
 
     def forward(self, x):
         outputs = {}
@@ -1032,22 +1080,28 @@ class ResNet(Backbone):
         """
         if first_stride is not None:
             assert "stride" not in kwargs and "stride_per_block" not in kwargs
-            kwargs["stride_per_block"] = [first_stride] + [1] * (num_blocks - 1)
+            kwargs["stride_per_block"] = [first_stride
+                                          ] + [1] * (num_blocks - 1)
         blocks = []
         for i in range(num_blocks):
             curr_kwargs = {}
             for k, v in kwargs.items():
                 if k.endswith("_per_block"):
                     assert len(v) == num_blocks, (
-                        f"Argument '{k}' of make_stage should have the " f"same length as num_blocks={num_blocks}."
-                    )
-                    newk = k[: -len("_per_block")]
-                    assert newk not in kwargs, f"Cannot call make_stage with both {k} and {newk}!"
+                        f"Argument '{k}' of make_stage should have the "
+                        f"same length as num_blocks={num_blocks}.")
+                    newk = k[:-len("_per_block")]
+                    assert (
+                        newk not in kwargs
+                    ), f"Cannot call make_stage with both {k} and {newk}!"
                     curr_kwargs[newk] = v[i]
                 else:
                     curr_kwargs[k] = v
 
-            blocks.append(block_class(in_channels=in_channels, out_channels=out_channels, **curr_kwargs))
+            blocks.append(
+                block_class(in_channels=in_channels,
+                            out_channels=out_channels,
+                            **curr_kwargs))
             in_channels = out_channels
 
         return blocks
@@ -1058,7 +1112,6 @@ class ROIPooler(nn.Module):
     Region of interest feature map pooler that supports pooling from one or more
     feature maps.
     """
-
     def __init__(
         self,
         output_size,
@@ -1073,12 +1126,14 @@ class ROIPooler(nn.Module):
         max_level = -math.log2(scales[-1])
 
         # a bunch of testing
-        assert math.isclose(min_level, int(min_level)) and math.isclose(max_level, int(max_level))
+        assert math.isclose(min_level, int(min_level)) and math.isclose(
+            max_level, int(max_level))
         assert len(scales) == max_level - min_level + 1, "not pyramid"
         assert 0 < min_level and min_level <= max_level
         if isinstance(output_size, int):
             output_size = (output_size, output_size)
-        assert len(output_size) == 2 and isinstance(output_size[0], int) and isinstance(output_size[1], int)
+        assert (len(output_size) == 2 and isinstance(output_size[0], int)
+                and isinstance(output_size[1], int))
         if len(scales) > 1:
             assert min_level <= canonical_level and canonical_level <= max_level
         assert canonical_box_size > 0
@@ -1086,7 +1141,8 @@ class ROIPooler(nn.Module):
         self.output_size = output_size
         self.min_level = int(min_level)
         self.max_level = int(max_level)
-        self.level_poolers = nn.ModuleList(RoIPool(output_size, spatial_scale=scale) for scale in scales)
+        self.level_poolers = nn.ModuleList(
+            RoIPool(output_size, spatial_scale=scale) for scale in scales)
         self.canonical_level = canonical_level
         self.canonical_box_size = canonical_box_size
 
@@ -1137,7 +1193,8 @@ class ROIPooler(nn.Module):
 class ROIOutputs(object):
     def __init__(self, cfg, training=False):
         self.smooth_l1_beta = cfg.ROI_BOX_HEAD.SMOOTH_L1_BETA
-        self.box2box_transform = Box2BoxTransform(weights=cfg.ROI_BOX_HEAD.BBOX_REG_WEIGHTS)
+        self.box2box_transform = Box2BoxTransform(
+            weights=cfg.ROI_BOX_HEAD.BBOX_REG_WEIGHTS)
         self.training = training
         self.score_thresh = cfg.ROI_HEADS.SCORE_THRESH_TEST
         self.min_detections = cfg.MIN_DETECTIONS
@@ -1153,7 +1210,8 @@ class ROIOutputs(object):
         B = proposals[0].size(-1)
         K = box_deltas.size(-1) // B
         box_deltas = box_deltas.view(num_pred * K, B)
-        proposals = torch.cat(proposals, dim=0).unsqueeze(-2).expand(num_pred, K, B)
+        proposals = torch.cat(proposals,
+                              dim=0).unsqueeze(-2).expand(num_pred, K, B)
         proposals = proposals.reshape(-1, B)
         boxes = self.box2box_transform.apply_deltas(box_deltas, proposals)
         return boxes.view(num_pred, K * B).split(preds_per_image, dim=0)
@@ -1166,7 +1224,8 @@ class ROIOutputs(object):
     def _predict_attrs(self, attr_logits, preds_per_image):
         attr_logits = attr_logits[..., :-1].softmax(-1)
         attr_probs, attrs = attr_logits.max(-1)
-        return attr_probs.split(preds_per_image, dim=0), attrs.split(preds_per_image, dim=0)
+        return attr_probs.split(preds_per_image,
+                                dim=0), attrs.split(preds_per_image, dim=0)
 
     @torch.no_grad()
     def inference(
@@ -1181,15 +1240,20 @@ class ROIOutputs(object):
     ):
         # only the pred boxes is the
         preds_per_image = [p.size(0) for p in pred_boxes]
-        boxes_all = self._predict_boxes(pred_boxes, box_deltas, preds_per_image)
-        obj_scores_all = self._predict_objs(obj_logits, preds_per_image)  # list of length N
-        attr_probs_all, attrs_all = self._predict_attrs(attr_logits, preds_per_image)
+        boxes_all = self._predict_boxes(pred_boxes, box_deltas,
+                                        preds_per_image)
+        obj_scores_all = self._predict_objs(
+            obj_logits, preds_per_image)  # list of length N
+        attr_probs_all, attrs_all = self._predict_attrs(
+            attr_logits, preds_per_image)
         features = features.split(preds_per_image, dim=0)
 
         # fun for each image too, also I can experiment and do multiple images
         final_results = []
-        zipped = zip(boxes_all, obj_scores_all, attr_probs_all, attrs_all, sizes)
-        for i, (boxes, obj_scores, attr_probs, attrs, size) in enumerate(zipped):
+        zipped = zip(boxes_all, obj_scores_all, attr_probs_all, attrs_all,
+                     sizes)
+        for i, (boxes, obj_scores, attr_probs, attrs,
+                size) in enumerate(zipped):
             for nms_t in self.nms_thresh:
                 outputs = do_nms(
                     boxes,
@@ -1209,20 +1273,20 @@ class ROIOutputs(object):
                 max_boxes[:, 0::2] *= scale_yx[1]
                 max_boxes[:, 1::2] *= scale_yx[0]
 
-            final_results.append(
-                (
-                    max_boxes,
-                    classes,
-                    max_scores,
-                    attrs[ids],
-                    attr_probs[ids],
-                    features[i][ids],
-                )
-            )
-        boxes, classes, class_probs, attrs, attr_probs, roi_features = map(list, zip(*final_results))
+            final_results.append((
+                max_boxes,
+                classes,
+                max_scores,
+                attrs[ids],
+                attr_probs[ids],
+                features[i][ids],
+            ))
+        boxes, classes, class_probs, attrs, attr_probs, roi_features = map(
+            list, zip(*final_results))
         return boxes, classes, class_probs, attrs, attr_probs, roi_features
 
-    def training(self, obj_logits, attr_logits, box_deltas, pred_boxes, features, sizes):
+    def training(self, obj_logits, attr_logits, box_deltas, pred_boxes,
+                 features, sizes):
         pass
 
     def __call__(
@@ -1254,7 +1318,6 @@ class Res5ROIHeads(nn.Module):
     It contains logic of cropping the regions, extract per-region features
     (by the res-5 block in this case), and make per-region predictions.
     """
-
     def __init__(self, cfg, input_shape):
         super().__init__()
         self.batch_size_per_image = cfg.RPN.BATCH_SIZE_PER_IMAGE
@@ -1265,7 +1328,7 @@ class Res5ROIHeads(nn.Module):
         self.feature_strides = {k: v.stride for k, v in input_shape.items()}
         self.feature_channels = {k: v.channels for k, v in input_shape.items()}
         self.cls_agnostic_bbox_reg = cfg.ROI_BOX_HEAD.CLS_AGNOSTIC_BBOX_REG
-        self.stage_channel_factor = 2 ** 3  # res5 is 8x res2
+        self.stage_channel_factor = 2**3  # res5 is 8x res2
         self.out_channels = cfg.RESNETS.RES2_OUT_CHANNELS * self.stage_channel_factor
 
         # self.proposal_matcher = Matcher(
@@ -1275,7 +1338,7 @@ class Res5ROIHeads(nn.Module):
         # )
 
         pooler_resolution = cfg.ROI_BOX_HEAD.POOLER_RESOLUTION
-        pooler_scales = (1.0 / self.feature_strides[self.in_features[0]],)
+        pooler_scales = (1.0 / self.feature_strides[self.in_features[0]], )
         sampling_ratio = cfg.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO
         res5_halve = cfg.ROI_BOX_HEAD.RES5HALVE
         use_attr = cfg.ROI_BOX_HEAD.ATTR
@@ -1345,7 +1408,8 @@ class Res5ROIHeads(nn.Module):
         assert not proposal_boxes[0].requires_grad
         box_features = self._shared_roi_transform(features, proposal_boxes)
         feature_pooled = box_features.mean(dim=[2, 3])  # pooled to 1x1
-        obj_logits, attr_logits, pred_proposal_deltas = self.box_predictor(feature_pooled)
+        obj_logits, attr_logits, pred_proposal_deltas = self.box_predictor(
+            feature_pooled)
         return obj_logits, attr_logits, pred_proposal_deltas, feature_pooled
 
 
@@ -1353,7 +1417,6 @@ class AnchorGenerator(nn.Module):
     """
     For a set of image sizes and feature maps, computes a set of anchors.
     """
-
     def __init__(self, cfg, input_shape: List[ShapeSpec]):
         super().__init__()
         sizes = cfg.ANCHOR_GENERATOR.SIZES
@@ -1361,7 +1424,6 @@ class AnchorGenerator(nn.Module):
         self.strides = [x.stride for x in input_shape]
         self.offset = cfg.ANCHOR_GENERATOR.OFFSET
         assert 0.0 <= self.offset < 1.0, self.offset
-
         """
         sizes (list[list[int]]): sizes[i] is the list of anchor sizes for feat map i
             1. given in absolute lengths in units of the input image;
@@ -1371,7 +1433,8 @@ class AnchorGenerator(nn.Module):
         """
 
         self.num_features = len(self.strides)
-        self.cell_anchors = nn.ParameterList(self._calculate_anchors(sizes, aspect_ratios))
+        self.cell_anchors = nn.ParameterList(
+            self._calculate_anchors(sizes, aspect_ratios))
         self._spacial_feat_dim = 4
 
     def _calculate_anchors(self, sizes, aspect_ratios):
@@ -1384,7 +1447,10 @@ class AnchorGenerator(nn.Module):
         assert self.num_features == len(sizes)
         assert self.num_features == len(aspect_ratios)
 
-        cell_anchors = [self.generate_cell_anchors(s, a).float() for s, a in zip(sizes, aspect_ratios)]
+        cell_anchors = [
+            self.generate_cell_anchors(s, a).float()
+            for s, a in zip(sizes, aspect_ratios)
+        ]
 
         return cell_anchors
 
@@ -1402,15 +1468,21 @@ class AnchorGenerator(nn.Module):
 
     def grid_anchors(self, grid_sizes):
         anchors = []
-        for (size, stride, base_anchors) in zip(grid_sizes, self.strides, self.cell_anchors):
-            shift_x, shift_y = _create_grid_offsets(size, stride, self.offset, base_anchors.device)
+        for size, stride, base_anchors in zip(grid_sizes, self.strides,
+                                              self.cell_anchors):
+            shift_x, shift_y = _create_grid_offsets(size, stride, self.offset,
+                                                    base_anchors.device)
             shifts = torch.stack((shift_x, shift_y, shift_x, shift_y), dim=1)
 
-            anchors.append((shifts.view(-1, 1, 4) + base_anchors.view(1, -1, 4)).reshape(-1, 4))
+            anchors.append(
+                (shifts.view(-1, 1, 4) + base_anchors.view(1, -1, 4)).reshape(
+                    -1, 4))
 
         return anchors
 
-    def generate_cell_anchors(self, sizes=(32, 64, 128, 256, 512), aspect_ratios=(0.5, 1, 2)):
+    def generate_cell_anchors(self,
+                              sizes=(32, 64, 128, 256, 512),
+                              aspect_ratios=(0.5, 1, 2)):
         """
         anchors are continuous geometric rectangles
         centered on one feature map point sample.
@@ -1420,7 +1492,7 @@ class AnchorGenerator(nn.Module):
 
         anchors = []
         for size in sizes:
-            area = size ** 2.0
+            area = size**2.0
             for aspect_ratio in aspect_ratios:
                 w = math.sqrt(area / aspect_ratio)
                 h = aspect_ratio * w
@@ -1438,8 +1510,10 @@ class AnchorGenerator(nn.Module):
         num_images = features[0].size(0)
         grid_sizes = [feature_map.shape[-2:] for feature_map in features]
         anchors_over_all_feature_maps = self.grid_anchors(grid_sizes)
-        anchors_over_all_feature_maps = torch.stack(anchors_over_all_feature_maps)
-        return anchors_over_all_feature_maps.unsqueeze(0).repeat_interleave(num_images, dim=0)
+        anchors_over_all_feature_maps = torch.stack(
+            anchors_over_all_feature_maps)
+        return anchors_over_all_feature_maps.unsqueeze(0).repeat_interleave(
+            num_images, dim=0)
 
 
 class RPNHead(nn.Module):
@@ -1449,19 +1523,20 @@ class RPNHead(nn.Module):
     and a second 1x1 conv predicts bounding-box deltas specifying how to deform
     each anchor into an object proposal.
     """
-
     def __init__(self, cfg, input_shape: List[ShapeSpec]):
         super().__init__()
 
         # Standard RPN is shared across levels:
         in_channels = [s.channels for s in input_shape]
-        assert len(set(in_channels)) == 1, "Each level must have the same channel!"
+        assert len(
+            set(in_channels)) == 1, "Each level must have the same channel!"
         in_channels = in_channels[0]
 
         anchor_generator = AnchorGenerator(cfg, input_shape)
         num_cell_anchors = anchor_generator.num_cell_anchors
         box_dim = anchor_generator.box_dim
-        assert len(set(num_cell_anchors)) == 1, "Each level must have the same number of cell anchors"
+        assert (len(set(num_cell_anchors)) == 1
+                ), "Each level must have the same number of cell anchors"
         num_cell_anchors = num_cell_anchors[0]
 
         if cfg.PROPOSAL_GENERATOR.HIDDEN_CHANNELS == -1:
@@ -1472,11 +1547,21 @@ class RPNHead(nn.Module):
             # Use hidden dim  instead fo the same dim as Res4 (in_channels)
 
         # 3x3 conv for the hidden representation
-        self.conv = nn.Conv2d(in_channels, hid_channels, kernel_size=3, stride=1, padding=1)
+        self.conv = nn.Conv2d(in_channels,
+                              hid_channels,
+                              kernel_size=3,
+                              stride=1,
+                              padding=1)
         # 1x1 conv for predicting objectness logits
-        self.objectness_logits = nn.Conv2d(hid_channels, num_cell_anchors, kernel_size=1, stride=1)
+        self.objectness_logits = nn.Conv2d(hid_channels,
+                                           num_cell_anchors,
+                                           kernel_size=1,
+                                           stride=1)
         # 1x1 conv for predicting box2box transform deltas
-        self.anchor_deltas = nn.Conv2d(hid_channels, num_cell_anchors * box_dim, kernel_size=1, stride=1)
+        self.anchor_deltas = nn.Conv2d(hid_channels,
+                                       num_cell_anchors * box_dim,
+                                       kernel_size=1,
+                                       stride=1)
 
         for layer in [self.conv, self.objectness_logits, self.anchor_deltas]:
             nn.init.normal_(layer.weight, std=0.01)
@@ -1500,7 +1585,6 @@ class RPN(nn.Module):
     """
     Region Proposal Network, introduced by the Faster R-CNN paper.
     """
-
     def __init__(self, cfg, input_shape: Dict[str, ShapeSpec]):
         super().__init__()
 
@@ -1522,19 +1606,27 @@ class RPN(nn.Module):
         }
         self.boundary_threshold = cfg.RPN.BOUNDARY_THRESH
 
-        self.anchor_generator = AnchorGenerator(cfg, [input_shape[f] for f in self.in_features])
-        self.box2box_transform = Box2BoxTransform(weights=cfg.RPN.BBOX_REG_WEIGHTS)
+        self.anchor_generator = AnchorGenerator(
+            cfg, [input_shape[f] for f in self.in_features])
+        self.box2box_transform = Box2BoxTransform(
+            weights=cfg.RPN.BBOX_REG_WEIGHTS)
         self.anchor_matcher = Matcher(
             cfg.RPN.IOU_THRESHOLDS,
             cfg.RPN.IOU_LABELS,
             allow_low_quality_matches=True,
         )
-        self.rpn_head = RPNHead(cfg, [input_shape[f] for f in self.in_features])
+        self.rpn_head = RPNHead(cfg,
+                                [input_shape[f] for f in self.in_features])
 
     def training(self, images, image_shapes, features, gt_boxes):
         pass
 
-    def inference(self, outputs, images, image_shapes, features, gt_boxes=None):
+    def inference(self,
+                  outputs,
+                  images,
+                  image_shapes,
+                  features,
+                  gt_boxes=None):
         outputs = find_top_rpn_proposals(
             outputs.predict_proposals(),
             outputs.predict_objectness_logits(),
@@ -1585,9 +1677,11 @@ class RPN(nn.Module):
 
         if self.training:
             raise NotImplementedError()
-            return self.training(outputs, images, image_shapes, features, gt_boxes)
+            return self.training(outputs, images, image_shapes, features,
+                                 gt_boxes)
         else:
-            return self.inference(outputs, images, image_shapes, features, gt_boxes)
+            return self.inference(outputs, images, image_shapes, features,
+                                  gt_boxes)
 
 
 class FastRCNNOutputLayers(nn.Module):
@@ -1596,7 +1690,6 @@ class FastRCNNOutputLayers(nn.Module):
       (1) proposal-to-detection box regression deltas
       (2) classification scores
     """
-
     def __init__(
         self,
         input_size,
@@ -1632,7 +1725,8 @@ class FastRCNNOutputLayers(nn.Module):
             Linear: {input_size // 4} --> {num_attrs + 1}
             """
             self.cls_embedding = nn.Embedding(num_classes + 1, input_size // 8)
-            self.fc_attr = nn.Linear(input_size + input_size // 8, input_size // 4)
+            self.fc_attr = nn.Linear(input_size + input_size // 8,
+                                     input_size // 4)
             self.attr_score = nn.Linear(input_size // 4, num_attrs + 1)
 
         nn.init.normal_(self.cls_score.weight, std=0.01)
@@ -1648,7 +1742,8 @@ class FastRCNNOutputLayers(nn.Module):
         if self.use_attr:
             _, max_class = scores.max(-1)  # [b, c] --> [b]
             cls_emb = self.cls_embedding(max_class)  # [b] --> [b, 256]
-            roi_features = torch.cat([roi_features, cls_emb], -1)  # [b, 2048] + [b, 256] --> [b, 2304]
+            roi_features = torch.cat([roi_features, cls_emb],
+                                     -1)  # [b, 2048] + [b, 256] --> [b, 2304]
             roi_features = self.fc_attr(roi_features)
             roi_features = F.relu(roi_features)
             attr_scores = self.attr_score(roi_features)
@@ -1669,7 +1764,8 @@ class GeneralizedRCNN(nn.Module):
         self.to(self.device)
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         config = kwargs.pop("config", None)
         state_dict = kwargs.pop("state_dict", None)
         cache_dir = kwargs.pop("cache_dir", None)
@@ -1682,7 +1778,8 @@ class GeneralizedRCNN(nn.Module):
 
         # Load config if we don't provide a configuration
         if not isinstance(config, Config):
-            config_path = config if config is not None else pretrained_model_name_or_path
+            config_path = (config if config is not None else
+                           pretrained_model_name_or_path)
             # try:
             config = Config.from_pretrained(
                 config_path,
@@ -1696,24 +1793,27 @@ class GeneralizedRCNN(nn.Module):
         # Load model
         if pretrained_model_name_or_path is not None:
             if os.path.isdir(pretrained_model_name_or_path):
-                if os.path.isfile(os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)):
+                if os.path.isfile(
+                        os.path.join(pretrained_model_name_or_path,
+                                     WEIGHTS_NAME)):
                     # Load from a PyTorch checkpoint
-                    archive_file = os.path.join(pretrained_model_name_or_path, WEIGHTS_NAME)
+                    archive_file = os.path.join(pretrained_model_name_or_path,
+                                                WEIGHTS_NAME)
                 else:
                     raise EnvironmentError(
                         "Error no file named {} found in directory {} ".format(
                             WEIGHTS_NAME,
                             pretrained_model_name_or_path,
-                        )
-                    )
-            elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+                        ))
+            elif os.path.isfile(
+                    pretrained_model_name_or_path) or is_remote_url(
+                        pretrained_model_name_or_path):
                 archive_file = pretrained_model_name_or_path
             elif os.path.isfile(pretrained_model_name_or_path + ".index"):
                 assert (
                     from_tf
                 ), "We found a TensorFlow checkpoint at {}, please set from_tf to True to load from this checkpoint".format(
-                    pretrained_model_name_or_path + ".index"
-                )
+                    pretrained_model_name_or_path + ".index")
                 archive_file = pretrained_model_name_or_path + ".index"
             else:
                 archive_file = hf_bucket_url(
@@ -1741,7 +1841,8 @@ class GeneralizedRCNN(nn.Module):
             if resolved_archive_file == archive_file:
                 print("loading weights file {}".format(archive_file))
             else:
-                print("loading weights file {} from cache at {}".format(archive_file, resolved_archive_file))
+                print("loading weights file {} from cache at {}".format(
+                    archive_file, resolved_archive_file))
         else:
             resolved_archive_file = None
 
@@ -1751,7 +1852,8 @@ class GeneralizedRCNN(nn.Module):
         if state_dict is None:
             try:
                 try:
-                    state_dict = torch.load(resolved_archive_file, map_location="cpu")
+                    state_dict = torch.load(resolved_archive_file,
+                                            map_location="cpu")
                 except Exception:
                     state_dict = load_checkpoint(resolved_archive_file)
 
@@ -1792,9 +1894,11 @@ class GeneralizedRCNN(nn.Module):
         if model.__class__.__name__ != model_to_load.__class__.__name__:
             base_model_state_dict = model_to_load.state_dict().keys()
             head_model_state_dict_without_base_prefix = [
-                key.split(cls.base_model_prefix + ".")[-1] for key in model.state_dict().keys()
+                key.split(cls.base_model_prefix + ".")[-1]
+                for key in model.state_dict().keys()
             ]
-            missing_keys.extend(head_model_state_dict_without_base_prefix - base_model_state_dict)
+            missing_keys.extend(head_model_state_dict_without_base_prefix -
+                                base_model_state_dict)
 
         if len(unexpected_keys) > 0:
             print(
@@ -1806,7 +1910,9 @@ class GeneralizedRCNN(nn.Module):
                 f"to be exactly identical (initializing a BertForSequenceClassification model from a BertForSequenceClassification model)."
             )
         else:
-            print(f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n")
+            print(
+                f"All model checkpoint weights were used when initializing {model.__class__.__name__}.\n"
+            )
         if len(missing_keys) > 0:
             print(
                 f"Some weights of {model.__class__.__name__} were not initialized from the model checkpoint at {pretrained_model_name_or_path} "
@@ -1822,9 +1928,7 @@ class GeneralizedRCNN(nn.Module):
         if len(error_msgs) > 0:
             raise RuntimeError(
                 "Error(s) in loading state_dict for {}:\n\t{}".format(
-                    model.__class__.__name__, "\n\t".join(error_msgs)
-                )
-            )
+                    model.__class__.__name__, "\n\t".join(error_msgs)))
         # Set model in evaluation mode to deactivate DropOut modules by default
         model.eval()
 
@@ -1871,12 +1975,14 @@ class GeneralizedRCNN(nn.Module):
 
         # generate proposals if none are available
         if proposals is None:
-            proposal_boxes, _ = self.proposal_generator(images, image_shapes, features, gt_boxes)
+            proposal_boxes, _ = self.proposal_generator(
+                images, image_shapes, features, gt_boxes)
         else:
             assert proposals is not None
 
         # pool object features from either gt_boxes, or from proposals
-        obj_logits, attr_logits, box_deltas, feature_pooled = self.roi_heads(features, proposal_boxes, gt_boxes)
+        obj_logits, attr_logits, box_deltas, feature_pooled = self.roi_heads(
+            features, proposal_boxes, gt_boxes)
 
         # prepare FRCNN Outputs and select top proposals
         boxes, classes, class_probs, attrs, attr_probs, roi_features = self.roi_outputs(
@@ -1899,24 +2005,26 @@ class GeneralizedRCNN(nn.Module):
         preds_per_image = torch.tensor([p.size(0) for p in boxes])
         boxes = pad_list_tensors(boxes, preds_per_image, **subset_kwargs)
         classes = pad_list_tensors(classes, preds_per_image, **subset_kwargs)
-        class_probs = pad_list_tensors(class_probs, preds_per_image, **subset_kwargs)
+        class_probs = pad_list_tensors(class_probs, preds_per_image,
+                                       **subset_kwargs)
         attrs = pad_list_tensors(attrs, preds_per_image, **subset_kwargs)
-        attr_probs = pad_list_tensors(attr_probs, preds_per_image, **subset_kwargs)
-        roi_features = pad_list_tensors(roi_features, preds_per_image, **subset_kwargs)
+        attr_probs = pad_list_tensors(attr_probs, preds_per_image,
+                                      **subset_kwargs)
+        roi_features = pad_list_tensors(roi_features, preds_per_image,
+                                        **subset_kwargs)
         subset_kwargs["padding"] = None
-        preds_per_image = pad_list_tensors(preds_per_image, None, **subset_kwargs)
+        preds_per_image = pad_list_tensors(preds_per_image, None,
+                                           **subset_kwargs)
         sizes = pad_list_tensors(image_shapes, None, **subset_kwargs)
         normalized_boxes = norm_box(boxes, original_sizes)
-        return OrderedDict(
-            {
-                "obj_ids": classes,
-                "obj_probs": class_probs,
-                "attr_ids": attrs,
-                "attr_probs": attr_probs,
-                "boxes": boxes,
-                "sizes": sizes,
-                "preds_per_image": preds_per_image,
-                "roi_features": roi_features,
-                "normalized_boxes": normalized_boxes,
-            }
-        )
+        return OrderedDict({
+            "obj_ids": classes,
+            "obj_probs": class_probs,
+            "attr_ids": attrs,
+            "attr_probs": attr_probs,
+            "boxes": boxes,
+            "sizes": sizes,
+            "preds_per_image": preds_per_image,
+            "roi_features": roi_features,
+            "normalized_boxes": normalized_boxes,
+        })

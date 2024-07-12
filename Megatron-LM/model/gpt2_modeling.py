@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """GPT-2 model."""
 
 import torch
@@ -29,6 +28,7 @@ def init_method_normal(std=0.02):
     """
     def init_(tensor):
         return torch.nn.init.normal_(tensor, mean=0.0, std=std)
+
     return init_
 
 
@@ -38,19 +38,20 @@ class GPT2Model(torch.nn.Module):
     The output of the forward method are the logits (parallel or
     serial depending on the `parallel_output` flag.
     """
-
-    def __init__(self,
-                 num_layers,
-                 vocab_size,
-                 hidden_size,
-                 num_attention_heads,
-                 embedding_dropout_prob,
-                 attention_dropout_prob,
-                 output_dropout_prob,
-                 max_sequence_length,
-                 checkpoint_activations,
-                 checkpoint_num_layers=1,
-                 parallel_output=True):
+    def __init__(
+        self,
+        num_layers,
+        vocab_size,
+        hidden_size,
+        num_attention_heads,
+        embedding_dropout_prob,
+        attention_dropout_prob,
+        output_dropout_prob,
+        max_sequence_length,
+        checkpoint_activations,
+        checkpoint_num_layers=1,
+        parallel_output=True,
+    ):
 
         super(GPT2Model, self).__init__()
 
@@ -72,13 +73,15 @@ class GPT2Model(torch.nn.Module):
         self.embedding_dropout = torch.nn.Dropout(embedding_dropout_prob)
 
         # Transformer
-        self.transformer = mpu.GPT2ParallelTransformer(num_layers,
-                                                       hidden_size,
-                                                       num_attention_heads,
-                                                       attention_dropout_prob,
-                                                       output_dropout_prob,
-                                                       checkpoint_activations,
-                                                       checkpoint_num_layers)
+        self.transformer = mpu.GPT2ParallelTransformer(
+            num_layers,
+            hidden_size,
+            num_attention_heads,
+            attention_dropout_prob,
+            output_dropout_prob,
+            checkpoint_activations,
+            checkpoint_num_layers,
+        )
 
     def forward(self, input_ids, position_ids, attention_mask):
 
@@ -107,19 +110,21 @@ class GPT2Model(torch.nn.Module):
 
 def gpt2_get_params_for_weight_decay_optimization(module):
 
-    weight_decay_params = {'params': []}
-    no_weight_decay_params = {'params': [], 'weight_decay': 0.0}
+    weight_decay_params = {"params": []}
+    no_weight_decay_params = {"params": [], "weight_decay": 0.0}
     for module_ in module.modules():
         if isinstance(module_, (mpu.LayerNorm, torch.nn.LayerNorm)):
-            no_weight_decay_params['params'].extend(
-                [p for p in list(module_._parameters.values())
-                 if p is not None])
+            no_weight_decay_params["params"].extend([
+                p for p in list(module_._parameters.values()) if p is not None
+            ])
         else:
-            weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n != 'bias'])
-            no_weight_decay_params['params'].extend(
-                [p for n, p in list(module_._parameters.items())
-                 if p is not None and n == 'bias'])
+            weight_decay_params["params"].extend([
+                p for n, p in list(module_._parameters.items())
+                if p is not None and n != "bias"
+            ])
+            no_weight_decay_params["params"].extend([
+                p for n, p in list(module_._parameters.items())
+                if p is not None and n == "bias"
+            ])
 
     return weight_decay_params, no_weight_decay_params

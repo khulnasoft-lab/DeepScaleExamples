@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for OpenAI GPT."""
 
-
 import json
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
@@ -25,36 +24,49 @@ from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 from .tokenization_gpt2 import GPT2Tokenizer
 
-
 if TYPE_CHECKING:
     from transformers.pipelines.conversational import Conversation
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.json", "merges_file": "merges.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.json",
+    "merges_file": "merges.txt",
+    "tokenizer_file": "tokenizer.json",
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
         "gpt2": "https://huggingface.co/gpt2/resolve/main/vocab.json",
-        "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/vocab.json",
-        "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/vocab.json",
+        "gpt2-medium":
+        "https://huggingface.co/gpt2-medium/resolve/main/vocab.json",
+        "gpt2-large":
+        "https://huggingface.co/gpt2-large/resolve/main/vocab.json",
         "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/vocab.json",
-        "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/vocab.json",
+        "distilgpt2":
+        "https://huggingface.co/distilgpt2/resolve/main/vocab.json",
     },
     "merges_file": {
         "gpt2": "https://huggingface.co/gpt2/resolve/main/merges.txt",
-        "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/merges.txt",
-        "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/merges.txt",
+        "gpt2-medium":
+        "https://huggingface.co/gpt2-medium/resolve/main/merges.txt",
+        "gpt2-large":
+        "https://huggingface.co/gpt2-large/resolve/main/merges.txt",
         "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/merges.txt",
-        "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/merges.txt",
+        "distilgpt2":
+        "https://huggingface.co/distilgpt2/resolve/main/merges.txt",
     },
     "tokenizer_file": {
-        "gpt2": "https://huggingface.co/gpt2/resolve/main/tokenizer.json",
-        "gpt2-medium": "https://huggingface.co/gpt2-medium/resolve/main/tokenizer.json",
-        "gpt2-large": "https://huggingface.co/gpt2-large/resolve/main/tokenizer.json",
-        "gpt2-xl": "https://huggingface.co/gpt2-xl/resolve/main/tokenizer.json",
-        "distilgpt2": "https://huggingface.co/distilgpt2/resolve/main/tokenizer.json",
+        "gpt2":
+        "https://huggingface.co/gpt2/resolve/main/tokenizer.json",
+        "gpt2-medium":
+        "https://huggingface.co/gpt2-medium/resolve/main/tokenizer.json",
+        "gpt2-large":
+        "https://huggingface.co/gpt2-large/resolve/main/tokenizer.json",
+        "gpt2-xl":
+        "https://huggingface.co/gpt2-xl/resolve/main/tokenizer.json",
+        "distilgpt2":
+        "https://huggingface.co/distilgpt2/resolve/main/tokenizer.json",
     },
 }
 
@@ -132,7 +144,7 @@ class GPT2TokenizerFast(PreTrainedTokenizerFast):
         bos_token="<|endoftext|>",
         eos_token="<|endoftext|>",
         add_prefix_space=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             vocab_file,
@@ -145,11 +157,14 @@ class GPT2TokenizerFast(PreTrainedTokenizerFast):
             **kwargs,
         )
 
-        pre_tok_state = json.loads(self.backend_tokenizer.pre_tokenizer.__getstate__())
-        if pre_tok_state.get("add_prefix_space", add_prefix_space) != add_prefix_space:
+        pre_tok_state = json.loads(
+            self.backend_tokenizer.pre_tokenizer.__getstate__())
+        if pre_tok_state.get("add_prefix_space",
+                             add_prefix_space) != add_prefix_space:
             pre_tok_class = getattr(pre_tokenizers, pre_tok_state.pop("type"))
             pre_tok_state["add_prefix_space"] = add_prefix_space
-            self.backend_tokenizer.pre_tokenizer = pre_tok_class(**pre_tok_state)
+            self.backend_tokenizer.pre_tokenizer = pre_tok_class(
+                **pre_tok_state)
 
         self.add_prefix_space = add_prefix_space
 
@@ -157,8 +172,7 @@ class GPT2TokenizerFast(PreTrainedTokenizerFast):
         is_split_into_words = kwargs.get("is_split_into_words", False)
         assert self.add_prefix_space or not is_split_into_words, (
             f"You need to instantiate {self.__class__.__name__} with add_prefix_space=True "
-            "to use it with pretokenized inputs."
-        )
+            "to use it with pretokenized inputs.")
 
         return super()._batch_encode_plus(*args, **kwargs)
 
@@ -167,21 +181,26 @@ class GPT2TokenizerFast(PreTrainedTokenizerFast):
 
         assert self.add_prefix_space or not is_split_into_words, (
             f"You need to instantiate {self.__class__.__name__} with add_prefix_space=True "
-            "to use it with pretokenized inputs."
-        )
+            "to use it with pretokenized inputs.")
 
         return super()._encode_plus(*args, **kwargs)
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
-        files = self._tokenizer.model.save(save_directory, name=filename_prefix)
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
+        files = self._tokenizer.model.save(save_directory,
+                                           name=filename_prefix)
         return tuple(files)
 
-    def _build_conversation_input_ids(self, conversation: "Conversation") -> List[int]:
+    def _build_conversation_input_ids(
+            self, conversation: "Conversation") -> List[int]:
         """This corresponds to DialoGPT variants of models."""
         input_ids = []
         for is_user, text in conversation.iter_texts():
-            input_ids.extend(self.encode(text, add_special_tokens=False) + [self.eos_token_id])
+            input_ids.extend(
+                self.encode(text, add_special_tokens=False) +
+                [self.eos_token_id])
 
         if len(input_ids) > self.model_max_length:
-            input_ids = input_ids[-self.model_max_length :]
+            input_ids = input_ids[-self.model_max_length:]
         return input_ids

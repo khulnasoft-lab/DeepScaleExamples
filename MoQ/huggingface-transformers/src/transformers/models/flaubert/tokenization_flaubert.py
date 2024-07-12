@@ -14,14 +14,12 @@
 # limitations under the License.
 """Tokenization classes for Flaubert, based on XLM."""
 
-
 import unicodedata
 
 import six
 
 from ...utils import logging
 from ..xlm.tokenization_xlm import XLMTokenizer
-
 
 logger = logging.get_logger(__name__)
 
@@ -32,16 +30,24 @@ VOCAB_FILES_NAMES = {
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "flaubert/flaubert_small_cased": "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/vocab.json",
-        "flaubert/flaubert_base_uncased": "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/vocab.json",
-        "flaubert/flaubert_base_cased": "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/vocab.json",
-        "flaubert/flaubert_large_cased": "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/vocab.json",
+        "flaubert/flaubert_small_cased":
+        "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/vocab.json",
+        "flaubert/flaubert_base_uncased":
+        "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/vocab.json",
+        "flaubert/flaubert_base_cased":
+        "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/vocab.json",
+        "flaubert/flaubert_large_cased":
+        "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/vocab.json",
     },
     "merges_file": {
-        "flaubert/flaubert_small_cased": "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/merges.txt",
-        "flaubert/flaubert_base_uncased": "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/merges.txt",
-        "flaubert/flaubert_base_cased": "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/merges.txt",
-        "flaubert/flaubert_large_cased": "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/merges.txt",
+        "flaubert/flaubert_small_cased":
+        "https://huggingface.co/flaubert/flaubert_small_cased/resolve/main/merges.txt",
+        "flaubert/flaubert_base_uncased":
+        "https://huggingface.co/flaubert/flaubert_base_uncased/resolve/main/merges.txt",
+        "flaubert/flaubert_base_cased":
+        "https://huggingface.co/flaubert/flaubert_base_cased/resolve/main/merges.txt",
+        "flaubert/flaubert_large_cased":
+        "https://huggingface.co/flaubert/flaubert_large_cased/resolve/main/merges.txt",
     },
 }
 
@@ -53,10 +59,18 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "flaubert/flaubert_small_cased": {"do_lowercase": False},
-    "flaubert/flaubert_base_uncased": {"do_lowercase": True},
-    "flaubert/flaubert_base_cased": {"do_lowercase": False},
-    "flaubert/flaubert_large_cased": {"do_lowercase": False},
+    "flaubert/flaubert_small_cased": {
+        "do_lowercase": False
+    },
+    "flaubert/flaubert_base_uncased": {
+        "do_lowercase": True
+    },
+    "flaubert/flaubert_base_cased": {
+        "do_lowercase": False
+    },
+    "flaubert/flaubert_large_cased": {
+        "do_lowercase": False
+    },
 }
 
 
@@ -64,6 +78,7 @@ def convert_to_unicode(text):
     """
     Converts `text` to Unicode (if it's not already), assuming UTF-8 input.
     """
+
     # six_ensure_text is copied from https://github.com/benjaminp/six
     def six_ensure_text(s, encoding="utf-8", errors="strict"):
         if isinstance(s, six.binary_type):

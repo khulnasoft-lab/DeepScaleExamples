@@ -13,18 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import os
 import unittest
 
 from transformers.file_utils import cached_property
-from transformers.models.xlm_prophetnet.tokenization_xlm_prophetnet import SPIECE_UNDERLINE, XLMProphetNetTokenizer
+from transformers.models.xlm_prophetnet.tokenization_xlm_prophetnet import (
+    SPIECE_UNDERLINE,
+    XLMProphetNetTokenizer,
+)
 from transformers.testing_utils import require_sentencepiece, slow
 
 from .test_tokenization_common import TokenizerTesterMixin
 
-
-SAMPLE_VOCAB = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fixtures/test_sentencepiece.model")
+SAMPLE_VOCAB = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "fixtures/test_sentencepiece.model")
 
 
 @require_sentencepiece
@@ -48,7 +50,10 @@ class XLMProphetNetTokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
         self.assertListEqual(
             tokenizer.convert_tokens_to_ids(tokens),
-            [value + tokenizer.fairseq_offset for value in [285, 46, 10, 170, 382]],
+            [
+                value + tokenizer.fairseq_offset
+                for value in [285, 46, 10, 170, 382]
+            ],
         )
 
         tokens = tokenizer.tokenize("I was born in 92000, and this is falsé.")
@@ -82,8 +87,29 @@ class XLMProphetNetTokenizationTest(TokenizerTesterMixin, unittest.TestCase):
         self.assertListEqual(
             ids,
             [
-                value + tokenizer.fairseq_offset
-                for value in [8, 21, 84, 55, 24, 19, 7, -9, 602, 347, 347, 347, 3, 12, 66, 46, 72, 80, 6, -9, 4]
+                value + tokenizer.fairseq_offset for value in [
+                    8,
+                    21,
+                    84,
+                    55,
+                    24,
+                    19,
+                    7,
+                    -9,
+                    602,
+                    347,
+                    347,
+                    347,
+                    3,
+                    12,
+                    66,
+                    46,
+                    72,
+                    80,
+                    6,
+                    -9,
+                    4,
+                ]
             ],
         )
 
@@ -117,10 +143,12 @@ class XLMProphetNetTokenizationTest(TokenizerTesterMixin, unittest.TestCase):
 
     @cached_property
     def big_tokenizer(self):
-        return XLMProphetNetTokenizer.from_pretrained("microsoft/xprophetnet-large-wiki100-cased")
+        return XLMProphetNetTokenizer.from_pretrained(
+            "microsoft/xprophetnet-large-wiki100-cased")
 
     @slow
     def test_tokenization_base_easy_symbols(self):
         symbols = "Hello World!"
         original_tokenizer_encodings = [35389, 6672, 49, 2]
-        self.assertListEqual(original_tokenizer_encodings, self.big_tokenizer.encode(symbols))
+        self.assertListEqual(original_tokenizer_encodings,
+                             self.big_tokenizer.encode(symbols))

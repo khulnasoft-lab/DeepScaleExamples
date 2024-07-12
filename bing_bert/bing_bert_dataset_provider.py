@@ -15,12 +15,13 @@ class BingBertDatasetProvider(BertDatasetProviderInterface):
     def __init__(self, args):
         self.tokenizer = args.tokenizer
         self.refresh_bucket_size = args.refresh_bucket_size
-        self.datasampler = RandomSampler if args.local_rank == -1 else DistributedSampler
-        self.num_workers = args.config['training']['num_workers']
+        self.datasampler = (RandomSampler
+                            if args.local_rank == -1 else DistributedSampler)
+        self.num_workers = args.config["training"]["num_workers"]
 
         # Initialize dataset paths
         self.dataset_paths = []
-        for dataset in ['wiki_pretrain_dataset', 'bc_pretrain_dataset']:
+        for dataset in ["wiki_pretrain_dataset", "bc_pretrain_dataset"]:
             self.dataset_paths.append(
                 os.path.join(args.data_path_prefix,
                              args.config["data"]["datasets"][dataset]))
@@ -39,7 +40,7 @@ class BingBertDatasetProvider(BertDatasetProviderInterface):
         self.dataset_iterator = []
 
         # Configure asynchronous data loading
-        self.async_dataloading = 'async_worker' in args.config['training']
+        self.async_dataloading = "async_worker" in args.config["training"]
         self.async_worker = None
 
         if self.global_rank == 0:
@@ -59,7 +60,8 @@ class BingBertDatasetProvider(BertDatasetProviderInterface):
                 max_seq_length=self.max_seq_length,
                 index=index,
                 data_type=PretrainDataType.NUMPY,
-                max_predictions_per_seq=self.max_predictions_per_seq)
+                max_predictions_per_seq=self.max_predictions_per_seq,
+            )
 
             datalengths.append(len(pretrain_dataset))
             batches_per_dataset.append(
@@ -104,12 +106,14 @@ class BingBertDatasetProvider(BertDatasetProviderInterface):
             self.async_worker.prefetch()
 
     def _get_dataloader(self, dataset: Dataset):
-        return (
-            x
-            for x in DataLoader(dataset,
-                                batch_size=self.train_micro_batch_size_per_gpu,
-                                sampler=self.datasampler(dataset),
-                                num_workers=self.num_workers))
+        return (x for x in DataLoader(
+            dataset,
+            batch_size=self.train_micro_batch_size_per_gpu,
+            sampler=self.datasampler(dataset),
+            num_workers=self.num_workers,
+        ))
 
     def _get_effective_batch(self, total):
-        return total // self.world_size // self.train_micro_batch_size_per_gpu // self.gradient_accumulation_steps // self.refresh_bucket_size
+        return (total // self.world_size //
+                self.train_micro_batch_size_per_gpu //
+                self.gradient_accumulation_steps // self.refresh_bucket_size)

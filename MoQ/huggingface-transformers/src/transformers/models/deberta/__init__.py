@@ -20,9 +20,9 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_torch_available
 
-
 _import_structure = {
-    "configuration_deberta": ["DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP", "DebertaConfig"],
+    "configuration_deberta":
+    ["DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP", "DebertaConfig"],
     "tokenization_deberta": ["DebertaTokenizer"],
 }
 
@@ -37,9 +37,11 @@ if is_torch_available():
         "DebertaForQuestionAnswering",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_deberta import DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP, DebertaConfig
+    from .configuration_deberta import (
+        DEBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        DebertaConfig,
+    )
     from .tokenization_deberta import DebertaTokenizer
 
     if is_torch_available():

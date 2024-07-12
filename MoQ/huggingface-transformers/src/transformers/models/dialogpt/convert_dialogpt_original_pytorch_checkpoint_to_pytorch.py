@@ -19,14 +19,14 @@ import torch
 
 from transformers.file_utils import WEIGHTS_NAME
 
-
 DIALOGPT_MODELS = ["small", "medium", "large"]
 
 OLD_KEY = "lm_head.decoder.weight"
 NEW_KEY = "lm_head.weight"
 
 
-def convert_dialogpt_checkpoint(checkpoint_path: str, pytorch_dump_folder_path: str):
+def convert_dialogpt_checkpoint(checkpoint_path: str,
+                                pytorch_dump_folder_path: str):
     d = torch.load(checkpoint_path)
     d[NEW_KEY] = d.pop(OLD_KEY)
     os.makedirs(pytorch_dump_folder_path, exist_ok=True)

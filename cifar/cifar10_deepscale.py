@@ -7,34 +7,42 @@ import deepscale
 
 def add_argument():
 
-    parser = argparse.ArgumentParser(description='CIFAR')
+    parser = argparse.ArgumentParser(description="CIFAR")
 
-    #data
+    # data
     # cuda
-    parser.add_argument('--with_cuda',
-                        default=False,
-                        action='store_true',
-                        help='use CPU in case there\'s no GPU support')
-    parser.add_argument('--use_ema',
-                        default=False,
-                        action='store_true',
-                        help='whether use exponential moving average')
+    parser.add_argument(
+        "--with_cuda",
+        default=False,
+        action="store_true",
+        help="use CPU in case there's no GPU support",
+    )
+    parser.add_argument(
+        "--use_ema",
+        default=False,
+        action="store_true",
+        help="whether use exponential moving average",
+    )
 
     # train
-    parser.add_argument('-b',
-                        '--batch_size',
+    parser.add_argument("-b",
+                        "--batch_size",
                         default=32,
                         type=int,
-                        help='mini-batch size (default: 32)')
-    parser.add_argument('-e',
-                        '--epochs',
-                        default=30,
-                        type=int,
-                        help='number of total epochs (default: 30)')
-    parser.add_argument('--local_rank',
-                        type=int,
-                        default=-1,
-                        help='local rank passed from distributed launcher')
+                        help="mini-batch size (default: 32)")
+    parser.add_argument(
+        "-e",
+        "--epochs",
+        default=30,
+        type=int,
+        help="number of total epochs (default: 30)",
+    )
+    parser.add_argument(
+        "--local_rank",
+        type=int,
+        default=-1,
+        help="local rank passed from distributed launcher",
+    )
 
     # Include DeepScale configuration arguments
     parser = deepscale.add_config_arguments(parser)
@@ -56,7 +64,7 @@ transform = transforms.Compose([
     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
 ])
 
-trainset = torchvision.datasets.CIFAR10(root='./data',
+trainset = torchvision.datasets.CIFAR10(root="./data",
                                         train=True,
                                         download=True,
                                         transform=transform)
@@ -65,7 +73,7 @@ trainloader = torch.utils.data.DataLoader(trainset,
                                           shuffle=True,
                                           num_workers=2)
 
-testset = torchvision.datasets.CIFAR10(root='./data',
+testset = torchvision.datasets.CIFAR10(root="./data",
                                        train=False,
                                        download=True,
                                        transform=transform)
@@ -74,8 +82,18 @@ testloader = torch.utils.data.DataLoader(testset,
                                          shuffle=False,
                                          num_workers=2)
 
-classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse',
-           'ship', 'truck')
+classes = (
+    "plane",
+    "car",
+    "bird",
+    "cat",
+    "deer",
+    "dog",
+    "frog",
+    "horse",
+    "ship",
+    "truck",
+)
 
 ########################################################################
 # Let us show some of the training images, for fun.
@@ -100,7 +118,7 @@ images, labels = dataiter.next()
 # show images
 imshow(torchvision.utils.make_grid(images))
 # print labels
-print(' '.join('%5s' % classes[labels[j]] for j in range(4)))
+print(" ".join("%5s" % classes[labels[j]] for j in range(4)))
 
 ########################################################################
 # 2. Define a Convolutional Neural Network
@@ -143,8 +161,8 @@ args = add_argument()
 model_engine, optimizer, trainloader, __ = deepscale.initialize(
     args=args, model=net, model_parameters=parameters, training_data=trainset)
 
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#net.to(device)
+# device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+# net.to(device)
 ########################################################################
 # 3. Define a Loss function and optimizer
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -153,7 +171,7 @@ model_engine, optimizer, trainloader, __ = deepscale.initialize(
 import torch.optim as optim
 
 criterion = nn.CrossEntropyLoss()
-#optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
+# optimizer = optim.SGD(net.parameters(), lr=0.001, momentum=0.9)
 
 ########################################################################
 # 4. Train the network
@@ -180,11 +198,11 @@ for epoch in range(2):  # loop over the dataset multiple times
         # print statistics
         running_loss += loss.item()
         if i % 2000 == 1999:  # print every 2000 mini-batches
-            print('[%d, %5d] loss: %.3f' %
+            print("[%d, %5d] loss: %.3f" %
                   (epoch + 1, i + 1, running_loss / 2000))
             running_loss = 0.0
 
-print('Finished Training')
+print("Finished Training")
 
 ########################################################################
 # 5. Test the network on the test data
@@ -204,7 +222,7 @@ images, labels = dataiter.next()
 
 # print images
 imshow(torchvision.utils.make_grid(images))
-print('GroundTruth: ', ' '.join('%5s' % classes[labels[j]] for j in range(4)))
+print("GroundTruth: ", " ".join("%5s" % classes[labels[j]] for j in range(4)))
 
 ########################################################################
 # Okay, now let us see what the neural network thinks these examples above are:
@@ -218,7 +236,7 @@ outputs = net(images.to(model_engine.local_rank))
 # So, let's get the index of the highest energy:
 _, predicted = torch.max(outputs, 1)
 
-print('Predicted: ', ' '.join('%5s' % classes[predicted[j]] for j in range(4)))
+print("Predicted: ", " ".join("%5s" % classes[predicted[j]] for j in range(4)))
 
 ########################################################################
 # The results seem pretty good.
@@ -236,7 +254,7 @@ with torch.no_grad():
         correct += (predicted == labels.to(
             model_engine.local_rank)).sum().item()
 
-print('Accuracy of the network on the 10000 test images: %d %%' %
+print("Accuracy of the network on the 10000 test images: %d %%" %
       (100 * correct / total))
 
 ########################################################################
@@ -247,8 +265,8 @@ print('Accuracy of the network on the 10000 test images: %d %%' %
 # Hmmm, what are the classes that performed well, and the classes that did
 # not perform well:
 
-class_correct = list(0. for i in range(10))
-class_total = list(0. for i in range(10))
+class_correct = list(0.0 for i in range(10))
+class_total = list(0.0 for i in range(10))
 with torch.no_grad():
     for data in testloader:
         images, labels = data
@@ -261,5 +279,5 @@ with torch.no_grad():
             class_total[label] += 1
 
 for i in range(10):
-    print('Accuracy of %5s : %2d %%' %
+    print("Accuracy of %5s : %2d %%" %
           (classes[i], 100 * class_correct[i] / class_total[i]))

@@ -26,16 +26,20 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_xlm_roberta": ["XLM_ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP", "XLMRobertaConfig"],
+    "configuration_xlm_roberta": [
+        "XLM_ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "XLMRobertaConfig",
+    ],
 }
 
 if is_sentencepiece_available():
     _import_structure["tokenization_xlm_roberta"] = ["XLMRobertaTokenizer"]
 
 if is_tokenizers_available():
-    _import_structure["tokenization_xlm_roberta_fast"] = ["XLMRobertaTokenizerFast"]
+    _import_structure["tokenization_xlm_roberta_fast"] = [
+        "XLMRobertaTokenizerFast"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_xlm_roberta"] = [
@@ -60,9 +64,11 @@ if is_tf_available():
         "TFXLMRobertaModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_xlm_roberta import XLM_ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP, XLMRobertaConfig
+    from .configuration_xlm_roberta import (
+        XLM_ROBERTA_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        XLMRobertaConfig,
+    )
 
     if is_sentencepiece_available():
         from .tokenization_xlm_roberta import XLMRobertaTokenizer

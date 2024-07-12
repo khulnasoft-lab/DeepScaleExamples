@@ -2,13 +2,14 @@ import logging
 import torch.distributed as dist
 
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-    datefmt='%m/%d/%Y %H:%M:%S',
-    level=logging.INFO)
+    format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 
 
-class Logger():
+class Logger:
     def __init__(self, cuda=False):
         self.logger = logging.getLogger(__name__)
         self.cuda = cuda

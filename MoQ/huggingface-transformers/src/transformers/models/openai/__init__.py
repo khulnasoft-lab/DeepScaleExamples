@@ -18,11 +18,18 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
-    "configuration_openai": ["OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP", "OpenAIGPTConfig"],
+    "configuration_openai": [
+        "OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "OpenAIGPTConfig",
+    ],
     "tokenization_openai": ["OpenAIGPTTokenizer"],
 }
 
@@ -51,9 +58,11 @@ if is_tf_available():
         "TFOpenAIGPTPreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_openai import OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP, OpenAIGPTConfig
+    from .configuration_openai import (
+        OPENAI_GPT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        OpenAIGPTConfig,
+    )
     from .tokenization_openai import OpenAIGPTTokenizer
 
     if is_tokenizers_available():

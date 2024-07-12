@@ -17,17 +17,23 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 DISTILBERT_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "distilbert-base-uncased": "https://huggingface.co/distilbert-base-uncased/resolve/main/config.json",
-    "distilbert-base-uncased-distilled-squad": "https://huggingface.co/distilbert-base-uncased-distilled-squad/resolve/main/config.json",
-    "distilbert-base-cased": "https://huggingface.co/distilbert-base-cased/resolve/main/config.json",
-    "distilbert-base-cased-distilled-squad": "https://huggingface.co/distilbert-base-cased-distilled-squad/resolve/main/config.json",
-    "distilbert-base-german-cased": "https://huggingface.co/distilbert-base-german-cased/resolve/main/config.json",
-    "distilbert-base-multilingual-cased": "https://huggingface.co/distilbert-base-multilingual-cased/resolve/main/config.json",
-    "distilbert-base-uncased-finetuned-sst-2-english": "https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/config.json",
+    "distilbert-base-uncased":
+    "https://huggingface.co/distilbert-base-uncased/resolve/main/config.json",
+    "distilbert-base-uncased-distilled-squad":
+    "https://huggingface.co/distilbert-base-uncased-distilled-squad/resolve/main/config.json",
+    "distilbert-base-cased":
+    "https://huggingface.co/distilbert-base-cased/resolve/main/config.json",
+    "distilbert-base-cased-distilled-squad":
+    "https://huggingface.co/distilbert-base-cased-distilled-squad/resolve/main/config.json",
+    "distilbert-base-german-cased":
+    "https://huggingface.co/distilbert-base-german-cased/resolve/main/config.json",
+    "distilbert-base-multilingual-cased":
+    "https://huggingface.co/distilbert-base-multilingual-cased/resolve/main/config.json",
+    "distilbert-base-uncased-finetuned-sst-2-english":
+    "https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/config.json",
 }
 
 
@@ -89,26 +95,25 @@ class DistilBertConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "distilbert"
 
-    def __init__(
-        self,
-        vocab_size=30522,
-        max_position_embeddings=512,
-        sinusoidal_pos_embds=False,
-        n_layers=6,
-        n_heads=12,
-        dim=768,
-        hidden_dim=4 * 768,
-        dropout=0.1,
-        attention_dropout=0.1,
-        activation="gelu",
-        initializer_range=0.02,
-        qa_dropout=0.1,
-        seq_classif_dropout=0.2,
-        pad_token_id=0,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=30522,
+                 max_position_embeddings=512,
+                 sinusoidal_pos_embds=False,
+                 n_layers=6,
+                 n_heads=12,
+                 dim=768,
+                 hidden_dim=4 * 768,
+                 dropout=0.1,
+                 attention_dropout=0.1,
+                 activation="gelu",
+                 initializer_range=0.02,
+                 qa_dropout=0.1,
+                 seq_classif_dropout=0.2,
+                 pad_token_id=0,
+                 **kwargs):
         super().__init__(**kwargs, pad_token_id=pad_token_id)
         self.vocab_size = vocab_size
         self.max_position_embeddings = max_position_embeddings

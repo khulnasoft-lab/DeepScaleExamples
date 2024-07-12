@@ -18,11 +18,11 @@ import warnings
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 BART_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "facebook/bart-large": "https://huggingface.co/facebook/bart-large/resolve/main/config.json",
+    "facebook/bart-large":
+    "https://huggingface.co/facebook/bart-large/resolve/main/config.json",
     # See all BART models at https://huggingface.co/models?filter=bart
 }
 
@@ -104,6 +104,7 @@ class BartConfig(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "bart"
     keys_to_ignore_at_inference = ["past_key_values"]
 
@@ -136,7 +137,7 @@ class BartConfig(PretrainedConfig):
         is_encoder_decoder=True,
         decoder_start_token_id=2,
         forced_eos_token_id=2,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             num_labels=num_labels,
@@ -169,10 +170,13 @@ class BartConfig(PretrainedConfig):
         self.use_cache = use_cache
         self.num_hidden_layers = encoder_layers
         self.gradient_checkpointing = gradient_checkpointing
-        self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
+        self.scale_embedding = (
+            scale_embedding  # scale factor will be sqrt(d_model) if True
+        )
 
         # ensure backward compatibilty for BART CNN models
-        if self.forced_bos_token_id is None and kwargs.get("force_bos_token_to_be_generated", False):
+        if self.forced_bos_token_id is None and kwargs.get(
+                "force_bos_token_to_be_generated", False):
             self.forced_bos_token_id = self.bos_token_id
             warnings.warn(
                 f"Please make sure the config includes `forced_bos_token_id={self.bos_token_id}` in future versions."

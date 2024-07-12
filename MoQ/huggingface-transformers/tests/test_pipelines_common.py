@@ -17,9 +17,14 @@ from unittest import mock
 
 from transformers import is_tf_available, is_torch_available, pipeline
 from transformers.pipelines import Pipeline
-from transformers.testing_utils import _run_slow_tests, is_pipeline_test, require_tf, require_torch, slow
+from transformers.testing_utils import (
+    _run_slow_tests,
+    is_pipeline_test,
+    require_tf,
+    require_torch,
+    slow,
+)
 from transformers.tokenization_utils_base import to_py_obj
-
 
 VALID_INPUTS = ["A simple string", ["list of strings"]]
 
@@ -31,7 +36,9 @@ class CustomInputPipelineCommonMixin:
     pipeline_running_kwargs = {}  # Additional kwargs to run the pipeline with
     small_models = []  # Models tested without the @slow decorator
     large_models = []  # Models tested with the @slow decorator
-    valid_inputs = VALID_INPUTS  # Some inputs which are valid to compare fast and slow tokenizers
+    valid_inputs = (
+        VALID_INPUTS  # Some inputs which are valid to compare fast and slow tokenizers
+    )
 
     def setUp(self) -> None:
         if not is_tf_available() and not is_torch_available():
@@ -63,12 +70,16 @@ class CustomInputPipelineCommonMixin:
     @require_torch
     @slow
     def test_pt_defaults(self):
-        pipeline(self.pipeline_task, framework="pt", **self.pipeline_loading_kwargs)
+        pipeline(self.pipeline_task,
+                 framework="pt",
+                 **self.pipeline_loading_kwargs)
 
     @require_tf
     @slow
     def test_tf_defaults(self):
-        pipeline(self.pipeline_task, framework="tf", **self.pipeline_loading_kwargs)
+        pipeline(self.pipeline_task,
+                 framework="tf",
+                 **self.pipeline_loading_kwargs)
 
     @require_torch
     def test_torch_small(self):
@@ -142,7 +153,9 @@ class CustomInputPipelineCommonMixin:
                 use_fast=True,
                 **self.pipeline_loading_kwargs,
             )
-            self._compare_slow_fast_pipelines(nlp_slow, nlp_fast, method="forward")
+            self._compare_slow_fast_pipelines(nlp_slow,
+                                              nlp_fast,
+                                              method="forward")
 
     @require_tf
     def test_compare_slow_fast_tf(self):
@@ -163,15 +176,24 @@ class CustomInputPipelineCommonMixin:
                 use_fast=True,
                 **self.pipeline_loading_kwargs,
             )
-            self._compare_slow_fast_pipelines(nlp_slow, nlp_fast, method="call")
+            self._compare_slow_fast_pipelines(nlp_slow,
+                                              nlp_fast,
+                                              method="call")
 
-    def _compare_slow_fast_pipelines(self, nlp_slow: Pipeline, nlp_fast: Pipeline, method: str):
+    def _compare_slow_fast_pipelines(self, nlp_slow: Pipeline,
+                                     nlp_fast: Pipeline, method: str):
         """We check that the inputs to the models forward passes are identical for
         slow and fast tokenizers.
         """
-        with mock.patch.object(
-            nlp_slow.model, method, wraps=getattr(nlp_slow.model, method)
-        ) as mock_slow, mock.patch.object(nlp_fast.model, method, wraps=getattr(nlp_fast.model, method)) as mock_fast:
+        with mock.patch.object(nlp_slow.model,
+                               method,
+                               wraps=getattr(
+                                   nlp_slow.model,
+                                   method)) as mock_slow, mock.patch.object(
+                                       nlp_fast.model,
+                                       method,
+                                       wraps=getattr(nlp_fast.model,
+                                                     method)) as mock_fast:
             for inputs in self.valid_inputs:
                 if isinstance(inputs, dict):
                     inputs.update(self.pipeline_running_kwargs)
@@ -184,15 +206,17 @@ class CustomInputPipelineCommonMixin:
                 mock_slow.assert_called()
                 mock_fast.assert_called()
 
-                self.assertEqual(len(mock_slow.call_args_list), len(mock_fast.call_args_list))
+                self.assertEqual(len(mock_slow.call_args_list),
+                                 len(mock_fast.call_args_list))
                 for mock_slow_call_args, mock_fast_call_args in zip(
-                    mock_slow.call_args_list, mock_slow.call_args_list
-                ):
+                        mock_slow.call_args_list, mock_slow.call_args_list):
                     slow_call_args, slow_call_kwargs = mock_slow_call_args
                     fast_call_args, fast_call_kwargs = mock_fast_call_args
 
-                    slow_call_args, slow_call_kwargs = to_py_obj(slow_call_args), to_py_obj(slow_call_kwargs)
-                    fast_call_args, fast_call_kwargs = to_py_obj(fast_call_args), to_py_obj(fast_call_kwargs)
+                    slow_call_args, slow_call_kwargs = to_py_obj(
+                        slow_call_args), to_py_obj(slow_call_kwargs)
+                    fast_call_args, fast_call_kwargs = to_py_obj(
+                        fast_call_args), to_py_obj(fast_call_kwargs)
 
                     self.assertEqual(slow_call_args, fast_call_args)
                     self.assertDictEqual(slow_call_kwargs, fast_call_kwargs)
@@ -222,12 +246,16 @@ class MonoInputPipelineCommonMixin(CustomInputPipelineCommonMixin):
         for key in self.mandatory_keys:
             self.assertIn(key, mono_result[0])
 
-        multi_result = [nlp(input, **self.pipeline_running_kwargs) for input in self.valid_inputs]
+        multi_result = [
+            nlp(input, **self.pipeline_running_kwargs)
+            for input in self.valid_inputs
+        ]
         self.assertIsInstance(multi_result, list)
         self.assertIsInstance(multi_result[0], (dict, list))
 
         if self.expected_multi_result is not None:
-            for result, expect in zip(multi_result, self.expected_multi_result):
+            for result, expect in zip(multi_result,
+                                      self.expected_multi_result):
                 for key in self.expected_check_keys or []:
                     self.assertEqual(
                         set([o[key] for o in result]),

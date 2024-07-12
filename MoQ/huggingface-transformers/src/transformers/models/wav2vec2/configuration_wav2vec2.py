@@ -17,11 +17,11 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 WAV_2_VEC_2_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "facebook/wav2vec2-base-960h": "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/config.json",
+    "facebook/wav2vec2-base-960h":
+    "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/config.json",
     # See all Wav2Vec2 models at https://huggingface.co/models?filter=wav2vec2
 }
 
@@ -106,6 +106,7 @@ class Wav2Vec2Config(PretrainedConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "wav2vec2"
 
     def __init__(
@@ -133,9 +134,14 @@ class Wav2Vec2Config(PretrainedConfig):
         pad_token_id=0,
         bos_token_id=1,
         eos_token_id=2,
-        **kwargs
+        **kwargs,
     ):
-        super().__init__(**kwargs, pad_token_id=pad_token_id, bos_token_id=bos_token_id, eos_token_id=eos_token_id)
+        super().__init__(
+            **kwargs,
+            pad_token_id=pad_token_id,
+            bos_token_id=bos_token_id,
+            eos_token_id=eos_token_id,
+        )
         self.hidden_size = hidden_size
         self.feat_extract_norm = feat_extract_norm
         self.feat_extract_dropout = feat_extract_dropout
@@ -158,11 +164,9 @@ class Wav2Vec2Config(PretrainedConfig):
         self.vocab_size = vocab_size
         self.do_stable_layer_norm = do_stable_layer_norm
 
-        if (
-            (len(self.conv_stride) != self.num_feat_extract_layers)
-            or (len(self.conv_kernel) != self.num_feat_extract_layers)
-            or (len(self.conv_dim) != self.num_feat_extract_layers)
-        ):
+        if ((len(self.conv_stride) != self.num_feat_extract_layers)
+                or (len(self.conv_kernel) != self.num_feat_extract_layers)
+                or (len(self.conv_dim) != self.num_feat_extract_layers)):
             raise ValueError(
                 "Configuration for convolutional layers is incorrect."
                 "It is required that `len(config.conv_dim)` == `len(config.conv_stride)` == `len(config.conv_kernel)`,"

@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Megatron initialization."""
 
 import random
@@ -31,8 +30,12 @@ from megatron.mpu import set_model_parallel_rank, set_model_parallel_world_size
 import deepscale
 
 
-def initialize_megatron(extra_args_provider=None, args_defaults={},
-                        ignore_unknown_args=False, allow_no_cuda=False):
+def initialize_megatron(
+    extra_args_provider=None,
+    args_defaults={},
+    ignore_unknown_args=False,
+    allow_no_cuda=False,
+):
     """Set global variables, initialize distributed, and
     set autoresume and random seeds.
     `allow_no_cuda` should not be set unless using megatron for cpu only
@@ -41,16 +44,18 @@ def initialize_megatron(extra_args_provider=None, args_defaults={},
     Returns a function to finalize distributed env initialization
     (optionally, only when args.lazy_mpu_init == True)
 
-"""
+    """
     if not allow_no_cuda:
         # Make sure cuda is available.
-        assert torch.cuda.is_available(), 'Megatron requires CUDA.'
+        assert torch.cuda.is_available(), "Megatron requires CUDA."
 
     # Parse args, build tokenizer, and set adlr-autoresume,
     # tensorboard-writer, and timers.
-    set_global_variables(extra_args_provider=extra_args_provider,
-                         args_defaults=args_defaults,
-                         ignore_unknown_args=ignore_unknown_args)
+    set_global_variables(
+        extra_args_provider=extra_args_provider,
+        args_defaults=args_defaults,
+        ignore_unknown_args=ignore_unknown_args,
+    )
 
     # torch.distributed initialization
     def finish_mpu_init():
@@ -60,12 +65,12 @@ def initialize_megatron(extra_args_provider=None, args_defaults={},
 
         # Random seeds for reproducibility.
         if args.rank == 0:
-            print('> setting random seeds to {} ...'.format(args.seed))
+            print("> setting random seeds to {} ...".format(args.seed))
         _set_random_seed(args.seed)
 
     args = get_args()
-    if  args.lazy_mpu_init:
-        args.use_cpu_initialization=True
+    if args.lazy_mpu_init:
+        args.use_cpu_initialization = True
         # delayed initialization of DDP-related stuff
         # We only set basic DDP globals
         set_model_parallel_world_size(args.model_parallel_size)
@@ -89,7 +94,7 @@ def initialize_megatron(extra_args_provider=None, args_defaults={},
 
 
 def setup_deepscale_random_and_activation_checkpointing(args):
-    '''Optional DeepScale Activation Checkpointing features.
+    """Optional DeepScale Activation Checkpointing features.
     Gives access to partition activations, contiguous memory optimizations
     and cpu checkpointing.
 
@@ -101,9 +106,10 @@ def setup_deepscale_random_and_activation_checkpointing(args):
     we overwrite them to maintain consistency.
 
     This must be called before all the calls to mpu.model_parallel_cuda_manual_seed
-    '''
+    """
     num_layers = args.num_layers // args.checkpoint_num_layers
-    num_layers = num_layers if args.num_layers % args.checkpoint_num_layers == 0 else num_layers + 1
+    num_layers = (num_layers if args.num_layers %
+                  args.checkpoint_num_layers == 0 else num_layers + 1)
     if args.split_transformers:
         num_layers *= 2
 
@@ -114,11 +120,13 @@ def setup_deepscale_random_and_activation_checkpointing(args):
         num_checkpoints=num_layers,
         checkpoint_in_cpu=args.checkpoint_in_cpu,
         synchronize=args.synchronize_each_layer,
-        profile=args.profile_backward)
+        profile=args.profile_backward,
+    )
 
     mpu.checkpoint = deepscale.checkpointing.checkpoint
     mpu.get_cuda_rng_tracker = deepscale.checkpointing.get_cuda_rng_tracker
-    mpu.model_parallel_cuda_manual_seed = deepscale.checkpointing.model_parallel_cuda_manual_seed
+    mpu.model_parallel_cuda_manual_seed = (
+        deepscale.checkpointing.model_parallel_cuda_manual_seed)
 
 
 def _initialize_distributed():
@@ -129,38 +137,44 @@ def _initialize_distributed():
     if torch.distributed.is_initialized():
 
         if args.rank == 0:
-            print('torch distributed is already initialized, '
-                  'skipping initialization ...', flush=True)
+            print(
+                "torch distributed is already initialized, "
+                "skipping initialization ...",
+                flush=True,
+            )
         args.rank = torch.distributed.get_rank()
         args.world_size = torch.distributed.get_world_size()
 
     else:
 
         if args.rank == 0:
-            print('> initializing torch distributed ...', flush=True)
+            print("> initializing torch distributed ...", flush=True)
         # Manually set the device ids.
         if device_count > 0:
             device = args.rank % device_count
             if args.local_rank is not None:
-                assert args.local_rank == device, \
-                    'expected local-rank to be the same as rank % device-count.'
+                assert (
+                    args.local_rank == device
+                ), "expected local-rank to be the same as rank % device-count."
             else:
                 args.local_rank = device
             torch.cuda.set_device(device)
         # Call the init process
-        init_method = 'tcp://'
-        master_ip = os.getenv('MASTER_ADDR', 'localhost')
-        master_port = os.getenv('MASTER_PORT', '6000')
-        init_method += master_ip + ':' + master_port
+        init_method = "tcp://"
+        master_ip = os.getenv("MASTER_ADDR", "localhost")
+        master_port = os.getenv("MASTER_PORT", "6000")
+        init_method += master_ip + ":" + master_port
         torch.distributed.init_process_group(
             backend=args.distributed_backend,
-            world_size=args.world_size, rank=args.rank,
-            init_method=init_method)
+            world_size=args.world_size,
+            rank=args.rank,
+            init_method=init_method,
+        )
 
     # Set the model-parallel / data-parallel communicators.
     if device_count > 0:
         if mpu.model_parallel_is_initialized():
-            print('model parallel is already initialized')
+            print("model parallel is already initialized")
         else:
             mpu.initialize_model_parallel(args.model_parallel_size)
 
@@ -168,6 +182,7 @@ def _initialize_distributed():
     #
     if args.deepscale and args.deepscale_activation_checkpointing:
         setup_deepscale_random_and_activation_checkpointing(args)
+
 
 def _init_autoresume():
     """Set autoresume start time."""
@@ -187,7 +202,8 @@ def _set_random_seed(seed):
         if torch.cuda.device_count() > 0:
             mpu.model_parallel_cuda_manual_seed(seed)
     else:
-        raise ValueError('Seed ({}) should be a positive integer.'.format(seed))
+        raise ValueError(
+            "Seed ({}) should be a positive integer.".format(seed))
 
 
 def _write_args_to_tensorboard():

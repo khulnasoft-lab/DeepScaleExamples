@@ -118,7 +118,7 @@ py::array build_sample_idx(const py::array_t<int32_t>& sizes_,
                      {2*byte_size, byte_size}, // C-style contiguous strides
                      sample_idx, // the data pointer
                      free_when_done); // numpy array references
-    
+
 }
 
 

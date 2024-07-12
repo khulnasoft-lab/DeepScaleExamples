@@ -14,7 +14,6 @@
 # limitations under the License.
 """Convert Reformer checkpoint."""
 
-
 import argparse
 import pickle
 
@@ -24,16 +23,17 @@ import torch
 from transformers import ReformerConfig, ReformerModelWithLMHead
 from transformers.utils import logging
 
-
 logging.set_verbosity_info()
 
 
 def set_param(torch_layer, weight, bias=None):
     # set parameter of one layer
-    assert torch_layer.weight.shape == weight.shape, "{} layer.weight does not match".format(torch_layer)
+    assert (torch_layer.weight.shape == weight.shape
+            ), "{} layer.weight does not match".format(torch_layer)
     torch_layer.weight = torch.nn.Parameter(weight)
     if bias is not None:
-        assert torch_layer.bias.shape == bias.shape, "{} layer.bias does not match".format(torch_layer)
+        assert (torch_layer.bias.shape == bias.shape
+                ), "{} layer.bias does not match".format(torch_layer)
         torch_layer.bias = torch.nn.Parameter(bias)
 
 
@@ -45,15 +45,18 @@ def set_layer_weights_in_torch_lsh(weights, torch_layer, hidden_size):
 
     set_param(
         torch_layer.self_attention.query_key,
-        torch.tensor(np_query_key).transpose(1, 2).contiguous().view(-1, hidden_size),
+        torch.tensor(np_query_key).transpose(1, 2).contiguous().view(
+            -1, hidden_size),
     )
     set_param(
         torch_layer.self_attention.value,
-        torch.tensor(np_value).transpose(1, 2).contiguous().view(-1, hidden_size),
+        torch.tensor(np_value).transpose(1,
+                                         2).contiguous().view(-1, hidden_size),
     )
     set_param(
         torch_layer.output.dense,
-        torch.tensor(np_dense).view(-1, hidden_size).contiguous().transpose(0, 1),
+        torch.tensor(np_dense).view(-1,
+                                    hidden_size).contiguous().transpose(0, 1),
     )
 
 
@@ -66,19 +69,23 @@ def set_layer_weights_in_torch_local(weights, torch_layer, hidden_size):
 
     set_param(
         torch_layer.self_attention.query,
-        torch.tensor(np_query).transpose(1, 2).contiguous().view(-1, hidden_size),
+        torch.tensor(np_query).transpose(1,
+                                         2).contiguous().view(-1, hidden_size),
     )
     set_param(
         torch_layer.self_attention.key,
-        torch.tensor(np_key).transpose(1, 2).contiguous().view(-1, hidden_size),
+        torch.tensor(np_key).transpose(1,
+                                       2).contiguous().view(-1, hidden_size),
     )
     set_param(
         torch_layer.self_attention.value,
-        torch.tensor(np_value).transpose(1, 2).contiguous().view(-1, hidden_size),
+        torch.tensor(np_value).transpose(1,
+                                         2).contiguous().view(-1, hidden_size),
     )
     set_param(
         torch_layer.output.dense,
-        torch.tensor(np_dense).view(-1, hidden_size).contiguous().transpose(0, 1),
+        torch.tensor(np_dense).view(-1,
+                                    hidden_size).contiguous().transpose(0, 1),
     )
 
 
@@ -96,9 +103,11 @@ def set_block_weights_in_torch(weights, torch_block, hidden_size):
     # lsh weights + output
     attn_weights = weights[0][1]
     if len(attn_weights) < 4:
-        set_layer_weights_in_torch_lsh(attn_weights, torch_block.attention, hidden_size)
+        set_layer_weights_in_torch_lsh(attn_weights, torch_block.attention,
+                                       hidden_size)
     else:
-        set_layer_weights_in_torch_local(attn_weights, torch_block.attention, hidden_size)
+        set_layer_weights_in_torch_local(attn_weights, torch_block.attention,
+                                         hidden_size)
 
     # intermediate weighs
     intermediate_weights = weights[2][0][1][2]
@@ -150,17 +159,18 @@ def set_model_weights_in_torch(weights, torch_model, hidden_size):
         position_embeddings = torch_model_reformer.embeddings.position_embeddings
         for emb_idx in range(len(position_embeddings.weights)):
             emb_weights = np.asarray(weights[3][emb_idx][0])
-            assert position_embeddings.weights[emb_idx].shape == emb_weights.shape, "{} emb does not match".format(
-                position_embeddings[emb_idx]
-            )
-            position_embeddings.weights[emb_idx] = torch.nn.Parameter(torch.tensor(emb_weights))
+            assert (position_embeddings.weights[emb_idx].shape ==
+                    emb_weights.shape), "{} emb does not match".format(
+                        position_embeddings[emb_idx])
+            position_embeddings.weights[emb_idx] = torch.nn.Parameter(
+                torch.tensor(emb_weights))
 
     trax_layer_weights = weights[5]
     assert len(torch_model_reformer.encoder.layers) * 4 == len(
         trax_layer_weights
     ), "HF and trax model do not have the same number of layers"
     for layer_idx, layer in enumerate(torch_model_reformer.encoder.layers):
-        block_weights = trax_layer_weights[4 * layer_idx : 4 * (layer_idx + 1)]
+        block_weights = trax_layer_weights[4 * layer_idx:4 * (layer_idx + 1)]
         set_block_weights_in_torch(block_weights, layer, hidden_size)
 
     # output layer norm
@@ -182,7 +192,8 @@ def set_model_weights_in_torch(weights, torch_model, hidden_size):
     )
 
 
-def convert_trax_checkpoint_to_pytorch(trax_model_pkl_path, config_file, pytorch_dump_path):
+def convert_trax_checkpoint_to_pytorch(trax_model_pkl_path, config_file,
+                                       pytorch_dump_path):
     # Initialise PyTorch model
     config = ReformerConfig.from_json_file(config_file)
     print("Building PyTorch model from configuration: {}".format(str(config)))
@@ -202,18 +213,29 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--trax_model_pkl_path", default=None, type=str, required=True, help="Path to the TensorFlow checkpoint path."
+        "--trax_model_pkl_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to the TensorFlow checkpoint path.",
     )
     parser.add_argument(
         "--config_file",
         default=None,
         type=str,
         required=True,
-        help="The config json file corresponding to the pre-trained Reformer model. \n"
+        help=
+        "The config json file corresponding to the pre-trained Reformer model. \n"
         "This specifies the model architecture.",
     )
     parser.add_argument(
-        "--pytorch_dump_path", default=None, type=str, required=True, help="Path to the output PyTorch model."
+        "--pytorch_dump_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to the output PyTorch model.",
     )
     args = parser.parse_args()
-    convert_trax_checkpoint_to_pytorch(args.trax_model_pkl_path, args.config_file, args.pytorch_dump_path)
+    convert_trax_checkpoint_to_pytorch(args.trax_model_pkl_path,
+                                       args.config_file,
+                                       args.pytorch_dump_path)

@@ -25,17 +25,21 @@ from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 from .tokenization_mpnet import MPNetTokenizer
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.txt",
+    "tokenizer_file": "tokenizer.json"
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "microsoft/mpnet-base": "https://huggingface.co/microsoft/mpnet-base/resolve/main/vocab.txt",
+        "microsoft/mpnet-base":
+        "https://huggingface.co/microsoft/mpnet-base/resolve/main/vocab.txt",
     },
     "tokenizer_file": {
-        "microsoft/mpnet-base": "https://huggingface.co/microsoft/mpnet-base/resolve/main/tokenizer.json",
+        "microsoft/mpnet-base":
+        "https://huggingface.co/microsoft/mpnet-base/resolve/main/tokenizer.json",
     },
 }
 
@@ -44,7 +48,9 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "microsoft/mpnet-base": {"do_lower_case": True},
+    "microsoft/mpnet-base": {
+        "do_lower_case": True
+    },
 }
 
 
@@ -104,22 +110,20 @@ class MPNetTokenizerFast(PreTrainedTokenizerFast):
     slow_tokenizer_class = MPNetTokenizer
     model_input_names = ["input_ids", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        tokenizer_file=None,
-        do_lower_case=True,
-        bos_token="<s>",
-        eos_token="</s>",
-        sep_token="</s>",
-        cls_token="<s>",
-        unk_token="[UNK]",
-        pad_token="<pad>",
-        mask_token="<mask>",
-        tokenize_chinese_chars=True,
-        strip_accents=None,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 tokenizer_file=None,
+                 do_lower_case=True,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 sep_token="</s>",
+                 cls_token="<s>",
+                 unk_token="[UNK]",
+                 pad_token="<pad>",
+                 mask_token="<mask>",
+                 tokenize_chinese_chars=True,
+                 strip_accents=None,
+                 **kwargs):
         super().__init__(
             vocab_file,
             tokenizer_file=tokenizer_file,
@@ -136,11 +140,11 @@ class MPNetTokenizerFast(PreTrainedTokenizerFast):
             **kwargs,
         )
 
-        pre_tok_state = json.loads(self.backend_tokenizer.normalizer.__getstate__())
-        if (
-            pre_tok_state.get("do_lower_case", do_lower_case) != do_lower_case
-            or pre_tok_state.get("strip_accents", strip_accents) != strip_accents
-        ):
+        pre_tok_state = json.loads(
+            self.backend_tokenizer.normalizer.__getstate__())
+        if (pre_tok_state.get("do_lower_case", do_lower_case) != do_lower_case
+                or pre_tok_state.get("strip_accents",
+                                     strip_accents) != strip_accents):
             pre_tok_class = getattr(normalizers, pre_tok_state.pop("type"))
             pre_tok_state["do_lower_case"] = do_lower_case
             pre_tok_state["strip_accents"] = strip_accents
@@ -171,7 +175,8 @@ class MPNetTokenizerFast(PreTrainedTokenizerFast):
         """
         # Mask token behave like a normal word, i.e. include the space before it
         # So we set lstrip to True
-        value = AddedToken(value, lstrip=True, rstrip=False) if isinstance(value, str) else value
+        value = (AddedToken(value, lstrip=True, rstrip=False) if isinstance(
+            value, str) else value)
         self._mask_token = value
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
@@ -182,8 +187,9 @@ class MPNetTokenizerFast(PreTrainedTokenizerFast):
         return output + [self.eos_token_id] + token_ids_1 + [self.eos_token_id]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Creates a mask from the two sequences passed to be used in a sequence-pair classification task. MPNet does not
         make use of token type ids, therefore a list of zeros is returned
@@ -204,6 +210,9 @@ class MPNetTokenizerFast(PreTrainedTokenizerFast):
             return len(cls + token_ids_0 + sep) * [0]
         return len(cls + token_ids_0 + sep + sep + token_ids_1 + sep) * [0]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
-        files = self._tokenizer.model.save(save_directory, name=filename_prefix)
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
+        files = self._tokenizer.model.save(save_directory,
+                                           name=filename_prefix)
         return tuple(files)

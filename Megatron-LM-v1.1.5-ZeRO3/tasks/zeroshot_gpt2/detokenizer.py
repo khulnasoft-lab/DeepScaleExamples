@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Detokenization."""
 
 import re
@@ -68,9 +67,9 @@ def lambada_detokenizer(string):
 
 
 _DETOKENIZERS = {
-    'ptb': ptb_detokenizer,
-    'wiki': wikitext_detokenizer,
-    'lambada': lambada_detokenizer,
+    "ptb": ptb_detokenizer,
+    "wiki": wikitext_detokenizer,
+    "lambada": lambada_detokenizer,
 }
 
 

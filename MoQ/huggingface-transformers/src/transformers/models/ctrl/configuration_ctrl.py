@@ -17,10 +17,11 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
-CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP = {"ctrl": "https://huggingface.co/ctrl/resolve/main/config.json"}
+CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP = {
+    "ctrl": "https://huggingface.co/ctrl/resolve/main/config.json"
+}
 
 
 class CTRLConfig(PretrainedConfig):
@@ -82,28 +83,26 @@ class CTRLConfig(PretrainedConfig):
     model_type = "ctrl"
     keys_to_ignore_at_inference = ["past_key_values"]
 
-    def __init__(
-        self,
-        vocab_size=246534,
-        n_positions=256,
-        n_ctx=256,
-        n_embd=1280,
-        dff=8192,
-        n_layer=48,
-        n_head=16,
-        resid_pdrop=0.1,
-        embd_pdrop=0.1,
-        attn_pdrop=0.1,
-        layer_norm_epsilon=1e-6,
-        initializer_range=0.02,
-        summary_type="cls_index",
-        summary_use_proj=True,
-        summary_activation=None,
-        summary_proj_to_labels=True,
-        summary_first_dropout=0.1,
-        use_cache=True,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=246534,
+                 n_positions=256,
+                 n_ctx=256,
+                 n_embd=1280,
+                 dff=8192,
+                 n_layer=48,
+                 n_head=16,
+                 resid_pdrop=0.1,
+                 embd_pdrop=0.1,
+                 attn_pdrop=0.1,
+                 layer_norm_epsilon=1e-6,
+                 initializer_range=0.02,
+                 summary_type="cls_index",
+                 summary_use_proj=True,
+                 summary_activation=None,
+                 summary_proj_to_labels=True,
+                 summary_first_dropout=0.1,
+                 use_cache=True,
+                 **kwargs):
         super().__init__(**kwargs)
         self.vocab_size = vocab_size
         self.n_ctx = n_ctx

@@ -1,6 +1,7 @@
 # coding: utf8
 def main():
     import sys
+
     try:
         from .convert_tf_checkpoint_to_pytorch import convert_tf_checkpoint_to_pytorch
     except ModuleNotFoundError:
@@ -24,5 +25,5 @@ def main():
                                          PYTORCH_DUMP_OUTPUT)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

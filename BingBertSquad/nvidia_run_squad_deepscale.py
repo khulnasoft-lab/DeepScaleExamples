@@ -28,9 +28,13 @@ import os
 import random
 import pickle
 from tqdm import tqdm, trange
-from utils import get_argument_parser, \
-    get_summary_writer, write_summary_events, \
-    is_time_to_exit, check_early_exit_warning
+from utils import (
+    get_argument_parser,
+    get_summary_writer,
+    write_summary_events,
+    is_time_to_exit,
+    check_early_exit_warning,
+)
 import deepscale
 
 import time
@@ -39,31 +43,39 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 
-from pytorch_pretrained_bert.tokenization import whitespace_tokenize, BasicTokenizer, BertTokenizer
+from pytorch_pretrained_bert.tokenization import (
+    whitespace_tokenize,
+    BasicTokenizer,
+    BertTokenizer,
+)
 from pytorch_pretrained_bert.optimization import BertAdam
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE
 
 from turing.nvidia_modeling import BertForQuestionAnswering, BertConfig
 from turing.nvidia_modelingpreln import BertConfig as BertConfigPreLN
-from turing.nvidia_modelingpreln import BertForQuestionAnswering as BertForQuestionAnsweringPreLN
+from turing.nvidia_modelingpreln import (
+    BertForQuestionAnswering as BertForQuestionAnsweringPreLN, )
 
 logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
-    datefmt='%m/%d/%Y %H:%M:%S',
-    level=logging.INFO)
+    format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
+    datefmt="%m/%d/%Y %H:%M:%S",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 all_step_time = 0.0
 
 
 class SquadExample(object):
     """A single training/test example for the Squad dataset."""
-    def __init__(self,
-                 qas_id,
-                 question_text,
-                 doc_tokens,
-                 orig_answer_text=None,
-                 start_position=None,
-                 end_position=None):
+    def __init__(
+        self,
+        qas_id,
+        question_text,
+        doc_tokens,
+        orig_answer_text=None,
+        start_position=None,
+        end_position=None,
+    ):
         self.qas_id = qas_id
         self.question_text = question_text
         self.doc_tokens = doc_tokens
@@ -88,18 +100,20 @@ class SquadExample(object):
 
 class InputFeatures(object):
     """A single set of features of data."""
-    def __init__(self,
-                 unique_id,
-                 example_index,
-                 doc_span_index,
-                 tokens,
-                 token_to_orig_map,
-                 token_is_max_context,
-                 input_ids,
-                 input_mask,
-                 segment_ids,
-                 start_position=None,
-                 end_position=None):
+    def __init__(
+        self,
+        unique_id,
+        example_index,
+        doc_span_index,
+        tokens,
+        token_to_orig_map,
+        token_is_max_context,
+        input_ids,
+        input_mask,
+        segment_ids,
+        start_position=None,
+        end_position=None,
+    ):
         self.unique_id = unique_id
         self.example_index = example_index
         self.doc_span_index = doc_span_index
@@ -115,7 +129,7 @@ class InputFeatures(object):
 
 def read_squad_examples(input_file, is_training):
     """Read a SQuAD json file into a list of SquadExample."""
-    with open(input_file, "r", encoding='utf-8') as reader:
+    with open(input_file, "r", encoding="utf-8") as reader:
         input_data = json.load(reader)["data"]
 
     def is_whitespace(c):
@@ -170,16 +184,21 @@ def read_squad_examples(input_file, is_training):
                     cleaned_answer_text = " ".join(
                         whitespace_tokenize(orig_answer_text))
                     if actual_text.find(cleaned_answer_text) == -1:
-                        logger.warning("Could not find answer: '%s' vs. '%s'",
-                                       actual_text, cleaned_answer_text)
+                        logger.warning(
+                            "Could not find answer: '%s' vs. '%s'",
+                            actual_text,
+                            cleaned_answer_text,
+                        )
                         continue
 
-                example = SquadExample(qas_id=qas_id,
-                                       question_text=question_text,
-                                       doc_tokens=doc_tokens,
-                                       orig_answer_text=orig_answer_text,
-                                       start_position=start_position,
-                                       end_position=end_position)
+                example = SquadExample(
+                    qas_id=qas_id,
+                    question_text=question_text,
+                    doc_tokens=doc_tokens,
+                    orig_answer_text=orig_answer_text,
+                    start_position=start_position,
+                    end_position=end_position,
+                )
                 examples.append(example)
     return examples
 
@@ -191,7 +210,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
     unique_id = 1000000000
 
     features = []
-    for (example_index, example) in enumerate(examples):
+    for example_index, example in enumerate(examples):
         query_tokens = tokenizer.tokenize(example.question_text)
 
         if len(query_tokens) > max_query_length:
@@ -200,7 +219,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
         tok_to_orig_index = []
         orig_to_tok_index = []
         all_doc_tokens = []
-        for (i, token) in enumerate(example.doc_tokens):
+        for i, token in enumerate(example.doc_tokens):
             orig_to_tok_index.append(len(all_doc_tokens))
             sub_tokens = tokenizer.tokenize(token)
             for sub_token in sub_tokens:
@@ -217,8 +236,12 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
             else:
                 tok_end_position = len(all_doc_tokens) - 1
             (tok_start_position, tok_end_position) = _improve_answer_span(
-                all_doc_tokens, tok_start_position, tok_end_position,
-                tokenizer, example.orig_answer_text)
+                all_doc_tokens,
+                tok_start_position,
+                tok_end_position,
+                tokenizer,
+                example.orig_answer_text,
+            )
 
         # The -3 accounts for [CLS], [SEP] and [SEP]
         max_tokens_for_doc = max_seq_length - len(query_tokens) - 3
@@ -239,7 +262,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                 break
             start_offset += min(length, doc_stride)
 
-        for (doc_span_index, doc_span) in enumerate(doc_spans):
+        for doc_span_index, doc_span in enumerate(doc_spans):
             tokens = []
             token_to_orig_map = {}
             token_is_max_context = {}
@@ -326,17 +349,19 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                     logger.info("answer: %s" % (answer_text))
 
             features.append(
-                InputFeatures(unique_id=unique_id,
-                              example_index=example_index,
-                              doc_span_index=doc_span_index,
-                              tokens=tokens,
-                              token_to_orig_map=token_to_orig_map,
-                              token_is_max_context=token_is_max_context,
-                              input_ids=input_ids,
-                              input_mask=input_mask,
-                              segment_ids=segment_ids,
-                              start_position=start_position,
-                              end_position=end_position))
+                InputFeatures(
+                    unique_id=unique_id,
+                    example_index=example_index,
+                    doc_span_index=doc_span_index,
+                    tokens=tokens,
+                    token_to_orig_map=token_to_orig_map,
+                    token_is_max_context=token_is_max_context,
+                    input_ids=input_ids,
+                    input_mask=input_mask,
+                    segment_ids=segment_ids,
+                    start_position=start_position,
+                    end_position=end_position,
+                ))
             unique_id += 1
 
     return features
@@ -400,7 +425,7 @@ def _check_is_max_context(doc_spans, cur_span_index, position):
     # and 0 right context.
     best_score = None
     best_span_index = None
-    for (span_index, doc_span) in enumerate(doc_spans):
+    for span_index, doc_span in enumerate(doc_spans):
         end = doc_span.start + doc_span.length - 1
         if position < doc_span.start:
             continue
@@ -421,9 +446,17 @@ RawResult = collections.namedtuple("RawResult",
                                    ["unique_id", "start_logits", "end_logits"])
 
 
-def write_predictions(all_examples, all_features, all_results, n_best_size,
-                      max_answer_length, do_lower_case, output_prediction_file,
-                      output_nbest_file, verbose_logging):
+def write_predictions(
+    all_examples,
+    all_features,
+    all_results,
+    n_best_size,
+    max_answer_length,
+    do_lower_case,
+    output_prediction_file,
+    output_nbest_file,
+    verbose_logging,
+):
     """Write final predictions to the json file."""
     logger.info("Writing predictions to: %s" % (output_prediction_file))
     logger.info("Writing nbest to: %s" % (output_nbest_file))
@@ -437,18 +470,20 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
         unique_id_to_result[result.unique_id] = result
 
     _PrelimPrediction = collections.namedtuple(  # pylint: disable=invalid-name
-        "PrelimPrediction", [
+        "PrelimPrediction",
+        [
             "feature_index", "start_index", "end_index", "start_logit",
             "end_logit"
-        ])
+        ],
+    )
 
     all_predictions = collections.OrderedDict()
     all_nbest_json = collections.OrderedDict()
-    for (example_index, example) in enumerate(all_examples):
+    for example_index, example in enumerate(all_examples):
         features = example_index_to_features[example_index]
 
         prelim_predictions = []
-        for (feature_index, feature) in enumerate(features):
+        for feature_index, feature in enumerate(features):
             result = unique_id_to_result[feature.unique_id]
 
             start_indexes = _get_best_indexes(result.start_logits, n_best_size)
@@ -480,12 +515,14 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
                             start_index=start_index,
                             end_index=end_index,
                             start_logit=result.start_logits[start_index],
-                            end_logit=result.end_logits[end_index]))
+                            end_logit=result.end_logits[end_index],
+                        ))
 
-        prelim_predictions = sorted(prelim_predictions,
-                                    key=lambda x:
-                                    (x.start_logit + x.end_logit),
-                                    reverse=True)
+        prelim_predictions = sorted(
+            prelim_predictions,
+            key=lambda x: (x.start_logit + x.end_logit),
+            reverse=True,
+        )
 
         _NbestPrediction = collections.namedtuple(  # pylint: disable=invalid-name
             "NbestPrediction", ["text", "start_logit", "end_logit"])
@@ -519,9 +556,11 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
 
             seen_predictions[final_text] = True
             nbest.append(
-                _NbestPrediction(text=final_text,
-                                 start_logit=pred.start_logit,
-                                 end_logit=pred.end_logit))
+                _NbestPrediction(
+                    text=final_text,
+                    start_logit=pred.start_logit,
+                    end_logit=pred.end_logit,
+                ))
 
         # In very rare edge cases we could have no valid predictions. So we
         # just create a nonce prediction in this case to avoid failure.
@@ -538,7 +577,7 @@ def write_predictions(all_examples, all_features, all_results, n_best_size,
         probs = _compute_softmax(total_scores)
 
         nbest_json = []
-        for (i, entry) in enumerate(nbest):
+        for i, entry in enumerate(nbest):
             output = collections.OrderedDict()
             output["text"] = entry.text
             output["probability"] = probs[i]
@@ -589,7 +628,7 @@ def get_final_text(pred_text, orig_text, do_lower_case, verbose_logging=False):
     def _strip_spaces(text):
         ns_chars = []
         ns_to_s_map = collections.OrderedDict()
-        for (i, c) in enumerate(text):
+        for i, c in enumerate(text):
             if c == " ":
                 continue
             ns_to_s_map[len(ns_chars)] = i
@@ -620,13 +659,15 @@ def get_final_text(pred_text, orig_text, do_lower_case, verbose_logging=False):
         if verbose_logging:
             logger.info(
                 "Length not equal after stripping spaces: '%s' vs '%s'",
-                orig_ns_text, tok_ns_text)
+                orig_ns_text,
+                tok_ns_text,
+            )
         return orig_text
 
     # We then project the characters in `pred_text` back to `orig_text` using
     # the character-to-character alignment.
     tok_s_to_ns_map = {}
-    for (i, tok_index) in tok_ns_to_s_map.items():
+    for i, tok_index in tok_ns_to_s_map.items():
         tok_s_to_ns_map[tok_index] = i
 
     orig_start_position = None
@@ -699,8 +740,8 @@ def warmup_linear(x, warmup=0.002):
 
 
 def copy_optimizer_params_to_model(named_params_model, named_params_optimizer):
-    """ Utility function for optimize_on_cpu and 16-bits training.
-        Copy the parameters optimized on CPU/RAM back to the model on GPU
+    """Utility function for optimize_on_cpu and 16-bits training.
+    Copy the parameters optimized on CPU/RAM back to the model on GPU
     """
     for (name_opti, param_opti), (name_model,
                                   param_model) in zip(named_params_optimizer,
@@ -715,8 +756,8 @@ def copy_optimizer_params_to_model(named_params_model, named_params_optimizer):
 def set_optimizer_params_grad(named_params_optimizer,
                               named_params_model,
                               test_nan=False):
-    """ Utility function for optimize_on_cpu and 16-bits training.
-        Copy the gradient of the GPU parameters to the CPU/RAMM copy of the model
+    """Utility function for optimize_on_cpu and 16-bits training.
+    Copy the gradient of the GPU parameters to the CPU/RAMM copy of the model
     """
     is_nan = False
     for (name_opti, param_opti), (name_model,
@@ -742,13 +783,13 @@ def set_optimizer_params_grad(named_params_optimizer,
 def main():
     parser = get_argument_parser()
 
-    deepscale.init_distributed(dist_backend='nccl')
+    deepscale.init_distributed(dist_backend="nccl")
 
     # Include DeepScale configuration arguments
     parser = deepscale.add_config_arguments(parser)
 
     args = parser.parse_args()
-    args.local_rank = int(os.environ['LOCAL_RANK'])
+    args.local_rank = int(os.environ["LOCAL_RANK"])
     args.train_batch_size = int(args.train_batch_size /
                                 args.gradient_accumulation_steps)
 
@@ -787,7 +828,7 @@ def main():
         "attention_probs_dropout_prob": 0.1,
         "max_position_embeddings": 512,
         "type_vocab_size": 2,
-        "initializer_range": 0.02
+        "initializer_range": 0.02,
     }
 
     if args.ckpt_type == "DS":
@@ -831,20 +872,25 @@ def main():
         if args.ckpt_type == "DS":
             checkpoint_state_dict = torch.load(
                 args.model_file, map_location=torch.device("cpu"))
-            if 'module' in checkpoint_state_dict:
-                logger.info('Loading DeepScale v2.0 style checkpoint')
-                model.load_state_dict(checkpoint_state_dict['module'],
+            if "module" in checkpoint_state_dict:
+                logger.info("Loading DeepScale v2.0 style checkpoint")
+                model.load_state_dict(checkpoint_state_dict["module"],
                                       strict=False)
-            elif 'model_state_dict' in checkpoint_state_dict:
+            elif "model_state_dict" in checkpoint_state_dict:
                 model.load_state_dict(
-                    checkpoint_state_dict['model_state_dict'], strict=False)
+                    checkpoint_state_dict["model_state_dict"], strict=False)
             else:
                 raise ValueError("Unable to find model state in checkpoint")
         else:
             from convert_bert_ckpt_to_deepscale import convert_ckpt_to_deepscale
-            convert_ckpt_to_deepscale(model, args.ckpt_type, args.model_file,
-                                      vocab_diff,
-                                      args.deepscale_transformer_kernel)
+
+            convert_ckpt_to_deepscale(
+                model,
+                args.ckpt_type,
+                args.model_file,
+                vocab_diff,
+                args.deepscale_transformer_kernel,
+            )
 
         logger.info(f"Pretrained Bert Encoder Loaded from: {args.model_file}")
 
@@ -853,31 +899,43 @@ def main():
 
     # hack to remove pooler, which is not used
     # thus it produce None grad that break apex
-    param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
+    param_optimizer = [n for n in param_optimizer if "pooler" not in n[0]]
 
-    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
     if args.deepscale_transformer_kernel:
         no_decay = no_decay + [
-            'attn_nw', 'attn_nb', 'norm_w', 'norm_b', 'attn_qkvb', 'attn_ob',
-            'inter_b', 'output_b'
+            "attn_nw",
+            "attn_nb",
+            "norm_w",
+            "norm_b",
+            "attn_qkvb",
+            "attn_ob",
+            "inter_b",
+            "output_b",
         ]
-    optimizer_grouped_parameters = [{
-        'params':
-        [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
-        'weight_decay':
-        0.01
-    }, {
-        'params':
-        [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-        'weight_decay':
-        0.0
-    }]
+    optimizer_grouped_parameters = [
+        {
+            "params": [
+                p for n, p in param_optimizer
+                if not any(nd in n for nd in no_decay)
+            ],
+            "weight_decay":
+            0.01,
+        },
+        {
+            "params":
+            [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
+            "weight_decay":
+            0.0,
+        },
+    ]
 
     model, optimizer, _, _ = deepscale.initialize(
         args=args,
         model=model,
         model_parameters=optimizer_grouped_parameters,
-        dist_init_required=True)
+        dist_init_required=True,
+    )
 
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available()
@@ -888,7 +946,7 @@ def main():
         device = torch.device("cuda", args.local_rank)
         n_gpu = 1
         # Initializes the distributed backend which will take care of sychronizing nodes/GPUs
-        #torch.distributed.init_process_group(backend='nccl')
+        # torch.distributed.init_process_group(backend='nccl')
     logger.info(
         "device: {} n_gpu: {}, distributed training: {}, 16-bits training: {}".
         format(device, n_gpu, bool(args.local_rank != -1), args.fp16))
@@ -914,8 +972,8 @@ def main():
                 "If `do_predict` is True, then `predict_file` must be specified."
             )
 
-    if os.path.exists(args.output_dir) and os.listdir(
-            args.output_dir) and args.do_train:
+    if (os.path.exists(args.output_dir) and os.listdir(args.output_dir)
+            and args.do_train):
         os.makedirs(args.output_dir, exist_ok=True)
 
     # Prepare Summary writer
@@ -939,10 +997,12 @@ def main():
 
     global_step = 0
     if args.do_train:
-        cached_train_features_file = args.train_file + '_{0}_{1}_{2}_{3}'.format(
-            list(filter(None, args.bert_model.split('/'))).pop(),
-            str(args.max_seq_length), str(args.doc_stride),
-            str(args.max_query_length))
+        cached_train_features_file = args.train_file + "_{0}_{1}_{2}_{3}".format(
+            list(filter(None, args.bert_model.split("/"))).pop(),
+            str(args.max_seq_length),
+            str(args.doc_stride),
+            str(args.max_query_length),
+        )
         train_features = None
         try:
             with open(cached_train_features_file, "rb") as reader:
@@ -954,10 +1014,13 @@ def main():
                 max_seq_length=args.max_seq_length,
                 doc_stride=args.doc_stride,
                 max_query_length=args.max_query_length,
-                is_training=True)
+                is_training=True,
+            )
             if args.local_rank == -1 or torch.distributed.get_rank() == 0:
-                logger.info("  Saving train features into cached file %s",
-                            cached_train_features_file)
+                logger.info(
+                    "  Saving train features into cached file %s",
+                    cached_train_features_file,
+                )
                 with open(cached_train_features_file, "wb") as writer:
                     pickle.dump(train_features, writer)
         logger.info("***** Running training *****")
@@ -975,9 +1038,13 @@ def main():
             [f.start_position for f in train_features], dtype=torch.long)
         all_end_positions = torch.tensor(
             [f.end_position for f in train_features], dtype=torch.long)
-        train_data = TensorDataset(all_input_ids, all_input_mask,
-                                   all_segment_ids, all_start_positions,
-                                   all_end_positions)
+        train_data = TensorDataset(
+            all_input_ids,
+            all_input_mask,
+            all_segment_ids,
+            all_start_positions,
+            all_end_positions,
+        )
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_data)
         else:
@@ -987,7 +1054,7 @@ def main():
                                       batch_size=args.train_batch_size)
 
         model.train()
-        ema_loss = 0.
+        ema_loss = 0.0
         sample_count = 0
         num_epoch = 0
         global all_step_time
@@ -1003,7 +1070,8 @@ def main():
                     batch = tuple(
                         t.to(device)
                         for t in batch)  # multi-gpu does scattering it-self
-                input_ids, input_mask, segment_ids, start_positions, end_positions = batch
+                input_ids, input_mask, segment_ids, start_positions, end_positions = (
+                    batch)
 
                 loss = model(input_ids, segment_ids, input_mask,
                              start_positions, end_positions)
@@ -1013,8 +1081,8 @@ def main():
                 if args.gradient_accumulation_steps > 1:
                     loss = loss / args.gradient_accumulation_steps
 
-                ema_loss = args.loss_plot_alpha * ema_loss + (
-                    1 - args.loss_plot_alpha) * loss.item()
+                ema_loss = (args.loss_plot_alpha * ema_loss +
+                            (1 - args.loss_plot_alpha) * loss.item())
 
                 model.backward(loss)
                 loss_item = loss.item() * args.gradient_accumulation_steps
@@ -1028,7 +1096,7 @@ def main():
                     lr_this_step = args.learning_rate * warmup_linear(
                         global_step / t_total, args.warmup_proportion)
                     for param_group in optimizer.param_groups:
-                        param_group['lr'] = lr_this_step
+                        param_group["lr"] = lr_this_step
 
                     model.step()
                     global_step += 1
@@ -1037,24 +1105,26 @@ def main():
                     if torch.distributed.get_rank(
                     ) == 0 and args.summary_writer:
                         summary_events = [
-                            (f'Train/Steps/lr', lr_this_step, global_step),
-                            (f'Train/Samples/train_loss', loss_item,
+                            (f"Train/Steps/lr", lr_this_step, global_step),
+                            (f"Train/Samples/train_loss", loss_item,
                              sample_count),
-                            (f'Train/Samples/lr', lr_this_step, sample_count),
-                            (f'Train/Samples/train_ema_loss', ema_loss,
-                             sample_count)
+                            (f"Train/Samples/lr", lr_this_step, sample_count),
+                            (f"Train/Samples/train_ema_loss", ema_loss,
+                             sample_count),
                         ]
 
-                        if args.fp16 and hasattr(optimizer, 'cur_scale'):
-                            summary_events.append(
-                                (f'Train/Samples/scale', optimizer.cur_scale,
-                                 sample_count))
+                        if args.fp16 and hasattr(optimizer, "cur_scale"):
+                            summary_events.append((
+                                f"Train/Samples/scale",
+                                optimizer.cur_scale,
+                                sample_count,
+                            ))
                         write_summary_events(args.summary_writer,
                                              summary_events)
                         args.summary_writer.flush()
 
-                    if torch.distributed.get_rank() == 0 and (
-                            step + 1) % args.print_steps == 0:
+                    if (torch.distributed.get_rank() == 0
+                            and (step + 1) % args.print_steps == 0):
                         logger.info(
                             f"bert_squad_progress: step={global_step} lr={lr_this_step} loss={ema_loss}"
                         )
@@ -1065,7 +1135,7 @@ def main():
                                    epoch_steps=epoch_step,
                                    global_steps=global_step):
                     logger.info(
-                        f'Warning: Early epoch termination due to max steps limit, epoch step ={epoch_step}, global step = {global_step}, epoch = {num_epoch}'
+                        f"Warning: Early epoch termination due to max steps limit, epoch step ={epoch_step}, global step = {global_step}, epoch = {num_epoch}"
                     )
                     break
                 one_step_time = time.time() - start_time
@@ -1073,25 +1143,27 @@ def main():
                 if (step + 1) % (
                         ave_rounds) == 0 and torch.distributed.get_rank() == 0:
                     print(
-                        ' At step {}, averaged throughput for {} rounds is: {} Samples/s'
+                        " At step {}, averaged throughput for {} rounds is: {} Samples/s"
                         .format(
-                            step, ave_rounds,
+                            step,
+                            ave_rounds,
                             bs_size * ave_rounds *
-                            torch.distributed.get_world_size() /
-                            all_step_time),
-                        flush=True)
+                            torch.distributed.get_world_size() / all_step_time,
+                        ),
+                        flush=True,
+                    )
                     all_step_time = 0.0
 
     # Save a trained model
     # model_to_save = model.module if hasattr(model, 'module') else model  # Only save the model it-self
-    #output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
+    # output_model_file = os.path.join(args.output_dir, "pytorch_model.bin")
     # if args.do_train:
     #    torch.save(model_to_save.state_dict(), output_model_file)
 
     # Load a trained model that you have fine-tuned
 
-    #model_state_dict = torch.load(output_model_file)
-    #model = BertForQuestionAnswering.from_pretrained(args.bert_model, state_dict=model_state_dict)
+    # model_state_dict = torch.load(output_model_file)
+    # model = BertForQuestionAnswering.from_pretrained(args.bert_model, state_dict=model_state_dict)
     # model.to(device)
 
     if args.do_predict and (args.local_rank == -1
@@ -1104,7 +1176,8 @@ def main():
             max_seq_length=args.max_seq_length,
             doc_stride=args.doc_stride,
             max_query_length=args.max_query_length,
-            is_training=False)
+            is_training=False,
+        )
 
         logger.info("***** Running predictions *****")
         logger.info("  Num orig examples = %d", len(eval_examples))
@@ -1146,17 +1219,26 @@ def main():
                 eval_feature = eval_features[example_index.item()]
                 unique_id = int(eval_feature.unique_id)
                 all_results.append(
-                    RawResult(unique_id=unique_id,
-                              start_logits=start_logits,
-                              end_logits=end_logits))
+                    RawResult(
+                        unique_id=unique_id,
+                        start_logits=start_logits,
+                        end_logits=end_logits,
+                    ))
         output_prediction_file = os.path.join(args.output_dir,
                                               "predictions.json")
         output_nbest_file = os.path.join(args.output_dir,
                                          "nbest_predictions.json")
-        write_predictions(eval_examples, eval_features, all_results,
-                          args.n_best_size, args.max_answer_length,
-                          args.do_lower_case, output_prediction_file,
-                          output_nbest_file, args.verbose_logging)
+        write_predictions(
+            eval_examples,
+            eval_features,
+            all_results,
+            args.n_best_size,
+            args.max_answer_length,
+            args.do_lower_case,
+            output_prediction_file,
+            output_nbest_file,
+            args.verbose_logging,
+        )
 
 
 if __name__ == "__main__":

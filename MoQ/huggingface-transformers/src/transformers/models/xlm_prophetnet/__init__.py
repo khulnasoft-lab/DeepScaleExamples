@@ -17,8 +17,10 @@
 # limitations under the License.
 
 from ...file_utils import is_sentencepiece_available, is_torch_available
-from .configuration_xlm_prophetnet import XLM_PROPHETNET_PRETRAINED_CONFIG_ARCHIVE_MAP, XLMProphetNetConfig
-
+from .configuration_xlm_prophetnet import (
+    XLM_PROPHETNET_PRETRAINED_CONFIG_ARCHIVE_MAP,
+    XLMProphetNetConfig,
+)
 
 if is_sentencepiece_available():
     from .tokenization_xlm_prophetnet import XLMProphetNetTokenizer

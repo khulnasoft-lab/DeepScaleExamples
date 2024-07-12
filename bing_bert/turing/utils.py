@@ -5,12 +5,11 @@ from collections import _iskeyword  # type: ignore
 from tensorboardX import SummaryWriter
 import os
 
-SUMMARY_WRITER_DIR_NAME = 'runs'
+SUMMARY_WRITER_DIR_NAME = "runs"
 
 
 def get_sample_writer(name, base=".."):
-    """Returns a tensorboard summary writer
-    """
+    """Returns a tensorboard summary writer"""
     return SummaryWriter(
         log_dir=os.path.join(base, SUMMARY_WRITER_DIR_NAME, name))
 
@@ -93,46 +92,45 @@ class {typename}(TorchTuple):
 {field_defs}
 """
 
-_repr_template = '{name}=%r'
+_repr_template = "{name}=%r"
 
-_field_template = '''\
+_field_template = """\
     {name} = _property(_itemgetter({index:d}), doc='Alias for field number {index:d}')
-'''
+"""
 
 
 def namedtorchbatch(typename: str,
                     field_names: List[str],
                     verbose: bool = False,
                     rename: bool = False):
-    """Returns a new subclass of tuple with named fields leveraging use of torch tensors.
-    """
+    """Returns a new subclass of tuple with named fields leveraging use of torch tensors."""
 
     # Validate the field names.  At the user's option, either generate an error
     # message or automatically replace the field name with a valid name.
     if isinstance(field_names, str):
-        field_names = field_names.replace(',', ' ').split()
+        field_names = field_names.replace(",", " ").split()
     field_names = list(map(str, field_names))
     if rename:
         seen: set = set()
         for index, name in enumerate(field_names):
             if (not name.isidentifier() or _iskeyword(name)
-                    or name.startswith('_') or name in seen):
-                field_names[index] = '_%d' % index
+                    or name.startswith("_") or name in seen):
+                field_names[index] = "_%d" % index
             seen.add(name)
     for name in [typename] + field_names:
         if not name.isidentifier():
-            raise ValueError('Type names and field names must be valid '
-                             'identifiers: %r' % name)
+            raise ValueError("Type names and field names must be valid "
+                             "identifiers: %r" % name)
         if _iskeyword(name):
-            raise ValueError('Type names and field names cannot be a '
-                             'keyword: %r' % name)
+            raise ValueError("Type names and field names cannot be a "
+                             "keyword: %r" % name)
     seen = set()
     for name in field_names:
-        if name.startswith('_') and not rename:
-            raise ValueError('Field names cannot start with an underscore: '
-                             '%r' % name)
+        if name.startswith("_") and not rename:
+            raise ValueError("Field names cannot start with an underscore: "
+                             "%r" % name)
         if name in seen:
-            raise ValueError('Encountered duplicate field name: %r' % name)
+            raise ValueError("Encountered duplicate field name: %r" % name)
         seen.add(name)
 
     # Fill-in the class template
@@ -141,15 +139,16 @@ def namedtorchbatch(typename: str,
         field_names=tuple(field_names),
         num_fields=len(field_names),
         arg_list=repr(tuple(field_names)).replace("'", "")[1:-1],
-        repr_fmt=', '.join(
+        repr_fmt=", ".join(
             _repr_template.format(name=name) for name in field_names),
-        field_defs='\n'.join(
+        field_defs="\n".join(
             _field_template.format(index=index, name=name)
-            for index, name in enumerate(field_names)))
+            for index, name in enumerate(field_names)),
+    )
 
     # Execute the template string in a temporary namespace and support
     # tracing utilities by setting a value for frame.f_globals['__name__']
-    namespace = dict(__name__='namedtuple_%s' % typename)
+    namespace = dict(__name__="namedtuple_%s" % typename)
     exec(class_definition, namespace)
     result = namespace[typename]
     result._source = class_definition  # type: ignore
@@ -162,7 +161,7 @@ def namedtorchbatch(typename: str,
     # defined for arguments greater than 0 (IronPython).
     try:
         result.__module__ = _sys._getframe(1).f_globals.get(
-            '__name__', '__main__')
+            "__name__", "__main__")
     except (AttributeError, ValueError):
         pass
 

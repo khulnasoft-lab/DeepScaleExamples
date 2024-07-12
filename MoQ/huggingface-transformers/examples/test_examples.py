@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import argparse
 import logging
 import os
@@ -23,12 +22,15 @@ from unittest.mock import patch
 import torch
 
 from transformers.file_utils import is_apex_available
-from transformers.testing_utils import TestCasePlus, require_torch_non_multi_gpu_but_fix_me, slow, torch_device
-
+from transformers.testing_utils import (
+    TestCasePlus,
+    require_torch_non_multi_gpu_but_fix_me,
+    slow,
+    torch_device,
+)
 
 SRC_DIRS = [
-    os.path.join(os.path.dirname(__file__), dirname)
-    for dirname in [
+    os.path.join(os.path.dirname(__file__), dirname) for dirname in [
         "text-generation",
         "text-classification",
         "token-classification",
@@ -40,7 +42,6 @@ SRC_DIRS = [
 ]
 sys.path.extend(SRC_DIRS)
 
-
 if SRC_DIRS is not None:
     import run_clm
     import run_generation
@@ -50,7 +51,6 @@ if SRC_DIRS is not None:
     import run_qa as run_squad
     import run_seq2seq
     import run_swag
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -249,7 +249,9 @@ class ExamplesTests(TestCasePlus):
         stream_handler = logging.StreamHandler(sys.stdout)
         logger.addHandler(stream_handler)
 
-        testargs = ["run_generation.py", "--prompt=Hello", "--length=10", "--seed=42"]
+        testargs = [
+            "run_generation.py", "--prompt=Hello", "--length=10", "--seed=42"
+        ]
 
         if is_cuda_and_apex_available():
             testargs.append("--fp16")

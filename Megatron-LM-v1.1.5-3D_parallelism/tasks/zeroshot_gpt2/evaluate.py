@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """GPT2 zero-shot evaluation."""
 
 import math
@@ -35,19 +34,18 @@ from .datasets import build_dataset
 def get_model_provider(eval_metric):
     """Based on evaluation metric set the parallel-output flag and
     return the model provider."""
-
     def model_provider():
         """Build the model."""
 
-        if eval_metric == 'loss':
+        if eval_metric == "loss":
             parallel_output = True
-        elif eval_metric == 'accuracy':
+        elif eval_metric == "accuracy":
             parallel_output = False
         else:
-            raise NotImplementedError('output type for {} evaluation metric '
-                                      'is not supported.'.format(eval_metric))
+            raise NotImplementedError("output type for {} evaluation metric "
+                                      "is not supported.".format(eval_metric))
 
-        print_rank_0('building GPT2 model ...')
+        print_rank_0("building GPT2 model ...")
         model = GPT2Model(num_tokentypes=0, parallel_output=parallel_output)
 
         return model
@@ -60,8 +58,8 @@ def process_batch(batch):
     args = get_args()
     tokenizer = get_tokenizer()
 
-    loss_mask = batch['pad_mask'].long().cuda().contiguous().byte()
-    tokens_ = batch['text'].long().cuda().contiguous()
+    loss_mask = batch["pad_mask"].long().cuda().contiguous().byte()
+    tokens_ = batch["text"].long().cuda().contiguous()
     labels = tokens_[:, 1:].contiguous()
     tokens = tokens_[:, :-1].contiguous()
 
@@ -71,7 +69,8 @@ def process_batch(batch):
         tokenizer.eod,
         args.reset_position_ids,
         args.reset_attention_mask,
-        args.eod_mask_loss)
+        args.eod_mask_loss,
+    )
 
     return tokens, labels, attention_mask, position_ids, loss_mask
 
@@ -87,23 +86,23 @@ def forward_step(batch, model, eval_metric):
     output = model(tokens, position_ids, attention_mask)
 
     # For loss, return the unreduced loss.
-    if eval_metric == 'loss':
-        losses = mpu.vocab_parallel_cross_entropy(
-            output.contiguous().float(), labels.contiguous())
+    if eval_metric == "loss":
+        losses = mpu.vocab_parallel_cross_entropy(output.contiguous().float(),
+                                                  labels.contiguous())
         loss = torch.sum(
             losses.view(-1) * loss_mask.contiguous().view(-1).float())
         return loss
 
     # For accuracy, return the number of correctly predicted samples.
-    if eval_metric == 'accuracy':
+    if eval_metric == "accuracy":
         outputs = torch.argmax(output, -1)
         correct = (outputs == labels).float()
         correct[(1 - loss_mask).bool()] = 1
         correct = correct.prod(-1)
         return correct.sum()
 
-    raise NotImplementedError('forward method for evaluation metric {} '
-                              'is not implemented.'.format(eval_metric))
+    raise NotImplementedError("forward method for evaluation metric {} "
+                              "is not implemented.".format(eval_metric))
 
 
 def evaluate(data_loader, model, eval_metric):
@@ -118,7 +117,7 @@ def evaluate(data_loader, model, eval_metric):
         # For all the batches in the dataset.
         for iteration, batch in enumerate(data_loader):
             if iteration % args.log_interval == 0:
-                print_rank_0('> working on iteration: {}'.format(iteration))
+                print_rank_0("> working on iteration: {}".format(iteration))
             # Forward evaluation.
             output = forward_step(batch, model, eval_metric)
 
@@ -137,46 +136,46 @@ def evaluate_and_print_results(task, data_loader, model, eval_metric):
     # Evaluate and get results.
     output = evaluate(data_loader, model, eval_metric)
 
-    string = ' validation results on {} | '.format(task)
-    if eval_metric == 'loss':
+    string = " validation results on {} | ".format(task)
+    if eval_metric == "loss":
         num_tokenized_tokens = data_loader.dataset.num_tokenized_tokens
         num_original_tokens = data_loader.dataset.num_original_tokens
         val_loss = output / (num_tokenized_tokens - 1)
         ppl = math.exp(min(20, val_loss))
         token_ratio = (num_tokenized_tokens - 1) / (num_original_tokens - 1)
         adjusted_ppl = math.exp(min(20, val_loss * token_ratio))
-        string += 'avg loss: {:.4E} | '.format(val_loss)
-        string += 'ppl: {:.4E} | '.format(ppl)
-        string += 'adjusted ppl: {:.4E} | '.format(adjusted_ppl)
-        string += 'token ratio: {} |'.format(token_ratio)
+        string += "avg loss: {:.4E} | ".format(val_loss)
+        string += "ppl: {:.4E} | ".format(ppl)
+        string += "adjusted ppl: {:.4E} | ".format(adjusted_ppl)
+        string += "token ratio: {} |".format(token_ratio)
 
-    elif eval_metric == 'accuracy':
+    elif eval_metric == "accuracy":
         num_examples = len(data_loader.dataset)
         acc = output / num_examples
-        string += 'number correct: {:.4E} | '.format(output)
-        string += 'total examples: {:.4E} | '.format(num_examples)
-        string += 'avg accuracy: {:.4E}'.format(acc)
+        string += "number correct: {:.4E} | ".format(output)
+        string += "total examples: {:.4E} | ".format(num_examples)
+        string += "avg accuracy: {:.4E}".format(acc)
 
     else:
-        raise NotImplementedError('evaluation method for {} metric is not '
-                                  'implemented yet.'.format(eval_metric))
+        raise NotImplementedError("evaluation method for {} metric is not "
+                                  "implemented yet.".format(eval_metric))
 
     length = len(string) + 1
-    print_rank_0('-' * length)
+    print_rank_0("-" * length)
     print_rank_0(string)
-    print_rank_0('-' * length)
+    print_rank_0("-" * length)
 
 
 def main():
     """Main program."""
     args = get_args()
 
-    if args.task == 'LAMBADA':
-        eval_metric = 'accuracy'
-    elif args.task == 'WIKITEXT103':
-        eval_metric = 'loss'
+    if args.task == "LAMBADA":
+        eval_metric = "accuracy"
+    elif args.task == "WIKITEXT103":
+        eval_metric = "loss"
     else:
-        raise NotImplementedError('{} task is not implemented.'.format(
+        raise NotImplementedError("{} task is not implemented.".format(
             args.task))
 
     # Set up model and load checkpoint.
@@ -186,10 +185,12 @@ def main():
 
     # Data stuff.
     dataset = build_dataset(args.task)
-    dataloader = build_data_loader(dataset, args.batch_size,
-                                   args.num_workers, drop_last=False)
+    dataloader = build_data_loader(dataset,
+                                   args.batch_size,
+                                   args.num_workers,
+                                   drop_last=False)
 
     # Run evaluation.
     evaluate_and_print_results(args.task, dataloader, model, eval_metric)
 
-    print_rank_0('done :-)')
+    print_rank_0("done :-)")

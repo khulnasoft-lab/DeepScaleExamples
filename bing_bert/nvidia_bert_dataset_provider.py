@@ -27,17 +27,24 @@ class WorkerInitObj(object):
         random.seed(self.seed + id)
 
 
-def create_pretraining_dataset(input_file, max_predictions_per_seq,
-                               num_workers, train_batch_size, worker_init,
-                               data_sampler):
+def create_pretraining_dataset(
+    input_file,
+    max_predictions_per_seq,
+    num_workers,
+    train_batch_size,
+    worker_init,
+    data_sampler,
+):
     train_data = pretraining_dataset(
         input_file=input_file, max_predictions_per_seq=max_predictions_per_seq)
-    train_dataloader = DataLoader(train_data,
-                                  sampler=data_sampler(train_data),
-                                  batch_size=train_batch_size,
-                                  num_workers=num_workers,
-                                  worker_init_fn=worker_init,
-                                  pin_memory=True)
+    train_dataloader = DataLoader(
+        train_data,
+        sampler=data_sampler(train_data),
+        batch_size=train_batch_size,
+        num_workers=num_workers,
+        worker_init_fn=worker_init,
+        pin_memory=True,
+    )
     return train_dataloader, len(train_data)
 
 
@@ -47,26 +54,32 @@ class pretraining_dataset(Dataset):
         self.max_predictions_per_seq = max_predictions_per_seq
         f = h5py.File(input_file, "r")
         keys = [
-            'input_ids', 'input_mask', 'segment_ids', 'masked_lm_positions',
-            'masked_lm_ids', 'next_sentence_labels'
+            "input_ids",
+            "input_mask",
+            "segment_ids",
+            "masked_lm_positions",
+            "masked_lm_ids",
+            "next_sentence_labels",
         ]
         self.inputs = [np.asarray(f[key][:]) for key in keys]
         f.close()
 
     def __len__(self):
-        'Denotes the total number of samples'
+        "Denotes the total number of samples"
         return len(self.inputs[0])
 
     def __getitem__(self, index):
 
         [
-            input_ids, input_mask, segment_ids, masked_lm_positions,
-            masked_lm_ids, next_sentence_labels
-        ] = [
-            torch.from_numpy(input[index].astype(np.int64)) if indice < 5 else
-            torch.from_numpy(np.asarray(input[index].astype(np.int64)))
-            for indice, input in enumerate(self.inputs)
-        ]
+            input_ids,
+            input_mask,
+            segment_ids,
+            masked_lm_positions,
+            masked_lm_ids,
+            next_sentence_labels,
+        ] = [(torch.from_numpy(input[index].astype(np.int64)) if indice < 5
+              else torch.from_numpy(np.asarray(input[index].astype(np.int64))))
+             for indice, input in enumerate(self.inputs)]
 
         masked_lm_labels = torch.ones(input_ids.shape, dtype=torch.long) * -1
         index = self.max_predictions_per_seq
@@ -77,14 +90,18 @@ class pretraining_dataset(Dataset):
         masked_lm_labels[masked_lm_positions[:index]] = masked_lm_ids[:index]
 
         return [
-            map_to_torch([BatchType.PRETRAIN_BATCH]), input_ids, input_mask,
-            segment_ids, next_sentence_labels, masked_lm_labels
+            map_to_torch([BatchType.PRETRAIN_BATCH]),
+            input_ids,
+            input_mask,
+            segment_ids,
+            next_sentence_labels,
+            masked_lm_labels,
         ]
 
 
 class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
     def __init__(self, args):
-        self.num_workers = args.config['training']['num_workers']
+        self.num_workers = args.config["training"]["num_workers"]
         self.max_seq_length = args.max_seq_length
         self.max_predictions_per_seq = args.max_predictions_per_seq
 
@@ -102,10 +119,10 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
         # Initialize dataset files
         dataset_path = os.path.join(
             args.data_path_prefix,
-            args.config['data']['datasets']['pretrain_dataset'])
+            args.config["data"]["datasets"]["pretrain_dataset"])
         self.dataset_files = [
             os.path.join(dataset_path, f) for f in os.listdir(dataset_path) if
-            os.path.isfile(os.path.join(dataset_path, f)) and 'training' in f
+            os.path.isfile(os.path.join(dataset_path, f)) and "training" in f
         ]
         self.dataset_files.sort()
         random.shuffle(self.dataset_files)
@@ -130,7 +147,8 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
                 num_workers=self.num_workers,
                 train_batch_size=self.train_micro_batch_size_per_gpu,
                 worker_init=self.worker_init,
-                data_sampler=self.data_sampler)
+                data_sampler=self.data_sampler,
+            )
         else:
             self.train_dataloader, sample_count = self.dataset_future.result(
                 timeout=None)
@@ -143,10 +161,14 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
     def prefetch_shard(self, index):
         data_file = self._get_shard_file(index)
         self.dataset_future = self.pool.submit(
-            create_pretraining_dataset, data_file,
-            self.max_predictions_per_seq, self.num_workers,
-            self.train_micro_batch_size_per_gpu, self.worker_init,
-            self.data_sampler)
+            create_pretraining_dataset,
+            data_file,
+            self.max_predictions_per_seq,
+            self.num_workers,
+            self.train_micro_batch_size_per_gpu,
+            self.worker_init,
+            self.data_sampler,
+        )
 
     def get_batch(self, batch_iter):
         return batch_iter
@@ -161,8 +183,8 @@ class NvidiaBertDatasetProvider(BertDatasetProviderInterface):
     def _get_shard_file_index(self, shard_index, global_rank):
         if dist.is_initialized() and self.world_size > self.num_files:
             remainder = self.world_size % self.num_files
-            file_index = (shard_index * self.world_size) + global_rank + (
-                remainder * shard_index)
+            file_index = ((shard_index * self.world_size) + global_rank +
+                          (remainder * shard_index))
         else:
             file_index = shard_index * self.world_size + global_rank
 

@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Tokenization classes for PhoBERT """
 
-
 import os
 import re
 from shutil import copyfile
@@ -23,7 +22,6 @@ from typing import List, Optional, Tuple
 
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -34,12 +32,16 @@ VOCAB_FILES_NAMES = {
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "vinai/phobert-base": "https://huggingface.co/vinai/phobert-base/resolve/main/vocab.txt",
-        "vinai/phobert-large": "https://huggingface.co/vinai/phobert-large/resolve/main/vocab.txt",
+        "vinai/phobert-base":
+        "https://huggingface.co/vinai/phobert-base/resolve/main/vocab.txt",
+        "vinai/phobert-large":
+        "https://huggingface.co/vinai/phobert-large/resolve/main/vocab.txt",
     },
     "merges_file": {
-        "vinai/phobert-base": "https://huggingface.co/vinai/phobert-base/resolve/main/bpe.codes",
-        "vinai/phobert-large": "https://huggingface.co/vinai/phobert-large/resolve/main/bpe.codes",
+        "vinai/phobert-base":
+        "https://huggingface.co/vinai/phobert-base/resolve/main/bpe.codes",
+        "vinai/phobert-large":
+        "https://huggingface.co/vinai/phobert-large/resolve/main/bpe.codes",
     },
 }
 
@@ -112,19 +114,17 @@ class PhobertTokenizer(PreTrainedTokenizer):
     pretrained_vocab_files_map = PRETRAINED_VOCAB_FILES_MAP
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        bos_token="<s>",
-        eos_token="</s>",
-        sep_token="</s>",
-        cls_token="<s>",
-        unk_token="<unk>",
-        pad_token="<pad>",
-        mask_token="<mask>",
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 sep_token="</s>",
+                 cls_token="<s>",
+                 unk_token="<unk>",
+                 pad_token="<pad>",
+                 mask_token="<mask>",
+                 **kwargs):
         super().__init__(
             bos_token=bos_token,
             eos_token=eos_token,
@@ -156,8 +156,9 @@ class PhobertTokenizer(PreTrainedTokenizer):
         self.cache = {}
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A PhoBERT sequence has the following format:
@@ -182,7 +183,10 @@ class PhobertTokenizer(PreTrainedTokenizer):
         return cls + token_ids_0 + sep + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -206,15 +210,22 @@ class PhobertTokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is None:
             return [1] + ([0] * len(token_ids_0)) + [1]
-        return [1] + ([0] * len(token_ids_0)) + [1, 1] + ([0] * len(token_ids_1)) + [1]
+        return [1] + ([0] * len(token_ids_0)) + [1, 1] + (
+            [0] * len(token_ids_1)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. PhoBERT does not
         make use of token type ids, therefore a list of zeros is returned.
@@ -254,7 +265,8 @@ class PhobertTokenizer(PreTrainedTokenizer):
             return token
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -270,7 +282,8 @@ class PhobertTokenizer(PreTrainedTokenizer):
                     new_word.extend(word[i:j])
                     i = j
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -298,7 +311,7 @@ class PhobertTokenizer(PreTrainedTokenizer):
         return split_tokens
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.encoder.get(token, self.encoder.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -306,25 +319,33 @@ class PhobertTokenizer(PreTrainedTokenizer):
         return self.decoder.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace("@@ ", "").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
         out_merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["merges_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        if os.path.abspath(self.merges_file) != os.path.abspath(out_merge_file):
+        if os.path.abspath(
+                self.merges_file) != os.path.abspath(out_merge_file):
             copyfile(self.merges_file, out_merge_file)
 
         return out_vocab_file, out_merge_file
@@ -346,7 +367,8 @@ class PhobertTokenizer(PreTrainedTokenizer):
             except FileNotFoundError as fnfe:
                 raise fnfe
             except UnicodeError:
-                raise Exception("Incorrect encoding detected in {}, please " "rebuild the dataset".format(f))
+                raise Exception("Incorrect encoding detected in {}, please "
+                                "rebuild the dataset".format(f))
             return
 
         lines = f.readlines()
@@ -354,6 +376,7 @@ class PhobertTokenizer(PreTrainedTokenizer):
             line = lineTmp.strip()
             idx = line.rfind(" ")
             if idx == -1:
-                raise ValueError("Incorrect dictionary format, expected '<token> <cnt>'")
+                raise ValueError(
+                    "Incorrect dictionary format, expected '<token> <cnt>'")
             word = line[:idx]
             self.encoder[word] = len(self.encoder)

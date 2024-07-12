@@ -15,7 +15,12 @@
 import unittest
 
 from transformers.pipelines import Pipeline, pipeline
-from transformers.testing_utils import require_pandas, require_torch, require_torch_scatter, slow
+from transformers.testing_utils import (
+    require_pandas,
+    require_torch,
+    require_torch_scatter,
+    slow,
+)
 
 from .test_pipelines_common import CustomInputPipelineCommonMixin
 
@@ -32,32 +37,48 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         "lysandre/tiny-tapas-random-wtq",
         "lysandre/tiny-tapas-random-sqa",
     ]
-    large_models = ["google/tapas-base-finetuned-wtq"]  # Models tested with the @slow decorator
+    large_models = ["google/tapas-base-finetuned-wtq"
+                    ]  # Models tested with the @slow decorator
     valid_inputs = [
         {
             "table": {
-                "actors": ["brad pitt", "leonardo di caprio", "george clooney"],
+                "actors":
+                ["brad pitt", "leonardo di caprio", "george clooney"],
                 "age": ["56", "45", "59"],
                 "number of movies": ["87", "53", "69"],
-                "date of birth": ["7 february 1967", "10 june 1996", "28 november 1967"],
+                "date of birth": [
+                    "7 february 1967",
+                    "10 june 1996",
+                    "28 november 1967",
+                ],
             },
             "query": "how many movies has george clooney played in?",
         },
         {
             "table": {
-                "actors": ["brad pitt", "leonardo di caprio", "george clooney"],
+                "actors":
+                ["brad pitt", "leonardo di caprio", "george clooney"],
                 "age": ["56", "45", "59"],
                 "number of movies": ["87", "53", "69"],
-                "date of birth": ["7 february 1967", "10 june 1996", "28 november 1967"],
+                "date of birth": [
+                    "7 february 1967",
+                    "10 june 1996",
+                    "28 november 1967",
+                ],
             },
-            "query": ["how many movies has george clooney played in?", "how old is he?", "what's his date of birth?"],
+            "query": [
+                "how many movies has george clooney played in?",
+                "how old is he?",
+                "what's his date of birth?",
+            ],
         },
         {
             "table": {
                 "Repository": ["Transformers", "Datasets", "Tokenizers"],
                 "Stars": ["36542", "4512", "3934"],
                 "Contributors": ["651", "77", "34"],
-                "Programming language": ["Python", "Python", "Rust, Python and NodeJS"],
+                "Programming language":
+                ["Python", "Python", "Rust, Python and NodeJS"],
             },
             "query": [
                 "What repository has the largest number of stars?",
@@ -73,8 +94,14 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         output_keys = {"answer", "coordinates", "cells"}
         valid_inputs = self.valid_inputs
         invalid_inputs = [
-            {"query": "What does it do with empty context ?", "table": ""},
-            {"query": "What does it do with empty context ?", "table": None},
+            {
+                "query": "What does it do with empty context ?",
+                "table": ""
+            },
+            {
+                "query": "What does it do with empty context ?",
+                "table": None
+            },
         ]
         self.assertIsNotNone(table_querier)
 
@@ -107,8 +134,10 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             model="lysandre/tiny-tapas-random-wtq",
             tokenizer="lysandre/tiny-tapas-random-wtq",
         )
-        self.assertIsInstance(table_querier.model.config.aggregation_labels, dict)
-        self.assertIsInstance(table_querier.model.config.no_aggregation_label_index, int)
+        self.assertIsInstance(table_querier.model.config.aggregation_labels,
+                              dict)
+        self.assertIsInstance(
+            table_querier.model.config.no_aggregation_label_index, int)
 
         mono_result = table_querier(self.valid_inputs[0])
         multi_result = table_querier(self.valid_inputs)
@@ -128,45 +157,49 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             model="lysandre/tiny-tapas-random-wtq",
             tokenizer="lysandre/tiny-tapas-random-wtq",
         )
-        self.assertIsInstance(table_querier.model.config.aggregation_labels, dict)
-        self.assertIsInstance(table_querier.model.config.no_aggregation_label_index, int)
+        self.assertIsInstance(table_querier.model.config.aggregation_labels,
+                              dict)
+        self.assertIsInstance(
+            table_querier.model.config.no_aggregation_label_index, int)
 
         with self.assertRaises(ValueError):
-            table_querier(
-                {
-                    "table": {},
-                    "query": "how many movies has george clooney played in?",
-                }
-            )
+            table_querier({
+                "table": {},
+                "query":
+                "how many movies has george clooney played in?",
+            })
         with self.assertRaises(ValueError):
-            table_querier(
-                {
-                    "query": "how many movies has george clooney played in?",
-                }
-            )
+            table_querier({
+                "query":
+                "how many movies has george clooney played in?",
+            })
         with self.assertRaises(ValueError):
-            table_querier(
-                {
-                    "table": {
-                        "Repository": ["Transformers", "Datasets", "Tokenizers"],
-                        "Stars": ["36542", "4512", "3934"],
-                        "Contributors": ["651", "77", "34"],
-                        "Programming language": ["Python", "Python", "Rust, Python and NodeJS"],
-                    },
-                    "query": "",
-                }
-            )
+            table_querier({
+                "table": {
+                    "Repository": ["Transformers", "Datasets", "Tokenizers"],
+                    "Stars": ["36542", "4512", "3934"],
+                    "Contributors": ["651", "77", "34"],
+                    "Programming language": [
+                        "Python",
+                        "Python",
+                        "Rust, Python and NodeJS",
+                    ],
+                },
+                "query": "",
+            })
         with self.assertRaises(ValueError):
-            table_querier(
-                {
-                    "table": {
-                        "Repository": ["Transformers", "Datasets", "Tokenizers"],
-                        "Stars": ["36542", "4512", "3934"],
-                        "Contributors": ["651", "77", "34"],
-                        "Programming language": ["Python", "Python", "Rust, Python and NodeJS"],
-                    },
-                }
-            )
+            table_querier({
+                "table": {
+                    "Repository": ["Transformers", "Datasets", "Tokenizers"],
+                    "Stars": ["36542", "4512", "3934"],
+                    "Contributors": ["651", "77", "34"],
+                    "Programming language": [
+                        "Python",
+                        "Python",
+                        "Rust, Python and NodeJS",
+                    ],
+                },
+            })
 
     def test_empty_errors(self):
         table_querier = pipeline(
@@ -192,9 +225,12 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             model="lysandre/tiny-tapas-random-sqa",
             tokenizer="lysandre/tiny-tapas-random-sqa",
         )
-        sequential_mono_result_0 = table_querier(self.valid_inputs[0], sequential=True)
-        sequential_mono_result_1 = table_querier(self.valid_inputs[1], sequential=True)
-        sequential_multi_result = table_querier(self.valid_inputs, sequential=True)
+        sequential_mono_result_0 = table_querier(self.valid_inputs[0],
+                                                 sequential=True)
+        sequential_mono_result_1 = table_querier(self.valid_inputs[1],
+                                                 sequential=True)
+        sequential_multi_result = table_querier(self.valid_inputs,
+                                                sequential=True)
         mono_result_0 = table_querier(self.valid_inputs[0])
         mono_result_1 = table_querier(self.valid_inputs[1])
         multi_result = table_querier(self.valid_inputs)
@@ -206,7 +242,8 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         self.assertNotEqual(sequential_mono_result_1, mono_result_1)
 
         # Assert that we get the same results when passing in several sequences.
-        for index, (sequential_multi, multi) in enumerate(zip(sequential_multi_result, multi_result)):
+        for index, (sequential_multi, multi) in enumerate(
+                zip(sequential_multi_result, multi_result)):
             if index == 0:
                 self.assertDictEqual(sequential_multi, multi)
             else:
@@ -220,7 +257,8 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             "Repository": ["Transformers", "Datasets", "Tokenizers"],
             "Stars": ["36542", "4512", "3934"],
             "Contributors": ["651", "77", "34"],
-            "Programming language": ["Python", "Python", "Rust, Python and NodeJS"],
+            "Programming language":
+            ["Python", "Python", "Rust, Python and NodeJS"],
         }
         queries = [
             "What repository has the largest number of stars?",
@@ -233,8 +271,18 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         results = tqa_pipeline(data, queries)
 
         expected_results = [
-            {"answer": "Transformers", "coordinates": [(0, 0)], "cells": ["Transformers"], "aggregator": "NONE"},
-            {"answer": "Transformers", "coordinates": [(0, 0)], "cells": ["Transformers"], "aggregator": "NONE"},
+            {
+                "answer": "Transformers",
+                "coordinates": [(0, 0)],
+                "cells": ["Transformers"],
+                "aggregator": "NONE",
+            },
+            {
+                "answer": "Transformers",
+                "coordinates": [(0, 0)],
+                "cells": ["Transformers"],
+                "aggregator": "NONE",
+            },
             {
                 "answer": "COUNT > Transformers, Datasets, Tokenizers",
                 "coordinates": [(0, 0), (1, 0), (2, 0)],
@@ -267,14 +315,31 @@ class TQAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             "Actors": ["Brad Pitt", "Leonardo Di Caprio", "George Clooney"],
             "Age": ["56", "45", "59"],
             "Number of movies": ["87", "53", "69"],
-            "Date of birth": ["7 february 1967", "10 june 1996", "28 november 1967"],
+            "Date of birth":
+            ["7 february 1967", "10 june 1996", "28 november 1967"],
         }
-        queries = ["How many movies has George Clooney played in?", "How old is he?", "What's his date of birth?"]
+        queries = [
+            "How many movies has George Clooney played in?",
+            "How old is he?",
+            "What's his date of birth?",
+        ]
         results = tqa_pipeline(data, queries, sequential=True)
 
         expected_results = [
-            {"answer": "69", "coordinates": [(2, 2)], "cells": ["69"]},
-            {"answer": "59", "coordinates": [(2, 1)], "cells": ["59"]},
-            {"answer": "28 november 1967", "coordinates": [(2, 3)], "cells": ["28 november 1967"]},
+            {
+                "answer": "69",
+                "coordinates": [(2, 2)],
+                "cells": ["69"]
+            },
+            {
+                "answer": "59",
+                "coordinates": [(2, 1)],
+                "cells": ["59"]
+            },
+            {
+                "answer": "28 november 1967",
+                "coordinates": [(2, 3)],
+                "cells": ["28 november 1967"],
+            },
         ]
         self.assertListEqual(results, expected_results)

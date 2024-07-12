@@ -15,9 +15,12 @@
 """ Tensorflow mT5 model. """
 
 from ...utils import logging
-from ..t5.modeling_tf_t5 import TFT5EncoderModel, TFT5ForConditionalGeneration, TFT5Model
+from ..t5.modeling_tf_t5 import (
+    TFT5EncoderModel,
+    TFT5ForConditionalGeneration,
+    TFT5Model,
+)
 from .configuration_mt5 import MT5Config
-
 
 logger = logging.get_logger(__name__)
 
@@ -42,6 +45,7 @@ class TFMT5Model(TFT5Model):
         >>> outputs = model(batch)
         >>> hidden_states = outputs.last_hidden_state
     """
+
     model_type = "mt5"
     config_class = MT5Config
 

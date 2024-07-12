@@ -20,14 +20,20 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule
 
-
 _import_structure = {
-    "tokenization_bert_japanese": ["BertJapaneseTokenizer", "CharacterTokenizer", "MecabTokenizer"],
+    "tokenization_bert_japanese": [
+        "BertJapaneseTokenizer",
+        "CharacterTokenizer",
+        "MecabTokenizer",
+    ],
 }
 
-
 if TYPE_CHECKING:
-    from .tokenization_bert_japanese import BertJapaneseTokenizer, CharacterTokenizer, MecabTokenizer
+    from .tokenization_bert_japanese import (
+        BertJapaneseTokenizer,
+        CharacterTokenizer,
+        MecabTokenizer,
+    )
 
 else:
     import importlib

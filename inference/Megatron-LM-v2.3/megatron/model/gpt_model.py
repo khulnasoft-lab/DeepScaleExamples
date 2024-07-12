@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """GPT-2 model."""
 
 import torch
@@ -28,20 +27,22 @@ from .utils import init_method_normal
 from .utils import scaled_init_method_normal
 
 
-def post_language_model_processing(lm_output, labels, logit_weights,
-                                   get_key_value, parallel_output,
-                                   forward_method_parallel_output,
-                                   fp16_lm_cross_entropy):
+def post_language_model_processing(
+    lm_output,
+    labels,
+    logit_weights,
+    get_key_value,
+    parallel_output,
+    forward_method_parallel_output,
+    fp16_lm_cross_entropy,
+):
     if get_key_value:
         lm_output, presents = lm_output
 
     # Output.
     if forward_method_parallel_output is not None:
         parallel_output = forward_method_parallel_output
-    output = parallel_lm_logits(
-        lm_output,
-        logit_weights,
-        parallel_output)
+    output = parallel_lm_logits(lm_output, logit_weights, parallel_output)
 
     if get_key_value:
         output = [output, presents]
@@ -59,12 +60,13 @@ def post_language_model_processing(lm_output, labels, logit_weights,
 
 class GPTModel(MegatronModule):
     """GPT-2 Language model."""
-
-    def __init__(self,
-                 num_tokentypes=0,
-                 parallel_output=True,
-                 pre_process=True,
-                 post_process=True):
+    def __init__(
+        self,
+        num_tokentypes=0,
+        parallel_output=True,
+        pre_process=True,
+        post_process=True,
+    ):
         super(GPTModel, self).__init__()
         args = get_args()
 
@@ -78,10 +80,11 @@ class GPTModel(MegatronModule):
             add_pooler=False,
             encoder_attn_mask_type=AttnMaskType.causal,
             init_method=init_method_normal(args.init_method_std),
-            scaled_init_method=scaled_init_method_normal(args.init_method_std,
-                                                         args.num_layers),
+            scaled_init_method=scaled_init_method_normal(
+                args.init_method_std, args.num_layers),
             pre_process=self.pre_process,
-            post_process=self.post_process)
+            post_process=self.post_process,
+        )
 
         self.initialize_word_embeddings(init_method_normal)
 
@@ -89,39 +92,53 @@ class GPTModel(MegatronModule):
         """See megatron.model.transformer.set_input_tensor()"""
         self.language_model.set_input_tensor(input_tensor)
 
-    def forward(self, input_ids, position_ids, attention_mask, labels=None,
-                tokentype_ids=None, layer_past=None, get_key_value=False,
-                forward_method_parallel_output=None):
+    def forward(
+        self,
+        input_ids,
+        position_ids,
+        attention_mask,
+        labels=None,
+        tokentype_ids=None,
+        layer_past=None,
+        get_key_value=False,
+        forward_method_parallel_output=None,
+    ):
 
         lm_output = self.language_model(
             input_ids,
             position_ids,
             attention_mask,
             layer_past=layer_past,
-            get_key_value=get_key_value)
+            get_key_value=get_key_value,
+        )
 
         if self.post_process:
             return post_language_model_processing(
-                lm_output, labels,
+                lm_output,
+                labels,
                 self.word_embeddings_weight(),
                 get_key_value,
                 self.parallel_output,
                 forward_method_parallel_output,
-                self.fp16_lm_cross_entropy)
+                self.fp16_lm_cross_entropy,
+            )
         else:
             return lm_output
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
+    def state_dict_for_save_checkpoint(self,
+                                       destination=None,
+                                       prefix="",
                                        keep_vars=False):
 
         state_dict_ = {}
-        state_dict_[self._language_model_key] \
-            = self.language_model.state_dict_for_save_checkpoint(
-                destination, prefix, keep_vars)
+        state_dict_[self._language_model_key] = (
+            self.language_model.state_dict_for_save_checkpoint(
+                destination, prefix, keep_vars))
         # Save word_embeddings.
         if self.post_process and not self.pre_process:
-            state_dict_[self._word_embeddings_for_head_key] \
-                = self.word_embeddings.state_dict(destination, prefix, keep_vars)
+            state_dict_[self._word_embeddings_for_head_key] = (
+                self.word_embeddings.state_dict(destination, prefix,
+                                                keep_vars))
         return state_dict_
 
     def load_state_dict(self, state_dict, strict=True):

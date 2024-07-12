@@ -20,14 +20,18 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tokenizers_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_squeezebert": ["SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "SqueezeBertConfig"],
+    "configuration_squeezebert": [
+        "SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "SqueezeBertConfig",
+    ],
     "tokenization_squeezebert": ["SqueezeBertTokenizer"],
 }
 
 if is_tokenizers_available():
-    _import_structure["tokenization_squeezebert_fast"] = ["SqueezeBertTokenizerFast"]
+    _import_structure["tokenization_squeezebert_fast"] = [
+        "SqueezeBertTokenizerFast"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_squeezebert"] = [
@@ -42,9 +46,11 @@ if is_torch_available():
         "SqueezeBertPreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_squeezebert import SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, SqueezeBertConfig
+    from .configuration_squeezebert import (
+        SQUEEZEBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        SqueezeBertConfig,
+    )
     from .tokenization_squeezebert import SqueezeBertTokenizer
 
     if is_tokenizers_available():

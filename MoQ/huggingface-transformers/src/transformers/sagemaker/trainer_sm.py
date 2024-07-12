@@ -29,9 +29,7 @@ from ..trainer_pt_utils import (
 from ..utils import logging
 from .training_args_sm import is_smdistributed_available
 
-
 logger = logging.get_logger(__name__)
-
 
 if is_smdistributed_available():
     import smdistributed.modelparallel.torch as smp
@@ -63,7 +61,9 @@ if is_smdistributed_available():
         if isinstance(tensor, (list, tuple)):
             return type(tensor)(nested_smp_concat(t) for t in tensor)
         elif isinstance(tensor, dict):
-            return type(tensor)({k: nested_smp_concat(v) for k, v in tensor.items()})
+            return type(tensor)(
+                {k: nested_smp_concat(v)
+                 for k, v in tensor.items()})
         # It doesn't seem possible to check here if `tensor` is a StepOutput because StepOutput lives in `smp.step`
         # which is also the name of the decorator so Python is confused.
         return tensor.concat().detach().cpu()
@@ -72,24 +72,37 @@ if is_smdistributed_available():
 class SageMakerTrainer(Trainer):
     def __init__(self, args=None, **kwargs):
         super().__init__(args=args, **kwargs)
-        self.is_model_parallel_enabled = is_smdistributed_available() and self.args.mp_parameters != ""
-        if self.is_model_parallel_enabled and self.args.gradient_accumulation_steps != 1:
-            raise ValueError("Gradient accumulation is not supported when model parallel is enabled.")
+        self.is_model_parallel_enabled = (is_smdistributed_available()
+                                          and self.args.mp_parameters != "")
+        if (self.is_model_parallel_enabled
+                and self.args.gradient_accumulation_steps != 1):
+            raise ValueError(
+                "Gradient accumulation is not supported when model parallel is enabled."
+            )
 
     def _get_train_sampler(self):
         if self.is_model_parallel_enabled:
             if self.args.group_by_length:
                 return DistributedLengthGroupedSampler(
-                    self.train_dataset, self.args.train_batch_size, num_replicas=smp.dp_size(), rank=smp.dp_rank()
+                    self.train_dataset,
+                    self.args.train_batch_size,
+                    num_replicas=smp.dp_size(),
+                    rank=smp.dp_rank(),
                 )
             else:
-                return DistributedSampler(self.train_dataset, num_replicas=smp.dp_size(), rank=smp.dp_rank())
+                return DistributedSampler(self.train_dataset,
+                                          num_replicas=smp.dp_size(),
+                                          rank=smp.dp_rank())
         else:
             return super()._get_train_sampler()
 
-    def _get_eval_sampler(self, eval_dataset: Dataset) -> Optional[torch.utils.data.sampler.Sampler]:
+    def _get_eval_sampler(
+            self, eval_dataset: Dataset
+    ) -> Optional[torch.utils.data.sampler.Sampler]:
         if self.is_model_parallel_enabled:
-            return SequentialDistributedSampler(eval_dataset, num_replicas=smp.dp_size(), rank=smp.dp_rank())
+            return SequentialDistributedSampler(eval_dataset,
+                                                num_replicas=smp.dp_size(),
+                                                rank=smp.dp_rank())
         else:
             return super()._get_eval_sampler(eval_dataset)
 
@@ -107,7 +120,9 @@ class SageMakerTrainer(Trainer):
         if self.is_model_parallel_enabled:
             self.optimizer = smp.DistributedOptimizer(self.optimizer)
 
-    def training_step(self, model: nn.Module, inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
+    def training_step(
+            self, model: nn.Module,
+            inputs: Dict[str, Union[torch.Tensor, Any]]) -> torch.Tensor:
         if self.is_model_parallel_enabled:
             model.train()
             inputs = self._prepare_inputs(inputs)
@@ -129,14 +144,17 @@ class SageMakerTrainer(Trainer):
         inputs: Dict[str, Union[torch.Tensor, Any]],
         prediction_loss_only: bool,
         ignore_keys: Optional[List[str]] = None,
-    ) -> Tuple[Optional[float], Optional[torch.Tensor], Optional[torch.Tensor]]:
+    ) -> Tuple[Optional[float], Optional[torch.Tensor],
+               Optional[torch.Tensor]]:
         if self.is_model_parallel_enabled:
-            has_labels = all(inputs.get(k) is not None for k in self.label_names)
+            has_labels = all(
+                inputs.get(k) is not None for k in self.label_names)
             inputs = self._prepare_inputs(inputs)
 
             if ignore_keys is None:
                 if hasattr(self.model, "config"):
-                    ignore_keys = getattr(self.model.config, "keys_to_ignore_at_inference", [])
+                    ignore_keys = getattr(self.model.config,
+                                          "keys_to_ignore_at_inference", [])
                 else:
                     ignore_keys = []
 
@@ -145,7 +163,8 @@ class SageMakerTrainer(Trainer):
                 if has_labels:
                     if isinstance(raw_outputs, dict):
                         loss_mb = raw_outputs["loss"]
-                        logits_mb = tuple(v for k, v in raw_outputs.items() if k not in ignore_keys + ["loss"])
+                        logits_mb = tuple(v for k, v in raw_outputs.items()
+                                          if k not in ignore_keys + ["loss"])
                     else:
                         loss_mb = raw_outputs[0]
                         logits_mb = raw_outputs[1:]
@@ -155,7 +174,8 @@ class SageMakerTrainer(Trainer):
                 else:
                     loss = None
                     if isinstance(raw_outputs, dict):
-                        logits_mb = tuple(v for k, v in raw_outputs.items() if k not in ignore_keys)
+                        logits_mb = tuple(v for k, v in raw_outputs.items()
+                                          if k not in ignore_keys)
                     else:
                         logits_mb = raw_outputs
                     logits = nested_smp_concat(logits_mb)
@@ -167,7 +187,8 @@ class SageMakerTrainer(Trainer):
                 logits = logits[0]
 
             if has_labels:
-                labels = nested_detach(tuple(inputs.get(name) for name in self.label_names))
+                labels = nested_detach(
+                    tuple(inputs.get(name) for name in self.label_names))
                 if len(labels) == 1:
                     labels = labels[0]
             else:
@@ -175,4 +196,7 @@ class SageMakerTrainer(Trainer):
 
             return (loss, logits, labels)
         else:
-            return super().prediction_step(model, inputs, prediction_loss_only, ignore_keys=ignore_keys)
+            return super().prediction_step(model,
+                                           inputs,
+                                           prediction_loss_only,
+                                           ignore_keys=ignore_keys)

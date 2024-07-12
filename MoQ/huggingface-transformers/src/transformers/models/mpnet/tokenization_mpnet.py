@@ -20,9 +20,14 @@ import os
 import unicodedata
 from typing import List, Optional, Tuple
 
-from ...tokenization_utils import AddedToken, PreTrainedTokenizer, _is_control, _is_punctuation, _is_whitespace
+from ...tokenization_utils import (
+    AddedToken,
+    PreTrainedTokenizer,
+    _is_control,
+    _is_punctuation,
+    _is_whitespace,
+)
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -30,7 +35,8 @@ VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "microsoft/mpnet-base": "https://huggingface.co/microsoft/mpnet-base/resolve/main/vocab.txt",
+        "microsoft/mpnet-base":
+        "https://huggingface.co/microsoft/mpnet-base/resolve/main/vocab.txt",
     }
 }
 
@@ -39,7 +45,9 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "microsoft/mpnet-base": {"do_lower_case": True},
+    "microsoft/mpnet-base": {
+        "do_lower_case": True
+    },
 }
 
 
@@ -124,32 +132,37 @@ class MPNetTokenizer(PreTrainedTokenizer):
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     model_input_names = ["input_ids", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        do_lower_case=True,
-        do_basic_tokenize=True,
-        never_split=None,
-        bos_token="<s>",
-        eos_token="</s>",
-        sep_token="</s>",
-        cls_token="<s>",
-        unk_token="[UNK]",
-        pad_token="<pad>",
-        mask_token="<mask>",
-        tokenize_chinese_chars=True,
-        strip_accents=None,
-        **kwargs
-    ):
-        bos_token = AddedToken(bos_token, lstrip=False, rstrip=False) if isinstance(bos_token, str) else bos_token
-        eos_token = AddedToken(eos_token, lstrip=False, rstrip=False) if isinstance(eos_token, str) else eos_token
-        sep_token = AddedToken(sep_token, lstrip=False, rstrip=False) if isinstance(sep_token, str) else sep_token
-        cls_token = AddedToken(cls_token, lstrip=False, rstrip=False) if isinstance(cls_token, str) else cls_token
-        unk_token = AddedToken(unk_token, lstrip=False, rstrip=False) if isinstance(unk_token, str) else unk_token
-        pad_token = AddedToken(pad_token, lstrip=False, rstrip=False) if isinstance(pad_token, str) else pad_token
+    def __init__(self,
+                 vocab_file,
+                 do_lower_case=True,
+                 do_basic_tokenize=True,
+                 never_split=None,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 sep_token="</s>",
+                 cls_token="<s>",
+                 unk_token="[UNK]",
+                 pad_token="<pad>",
+                 mask_token="<mask>",
+                 tokenize_chinese_chars=True,
+                 strip_accents=None,
+                 **kwargs):
+        bos_token = (AddedToken(bos_token, lstrip=False, rstrip=False)
+                     if isinstance(bos_token, str) else bos_token)
+        eos_token = (AddedToken(eos_token, lstrip=False, rstrip=False)
+                     if isinstance(eos_token, str) else eos_token)
+        sep_token = (AddedToken(sep_token, lstrip=False, rstrip=False)
+                     if isinstance(sep_token, str) else sep_token)
+        cls_token = (AddedToken(cls_token, lstrip=False, rstrip=False)
+                     if isinstance(cls_token, str) else cls_token)
+        unk_token = (AddedToken(unk_token, lstrip=False, rstrip=False)
+                     if isinstance(unk_token, str) else unk_token)
+        pad_token = (AddedToken(pad_token, lstrip=False, rstrip=False)
+                     if isinstance(pad_token, str) else pad_token)
 
         # Mask token behave like a normal word, i.e. include the space before it
-        mask_token = AddedToken(mask_token, lstrip=True, rstrip=False) if isinstance(mask_token, str) else mask_token
+        mask_token = (AddedToken(mask_token, lstrip=True, rstrip=False)
+                      if isinstance(mask_token, str) else mask_token)
 
         super().__init__(
             do_lower_case=do_lower_case,
@@ -170,10 +183,12 @@ class MPNetTokenizer(PreTrainedTokenizer):
         if not os.path.isfile(vocab_file):
             raise ValueError(
                 "Can't find a vocabulary file at path '{}'. To load the vocabulary from a Google pretrained "
-                "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`".format(vocab_file)
-            )
+                "model use `tokenizer = BertTokenizer.from_pretrained(PRETRAINED_MODEL_NAME)`"
+                .format(vocab_file))
         self.vocab = load_vocab(vocab_file)
-        self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
+        self.ids_to_tokens = collections.OrderedDict([
+            (ids, tok) for tok, ids in self.vocab.items()
+        ])
         self.do_basic_tokenize = do_basic_tokenize
         if do_basic_tokenize:
             self.basic_tokenizer = BasicTokenizer(
@@ -182,7 +197,8 @@ class MPNetTokenizer(PreTrainedTokenizer):
                 tokenize_chinese_chars=tokenize_chinese_chars,
                 strip_accents=strip_accents,
             )
-        self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab, unk_token=self.unk_token)
+        self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab,
+                                                      unk_token=self.unk_token)
 
     @property
     def do_lower_case(self):
@@ -198,7 +214,8 @@ class MPNetTokenizer(PreTrainedTokenizer):
     def _tokenize(self, text):
         split_tokens = []
         if self.do_basic_tokenize:
-            for token in self.basic_tokenizer.tokenize(text, never_split=self.all_special_tokens):
+            for token in self.basic_tokenizer.tokenize(
+                    text, never_split=self.all_special_tokens):
 
                 # If the token is part of the never_split set
                 if token in self.basic_tokenizer.never_split:
@@ -210,7 +227,7 @@ class MPNetTokenizer(PreTrainedTokenizer):
         return split_tokens
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.vocab.get(token, self.vocab.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -218,13 +235,14 @@ class MPNetTokenizer(PreTrainedTokenizer):
         return self.ids_to_tokens.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A MPNet sequence has the following format:
@@ -248,7 +266,10 @@ class MPNetTokenizer(PreTrainedTokenizer):
         return cls + token_ids_0 + sep + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -271,15 +292,22 @@ class MPNetTokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formated with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is None:
             return [1] + ([0] * len(token_ids_0)) + [1]
-        return [1] + ([0] * len(token_ids_0)) + [1, 1] + ([0] * len(token_ids_1)) + [1]
+        return [1] + ([0] * len(token_ids_0)) + [1, 1] + (
+            [0] * len(token_ids_1)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Creates a mask from the two sequences passed to be used in a sequence-pair classification task. MPNet does not
         make use of token type ids, therefore a list of zeros is returned.
@@ -300,25 +328,31 @@ class MPNetTokenizer(PreTrainedTokenizer):
             return len(cls + token_ids_0 + sep) * [0]
         return len(cls + token_ids_0 + sep + sep + token_ids_1 + sep) * [0]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         index = 0
         if os.path.isdir(save_directory):
             vocab_file = os.path.join(
-                save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+                save_directory,
+                (filename_prefix + "-" if filename_prefix else "") +
+                VOCAB_FILES_NAMES["vocab_file"],
             )
         else:
-            vocab_file = (filename_prefix + "-" if filename_prefix else "") + save_directory
+            vocab_file = (filename_prefix +
+                          "-" if filename_prefix else "") + save_directory
         with open(vocab_file, "w", encoding="utf-8") as writer:
-            for token, token_index in sorted(self.vocab.items(), key=lambda kv: kv[1]):
+            for token, token_index in sorted(self.vocab.items(),
+                                             key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: vocabulary indices are not consecutive."
-                        " Please check that the vocabulary is not corrupted!".format(vocab_file)
-                    )
+                        " Please check that the vocabulary is not corrupted!".
+                        format(vocab_file))
                     index = token_index
                 writer.write(token + "\n")
                 index += 1
-        return (vocab_file,)
+        return (vocab_file, )
 
 
 # Copied from transformers.models.bert.tokenization_bert.BasicTokenizer
@@ -341,8 +375,13 @@ class BasicTokenizer(object):
             Whether or not to strip all accents. If this option is not specified, then it will be determined by the
             value for :obj:`lowercase` (as in the original BERT).
     """
-
-    def __init__(self, do_lower_case=True, never_split=None, tokenize_chinese_chars=True, strip_accents=None):
+    def __init__(
+        self,
+        do_lower_case=True,
+        never_split=None,
+        tokenize_chinese_chars=True,
+        strip_accents=None,
+    ):
         if never_split is None:
             never_split = []
         self.do_lower_case = do_lower_case
@@ -361,7 +400,8 @@ class BasicTokenizer(object):
                 :func:`PreTrainedTokenizer.tokenize`) List of token not to split.
         """
         # union() returns a new set by concatenating the two sets.
-        never_split = self.never_split.union(set(never_split)) if never_split else self.never_split
+        never_split = (self.never_split.union(set(never_split))
+                       if never_split else self.never_split)
         text = self._clean_text(text)
 
         # This was added on November 1st, 2018 for the multilingual and Chinese
@@ -443,16 +483,15 @@ class BasicTokenizer(object):
         # as is Japanese Hiragana and Katakana. Those alphabets are used to write
         # space-separated words, so they are not treated specially and handled
         # like the all of the other languages.
-        if (
-            (cp >= 0x4E00 and cp <= 0x9FFF)
-            or (cp >= 0x3400 and cp <= 0x4DBF)  #
-            or (cp >= 0x20000 and cp <= 0x2A6DF)  #
-            or (cp >= 0x2A700 and cp <= 0x2B73F)  #
-            or (cp >= 0x2B740 and cp <= 0x2B81F)  #
-            or (cp >= 0x2B820 and cp <= 0x2CEAF)  #
-            or (cp >= 0xF900 and cp <= 0xFAFF)
-            or (cp >= 0x2F800 and cp <= 0x2FA1F)  #
-        ):  #
+        if ((cp >= 0x4E00 and cp <= 0x9FFF)
+                or (cp >= 0x3400 and cp <= 0x4DBF)  #
+                or (cp >= 0x20000 and cp <= 0x2A6DF)  #
+                or (cp >= 0x2A700 and cp <= 0x2B73F)  #
+                or (cp >= 0x2B740 and cp <= 0x2B81F)  #
+                or (cp >= 0x2B820 and cp <= 0x2CEAF)  #
+                or (cp >= 0xF900 and cp <= 0xFAFF)
+                or (cp >= 0x2F800 and cp <= 0x2FA1F)  #
+            ):  #
             return True
 
         return False
@@ -474,7 +513,6 @@ class BasicTokenizer(object):
 # Copied from transformers.models.bert.tokenization_bert.WordpieceTokenizer
 class WordpieceTokenizer(object):
     """Runs WordPiece tokenization."""
-
     def __init__(self, vocab, unk_token, max_input_chars_per_word=100):
         self.vocab = vocab
         self.unk_token = unk_token

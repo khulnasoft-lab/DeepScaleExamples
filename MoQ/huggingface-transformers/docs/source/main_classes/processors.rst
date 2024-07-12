@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -141,7 +141,7 @@ Here is an example using the processors as well as the conversion method using d
     processor = SquadV1Processor()
     examples = processor.get_dev_examples(squad_v1_data_dir)
 
-    features = squad_convert_examples_to_features( 
+    features = squad_convert_examples_to_features(
         examples=examples,
         tokenizer=tokenizer,
         max_seq_length=max_seq_length,
@@ -158,7 +158,7 @@ Using `tensorflow_datasets` is as easy as using a data file:
     tfds_examples = tfds.load("squad")
     examples = SquadV1Processor().get_examples_from_dataset(tfds_examples, evaluate=evaluate)
 
-    features = squad_convert_examples_to_features( 
+    features = squad_convert_examples_to_features(
         examples=examples,
         tokenizer=tokenizer,
         max_seq_length=max_seq_length,

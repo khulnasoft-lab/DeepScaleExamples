@@ -15,7 +15,6 @@
 # limitations under the License.
 """ Configuration base class and utilities."""
 
-
 import copy
 import json
 import os
@@ -24,7 +23,6 @@ from typing import Any, Dict, Tuple, Union
 from . import __version__
 from .file_utils import CONFIG_NAME, cached_path, hf_bucket_url, is_remote_url
 from .utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -178,6 +176,7 @@ class PretrainedConfig(object):
         - **use_bfloat16** (:obj:`bool`, `optional`, defaults to :obj:`False`) -- Whether or not the model should use
           BFloat16 scalars (only used by some TensorFlow models).
     """
+
     model_type: str = ""
     is_composition: bool = False
 
@@ -186,7 +185,8 @@ class PretrainedConfig(object):
         self.return_dict = kwargs.pop("return_dict", True)
         self.output_hidden_states = kwargs.pop("output_hidden_states", False)
         self.output_attentions = kwargs.pop("output_attentions", False)
-        self.torchscript = kwargs.pop("torchscript", False)  # Only used by PyTorch models
+        self.torchscript = kwargs.pop("torchscript",
+                                      False)  # Only used by PyTorch models
         self.use_bfloat16 = kwargs.pop("use_bfloat16", False)
         self.pruned_heads = kwargs.pop("pruned_heads", {})
         self.tie_word_embeddings = kwargs.pop(
@@ -213,12 +213,14 @@ class PretrainedConfig(object):
         self.repetition_penalty = kwargs.pop("repetition_penalty", 1.0)
         self.length_penalty = kwargs.pop("length_penalty", 1.0)
         self.no_repeat_ngram_size = kwargs.pop("no_repeat_ngram_size", 0)
-        self.encoder_no_repeat_ngram_size = kwargs.pop("encoder_no_repeat_ngram_size", 0)
+        self.encoder_no_repeat_ngram_size = kwargs.pop(
+            "encoder_no_repeat_ngram_size", 0)
         self.bad_words_ids = kwargs.pop("bad_words_ids", None)
         self.num_return_sequences = kwargs.pop("num_return_sequences", 1)
         self.chunk_size_feed_forward = kwargs.pop("chunk_size_feed_forward", 0)
         self.output_scores = kwargs.pop("output_scores", False)
-        self.return_dict_in_generate = kwargs.pop("return_dict_in_generate", False)
+        self.return_dict_in_generate = kwargs.pop("return_dict_in_generate",
+                                                  False)
         self.forced_bos_token_id = kwargs.pop("forced_bos_token_id", None)
         self.forced_eos_token_id = kwargs.pop("forced_eos_token_id", None)
 
@@ -229,7 +231,8 @@ class PretrainedConfig(object):
         self.label2id = kwargs.pop("label2id", None)
         if self.id2label is not None:
             kwargs.pop("num_labels", None)
-            self.id2label = dict((int(key), value) for key, value in self.id2label.items())
+            self.id2label = dict(
+                (int(key), value) for key, value in self.id2label.items())
             # Keys are always strings in JSON so convert ids to int here.
         else:
             self.num_labels = kwargs.pop("num_labels", 2)
@@ -242,7 +245,8 @@ class PretrainedConfig(object):
         self.eos_token_id = kwargs.pop("eos_token_id", None)
         self.sep_token_id = kwargs.pop("sep_token_id", None)
 
-        self.decoder_start_token_id = kwargs.pop("decoder_start_token_id", None)
+        self.decoder_start_token_id = kwargs.pop("decoder_start_token_id",
+                                                 None)
 
         # task specific arguments
         self.task_specific_params = kwargs.pop("task_specific_params", None)
@@ -261,7 +265,8 @@ class PretrainedConfig(object):
             try:
                 setattr(self, key, value)
             except AttributeError as err:
-                logger.error("Can't set {} with value {} for {}".format(key, value, self))
+                logger.error("Can't set {} with value {} for {}".format(
+                    key, value, self))
                 raise err
 
     @property
@@ -270,7 +275,9 @@ class PretrainedConfig(object):
 
     @name_or_path.setter
     def name_or_path(self, value):
-        self._name_or_path = str(value)  # Make sure that name_or_path is a string (for JSON encoding)
+        self._name_or_path = str(
+            value
+        )  # Make sure that name_or_path is a string (for JSON encoding)
 
     @property
     def use_return_dict(self) -> bool:
@@ -302,7 +309,9 @@ class PretrainedConfig(object):
                 Directory where the configuration JSON file will be saved (will be created if it does not exist).
         """
         if os.path.isfile(save_directory):
-            raise AssertionError("Provided path ({}) should be a directory, not a file".format(save_directory))
+            raise AssertionError(
+                "Provided path ({}) should be a directory, not a file".format(
+                    save_directory))
         os.makedirs(save_directory, exist_ok=True)
         # If we save using the predefined names, we can load using `from_pretrained`
         output_config_file = os.path.join(save_directory, CONFIG_NAME)
@@ -311,7 +320,9 @@ class PretrainedConfig(object):
         logger.info(f"Configuration saved in {output_config_file}")
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs) -> "PretrainedConfig":
+    def from_pretrained(cls, pretrained_model_name_or_path: Union[str,
+                                                                  os.PathLike],
+                        **kwargs) -> "PretrainedConfig":
         r"""
         Instantiate a :class:`~transformers.PretrainedConfig` (or a derived class) from a pretrained model
         configuration.
@@ -380,13 +391,14 @@ class PretrainedConfig(object):
             assert unused_kwargs == {'foo': False}
 
         """
-        config_dict, kwargs = cls.get_config_dict(pretrained_model_name_or_path, **kwargs)
+        config_dict, kwargs = cls.get_config_dict(
+            pretrained_model_name_or_path, **kwargs)
         return cls.from_dict(config_dict, **kwargs)
 
     @classmethod
-    def get_config_dict(
-        cls, pretrained_model_name_or_path: Union[str, os.PathLike], **kwargs
-    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def get_config_dict(cls, pretrained_model_name_or_path: Union[str,
+                                                                  os.PathLike],
+                        **kwargs) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         From a ``pretrained_model_name_or_path``, resolve to a dictionary of parameters, to be used for instantiating a
         :class:`~transformers.PretrainedConfig` using ``from_dict``.
@@ -411,12 +423,17 @@ class PretrainedConfig(object):
 
         pretrained_model_name_or_path = str(pretrained_model_name_or_path)
         if os.path.isdir(pretrained_model_name_or_path):
-            config_file = os.path.join(pretrained_model_name_or_path, CONFIG_NAME)
-        elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(pretrained_model_name_or_path):
+            config_file = os.path.join(pretrained_model_name_or_path,
+                                       CONFIG_NAME)
+        elif os.path.isfile(pretrained_model_name_or_path) or is_remote_url(
+                pretrained_model_name_or_path):
             config_file = pretrained_model_name_or_path
         else:
             config_file = hf_bucket_url(
-                pretrained_model_name_or_path, filename=CONFIG_NAME, revision=revision, mirror=None
+                pretrained_model_name_or_path,
+                filename=CONFIG_NAME,
+                revision=revision,
+                mirror=None,
             )
 
         try:
@@ -446,19 +463,22 @@ class PretrainedConfig(object):
             msg = (
                 "Couldn't reach server at '{}' to download configuration file or "
                 "configuration file is not a valid JSON file. "
-                "Please check network or file content here: {}.".format(config_file, resolved_config_file)
-            )
+                "Please check network or file content here: {}.".format(
+                    config_file, resolved_config_file))
             raise EnvironmentError(msg)
 
         if resolved_config_file == config_file:
             logger.info("loading configuration file {}".format(config_file))
         else:
-            logger.info("loading configuration file {} from cache at {}".format(config_file, resolved_config_file))
+            logger.info(
+                "loading configuration file {} from cache at {}".format(
+                    config_file, resolved_config_file))
 
         return config_dict, kwargs
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any], **kwargs) -> "PretrainedConfig":
+    def from_dict(cls, config_dict: Dict[str, Any],
+                  **kwargs) -> "PretrainedConfig":
         """
         Instantiates a :class:`~transformers.PretrainedConfig` from a Python dictionary of parameters.
 
@@ -478,7 +498,9 @@ class PretrainedConfig(object):
         config = cls(**config_dict)
 
         if hasattr(config, "pruned_heads"):
-            config.pruned_heads = dict((int(key), value) for key, value in config.pruned_heads.items())
+            config.pruned_heads = dict(
+                (int(key), value)
+                for key, value in config.pruned_heads.items())
 
         # Update config with kwargs if needed
         to_remove = []
@@ -496,7 +518,8 @@ class PretrainedConfig(object):
             return config
 
     @classmethod
-    def from_json_file(cls, json_file: Union[str, os.PathLike]) -> "PretrainedConfig":
+    def from_json_file(
+            cls, json_file: Union[str, os.PathLike]) -> "PretrainedConfig":
         """
         Instantiates a :class:`~transformers.PretrainedConfig` from the path to a JSON file of parameters.
 
@@ -537,18 +560,17 @@ class PretrainedConfig(object):
         default_config_dict = PretrainedConfig().to_dict()
 
         # get class specific config dict
-        class_config_dict = self.__class__().to_dict() if not self.is_composition else {}
+        class_config_dict = (self.__class__().to_dict()
+                             if not self.is_composition else {})
 
         serializable_config_dict = {}
 
         # only serialize values that differ from the default config
         for key, value in config_dict.items():
-            if (
-                key not in default_config_dict
-                or key == "transformers_version"
-                or value != default_config_dict[key]
-                or (key in class_config_dict and value != class_config_dict[key])
-            ):
+            if (key not in default_config_dict or key == "transformers_version"
+                    or value != default_config_dict[key]
+                    or (key in class_config_dict
+                        and value != class_config_dict[key])):
                 serializable_config_dict[key] = value
 
         return serializable_config_dict
@@ -587,7 +609,9 @@ class PretrainedConfig(object):
             config_dict = self.to_dict()
         return json.dumps(config_dict, indent=2, sort_keys=True) + "\n"
 
-    def to_json_file(self, json_file_path: Union[str, os.PathLike], use_diff: bool = True):
+    def to_json_file(self,
+                     json_file_path: Union[str, os.PathLike],
+                     use_diff: bool = True):
         """
         Save this instance to a JSON file.
 

@@ -15,7 +15,11 @@
 
 import torch
 
-from .initialize import get_model_parallel_group, get_model_parallel_world_size, get_model_parallel_rank
+from .initialize import (
+    get_model_parallel_group,
+    get_model_parallel_world_size,
+    get_model_parallel_rank,
+)
 from .utils import split_tensor_along_last_dim
 
 
@@ -23,7 +27,7 @@ def _reduce(input_):
     """All-reduce the the input tensor across model parallel group."""
 
     # Bypass the function if we are using only 1 GPU.
-    if get_model_parallel_world_size()==1:
+    if get_model_parallel_world_size() == 1:
         return input_
 
     # All-reduce.
@@ -38,7 +42,7 @@ def _split(input_):
 
     world_size = get_model_parallel_world_size()
     # Bypass the function if we are using only 1 GPU.
-    if world_size==1:
+    if world_size == 1:
         return input_
 
     # Split along last dimension.
@@ -56,7 +60,7 @@ def _gather(input_):
 
     world_size = get_model_parallel_world_size()
     # Bypass the function if we are using only 1 GPU.
-    if world_size==1:
+    if world_size == 1:
         return input_
 
     # Size and dimension.
@@ -65,7 +69,9 @@ def _gather(input_):
 
     tensor_list = [torch.empty_like(input_) for _ in range(world_size)]
     tensor_list[rank] = input_
-    torch.distributed.all_gather(tensor_list, input_, group=get_model_parallel_group())
+    torch.distributed.all_gather(tensor_list,
+                                 input_,
+                                 group=get_model_parallel_group())
 
     # Note: torch.cat already creates a contiguous tensor.
     output = torch.cat(tensor_list, dim=last_dim).contiguous()
@@ -75,11 +81,10 @@ def _gather(input_):
 
 class _CopyToModelParallelRegion(torch.autograd.Function):
     """Pass the input to the model parallel region."""
-
     @staticmethod
     def symbolic(graph, input_):
         return input_
-    
+
     @staticmethod
     def forward(ctx, input_):
         return input_
@@ -91,11 +96,10 @@ class _CopyToModelParallelRegion(torch.autograd.Function):
 
 class _ReduceFromModelParallelRegion(torch.autograd.Function):
     """All-redcue the input from the model parallel region."""
-
     @staticmethod
     def symbolic(graph, input_):
         return _reduce(input_)
-    
+
     @staticmethod
     def forward(ctx, input_):
         return _reduce(input_)
@@ -107,7 +111,6 @@ class _ReduceFromModelParallelRegion(torch.autograd.Function):
 
 class _ScatterToModelParallelRegion(torch.autograd.Function):
     """Split the input and keep only the corresponding chuck to the rank."""
-
     @staticmethod
     def symbolic(graph, input_):
         return _split(input_)
@@ -123,11 +126,10 @@ class _ScatterToModelParallelRegion(torch.autograd.Function):
 
 class _GatherFromModelParallelRegion(torch.autograd.Function):
     """Gather the input from model parallel region and concatinate."""
-
     @staticmethod
     def symbolic(graph, input_):
         return _gather(input_)
-    
+
     @staticmethod
     def forward(ctx, input_):
         return _gather(input_)
@@ -140,6 +142,7 @@ class _GatherFromModelParallelRegion(torch.autograd.Function):
 # -----------------
 # Helper functions.
 # -----------------
+
 
 def copy_to_model_parallel_region(input_):
     return _CopyToModelParallelRegion.apply(input_)

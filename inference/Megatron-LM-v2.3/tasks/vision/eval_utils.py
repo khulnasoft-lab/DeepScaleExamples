@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Evaluation utilities."""
 
 import os
@@ -35,14 +34,12 @@ def accuracy_func_provider():
     # Build dataloaders.
     val_data_path = os.path.join(data_path[0], "val")
     normalize = transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
-    transform_val = transforms.Compose(
-        [
-            transforms.Resize(crop_size),
-            transforms.CenterCrop(crop_size),
-            transforms.ToTensor(),
-            normalize,
-        ]
-    )
+    transform_val = transforms.Compose([
+        transforms.Resize(crop_size),
+        transforms.CenterCrop(crop_size),
+        transforms.ToTensor(),
+        normalize,
+    ])
     dataset = datasets.ImageFolder(root=val_data_path, transform=transform_val)
 
     dataloader = build_data_loader(
@@ -56,10 +53,8 @@ def accuracy_func_provider():
         print_rank_0("calculating metrics ...")
         correct, total = calculate_correct_answers(model, dataloader, epoch)
         percent = float(correct) * 100.0 / float(total)
-        print_rank_0(
-            " >> |epoch: {}| overall: correct / total = {} / {} = "
-            "{:.4f} %".format(epoch, correct, total, percent)
-        )
+        print_rank_0(" >> |epoch: {}| overall: correct / total = {} / {} = "
+                     "{:.4f} %".format(epoch, correct, total, percent))
 
     return metrics_func
 
@@ -87,7 +82,8 @@ def calculate_correct_answers(model, dataloader, epoch):
 
     # Reduce.
     unreduced = torch.cuda.LongTensor([correct, total])
-    torch.distributed.all_reduce(unreduced, group=mpu.get_data_parallel_group())
+    torch.distributed.all_reduce(unreduced,
+                                 group=mpu.get_data_parallel_group())
 
     # Print on screen.
     correct_ans = unreduced[0].item()

@@ -27,22 +27,33 @@ class QAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         "max_seq_len": 25,
         "doc_stride": 5,
     }  # Default is 'longest' but we use 'max_length' to test equivalence between slow/fast tokenizers
-    small_models = [
-        "sshleifer/tiny-distilbert-base-cased-distilled-squad"
-    ]  # Models tested without the @slow decorator
+    small_models = ["sshleifer/tiny-distilbert-base-cased-distilled-squad"
+                    ]  # Models tested without the @slow decorator
     large_models = []  # Models tested with the @slow decorator
     valid_inputs = [
-        {"question": "Where was HuggingFace founded ?", "context": "HuggingFace was founded in Paris."},
         {
-            "question": "In what field is HuggingFace working ?",
-            "context": "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
+            "question": "Where was HuggingFace founded ?",
+            "context": "HuggingFace was founded in Paris.",
         },
         {
-            "question": ["In what field is HuggingFace working ?", "In what field is HuggingFace working ?"],
-            "context": "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
+            "question":
+            "In what field is HuggingFace working ?",
+            "context":
+            "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
         },
         {
-            "question": ["In what field is HuggingFace working ?", "In what field is HuggingFace working ?"],
+            "question": [
+                "In what field is HuggingFace working ?",
+                "In what field is HuggingFace working ?",
+            ],
+            "context":
+            "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
+        },
+        {
+            "question": [
+                "In what field is HuggingFace working ?",
+                "In what field is HuggingFace working ?",
+            ],
             "context": [
                 "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
                 "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
@@ -53,17 +64,34 @@ class QAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
     def _test_pipeline(self, nlp: Pipeline):
         output_keys = {"score", "answer", "start", "end"}
         valid_inputs = [
-            {"question": "Where was HuggingFace founded ?", "context": "HuggingFace was founded in Paris."},
             {
-                "question": "In what field is HuggingFace working ?",
-                "context": "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
+                "question": "Where was HuggingFace founded ?",
+                "context": "HuggingFace was founded in Paris.",
+            },
+            {
+                "question":
+                "In what field is HuggingFace working ?",
+                "context":
+                "HuggingFace is a startup based in New-York founded in Paris which is trying to solve NLP.",
             },
         ]
         invalid_inputs = [
-            {"question": "", "context": "This is a test to try empty question edge case"},
-            {"question": None, "context": "This is a test to try empty question edge case"},
-            {"question": "What is does with empty context ?", "context": ""},
-            {"question": "What is does with empty context ?", "context": None},
+            {
+                "question": "",
+                "context": "This is a test to try empty question edge case",
+            },
+            {
+                "question": None,
+                "context": "This is a test to try empty question edge case",
+            },
+            {
+                "question": "What is does with empty context ?",
+                "context": ""
+            },
+            {
+                "question": "What is does with empty context ?",
+                "context": None
+            },
         ]
         self.assertIsNotNone(nlp)
 
@@ -120,7 +148,13 @@ class QAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
         self.assertEqual(len(normalized), 1)
         self.assertEqual({type(el) for el in normalized}, {SquadExample})
 
-        normalized = qa([{"question": Q, "context": C}, {"question": Q, "context": C}])
+        normalized = qa([{
+            "question": Q,
+            "context": C
+        }, {
+            "question": Q,
+            "context": C
+        }])
         self.assertEqual(type(normalized), list)
         self.assertEqual(len(normalized), 2)
         self.assertEqual({type(el) for el in normalized}, {SquadExample})
@@ -180,12 +214,24 @@ class QAPipelineTests(CustomInputPipelineCommonMixin, unittest.TestCase):
             qa({"question": Q, "context": ""})
 
         with self.assertRaises(ValueError):
-            qa([{"question": Q, "context": C}, {"question": None, "context": C}])
+            qa([{
+                "question": Q,
+                "context": C
+            }, {
+                "question": None,
+                "context": C
+            }])
         with self.assertRaises(ValueError):
             qa([{"question": Q, "context": C}, {"question": "", "context": C}])
 
         with self.assertRaises(ValueError):
-            qa([{"question": Q, "context": C}, {"question": Q, "context": None}])
+            qa([{
+                "question": Q,
+                "context": C
+            }, {
+                "question": Q,
+                "context": None
+            }])
         with self.assertRaises(ValueError):
             qa([{"question": Q, "context": C}, {"question": Q, "context": ""}])
 

@@ -16,7 +16,6 @@
 # limitations under the License.
 """ Finetuning the library models for multiple choice (Bert, Roberta, XLNet)."""
 
-
 import logging
 import os
 from dataclasses import dataclass, field
@@ -37,11 +36,9 @@ from transformers import (
 from transformers.utils import logging as hf_logging
 from utils_multiple_choice import Split, TFMultipleChoiceDataset, processors
 
-
 hf_logging.set_verbosity_info()
 hf_logging.enable_default_handler()
 hf_logging.enable_explicit_format()
-
 
 logger = logging.getLogger(__name__)
 
@@ -57,17 +54,30 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        })
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
 
 
@@ -77,17 +87,24 @@ class DataTrainingArguments:
     Arguments pertaining to what data we are going to input our model for training and eval.
     """
 
-    task_name: str = field(metadata={"help": "The name of the task to train on: " + ", ".join(processors.keys())})
-    data_dir: str = field(metadata={"help": "Should contain the data files for the task."})
+    task_name: str = field(
+        metadata={
+            "help":
+            "The name of the task to train on: " + ", ".join(processors.keys())
+        })
+    data_dir: str = field(
+        metadata={"help": "Should contain the data files for the task."})
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
 
 
@@ -96,15 +113,13 @@ def main():
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TFTrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, DataTrainingArguments, TFTrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
+    if (os.path.exists(training_args.output_dir)
+            and os.listdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
@@ -139,13 +154,15 @@ def main():
     # The .from_pretrained methods guarantee that only one local process can concurrently
     # download model & vocab.
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         num_labels=num_labels,
         finetuning_task=data_args.task_name,
         cache_dir=model_args.cache_dir,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
     )
     with training_args.strategy.scope():
@@ -156,30 +173,22 @@ def main():
             cache_dir=model_args.cache_dir,
         )
     # Get datasets
-    train_dataset = (
-        TFMultipleChoiceDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-            mode=Split.train,
-        )
-        if training_args.do_train
-        else None
-    )
-    eval_dataset = (
-        TFMultipleChoiceDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-            mode=Split.dev,
-        )
-        if training_args.do_eval
-        else None
-    )
+    train_dataset = (TFMultipleChoiceDataset(
+        data_dir=data_args.data_dir,
+        tokenizer=tokenizer,
+        task=data_args.task_name,
+        max_seq_length=data_args.max_seq_length,
+        overwrite_cache=data_args.overwrite_cache,
+        mode=Split.train,
+    ) if training_args.do_train else None)
+    eval_dataset = (TFMultipleChoiceDataset(
+        data_dir=data_args.data_dir,
+        tokenizer=tokenizer,
+        task=data_args.task_name,
+        max_seq_length=data_args.max_seq_length,
+        overwrite_cache=data_args.overwrite_cache,
+        mode=Split.dev,
+    ) if training_args.do_eval else None)
 
     def compute_metrics(p: EvalPrediction) -> Dict:
         preds = np.argmax(p.predictions, axis=1)
@@ -206,7 +215,8 @@ def main():
 
         result = trainer.evaluate()
 
-        output_eval_file = os.path.join(training_args.output_dir, "eval_results.txt")
+        output_eval_file = os.path.join(training_args.output_dir,
+                                        "eval_results.txt")
         with open(output_eval_file, "w") as writer:
             logger.info("***** Eval results *****")
             for key, value in result.items():

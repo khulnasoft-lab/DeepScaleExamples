@@ -18,12 +18,11 @@ import logging
 
 from transformers import PretrainedConfig
 
-
 logger = logging.getLogger(__name__)
 
-
 BERTABS_FINETUNED_CONFIG_MAP = {
-    "bertabs-finetuned-cnndm": "https://huggingface.co/remi/bertabs-finetuned-cnndm-extractive-abstractive-summarization/resolve/main/config.json",
+    "bertabs-finetuned-cnndm":
+    "https://huggingface.co/remi/bertabs-finetuned-cnndm-extractive-abstractive-summarization/resolve/main/config.json",
 }
 
 

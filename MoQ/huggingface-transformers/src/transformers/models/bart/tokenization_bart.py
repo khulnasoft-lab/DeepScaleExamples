@@ -16,9 +16,7 @@
 from ...utils import logging
 from ..roberta.tokenization_roberta import RobertaTokenizer
 
-
 logger = logging.get_logger(__name__)
-
 
 # vocab and merges same as roberta
 vocab_url = "https://huggingface.co/roberta-large/resolve/main/vocab.json"
@@ -42,9 +40,12 @@ class BartTokenizer(RobertaTokenizer):
     :class:`~transformers.RobertaTokenizer` for usage examples and documentation concerning the initialization
     parameters and other methods.
     """
+
     # merges and vocab same as Roberta
     max_model_input_sizes = {m: 1024 for m in _all_bart_models}
     pretrained_vocab_files_map = {
-        "vocab_file": {m: vocab_url for m in _all_bart_models},
-        "merges_file": {m: merges_url for m in _all_bart_models},
+        "vocab_file": {m: vocab_url
+                       for m in _all_bart_models},
+        "merges_file": {m: merges_url
+                        for m in _all_bart_models},
     }

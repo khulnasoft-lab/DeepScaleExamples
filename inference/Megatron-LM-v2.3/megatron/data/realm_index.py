@@ -32,11 +32,11 @@ class OpenRetreivalDataStore(object):
             self.load_from_file()
 
         block_data_name = os.path.splitext(self.embedding_path)[0]
-        self.temp_dir_name = block_data_name + '_tmp'
+        self.temp_dir_name = block_data_name + "_tmp"
 
     def state(self):
         return {
-            'embed_data': self.embed_data,
+            "embed_data": self.embed_data,
         }
 
     def clear(self):
@@ -52,11 +52,11 @@ class OpenRetreivalDataStore(object):
 
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print("\n> Unpickling BlockData", flush=True)
-        state_dict = pickle.load(open(self.embedding_path, 'rb'))
+        state_dict = pickle.load(open(self.embedding_path, "rb"))
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print(">> Finished unpickling BlockData\n", flush=True)
 
-        self.embed_data = state_dict['embed_data']
+        self.embed_data = state_dict["embed_data"]
 
     def add_block_data(self, row_id, block_embeds, allow_overwrite=False):
         """
@@ -79,12 +79,12 @@ class OpenRetreivalDataStore(object):
             os.makedirs(self.temp_dir_name, exist_ok=True)
 
         # save the data for each shard
-        with open('{}/{}.pkl'.format(self.temp_dir_name, self.rank), 'wb') \
-            as writer:
+        with open("{}/{}.pkl".format(self.temp_dir_name, self.rank),
+                  "wb") as writer:
             pickle.dump(self.state(), writer)
 
     def merge_shards_and_save(self):
-        #Combine all the shards made using save_shard
+        # Combine all the shards made using save_shard
         shard_names = os.listdir(self.temp_dir_name)
         seen_own_shard = False
 
@@ -94,25 +94,28 @@ class OpenRetreivalDataStore(object):
                 seen_own_shard = True
                 continue
 
-            with open('{}/{}'.format(self.temp_dir_name, fname), 'rb') as f:
+            with open("{}/{}".format(self.temp_dir_name, fname), "rb") as f:
                 data = pickle.load(f)
                 old_size = len(self.embed_data)
-                shard_size = len(data['embed_data'])
+                shard_size = len(data["embed_data"])
 
                 # add the shard's data and check to make sure there
                 # is no overlap
-                self.embed_data.update(data['embed_data'])
+                self.embed_data.update(data["embed_data"])
                 assert len(self.embed_data) == old_size + shard_size
 
         assert seen_own_shard
 
         # save the consolidated shards and remove temporary directory
-        with open(self.embedding_path, 'wb') as final_file:
+        with open(self.embedding_path, "wb") as final_file:
             pickle.dump(self.state(), final_file)
         shutil.rmtree(self.temp_dir_name, ignore_errors=True)
 
-        print("Finished merging {} shards for a total of {} embeds".format(
-            len(shard_names), len(self.embed_data)), flush=True)
+        print(
+            "Finished merging {} shards for a total of {} embeds".format(
+                len(shard_names), len(self.embed_data)),
+            flush=True,
+        )
 
 
 class FaissMIPSIndex(object):
@@ -135,7 +138,8 @@ class FaissMIPSIndex(object):
         try:
             import faiss
         except ImportError:
-            raise Exception("Error: Please install faiss to use FaissMIPSIndex")
+            raise Exception(
+                "Error: Please install faiss to use FaissMIPSIndex")
 
         if mpu.is_unitialized() or mpu.get_data_parallel_rank() == 0:
             print("\n> Building index", flush=True)
@@ -215,10 +219,11 @@ class FaissMIPSIndex(object):
 
         if reconstruct:
             # get the vectors themselves
-            top_k_block_embeds = self.mips_index.search_and_reconstruct(\
+            top_k_block_embeds = self.mips_index.search_and_reconstruct(
                 query_embeds, top_k)
             return top_k_block_embeds
         else:
             # get distances and indices of closest vectors
-            distances, block_indices = self.mips_index.search(query_embeds, top_k)
+            distances, block_indices = self.mips_index.search(
+                query_embeds, top_k)
             return distances, block_indices

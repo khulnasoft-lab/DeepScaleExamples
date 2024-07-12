@@ -14,6 +14,7 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def set_data(param, array):
     try:
         assert param.shape == array.shape
@@ -22,9 +23,9 @@ def set_data(param, array):
         raise
     param.data = torch.from_numpy(array)
 
+
 def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
-    """ Load tf checkpoints in DeepScale model.
-    """
+    """Load tf checkpoints in DeepScale model."""
     try:
         import re
         import numpy as np
@@ -52,10 +53,13 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
         name = name_str.split("/")
         # adam_v and adam_m are variables used in AdamWeightDecayOptimizer to calculated m and v
         # which are not required for using pretrained model
-        if any(
-            n in ["adam_v", "adam_m", "AdamWeightDecayOptimizer", "AdamWeightDecayOptimizer_1", "global_step"]
-            for n in name
-        ):
+        if any(n in [
+                "adam_v",
+                "adam_m",
+                "AdamWeightDecayOptimizer",
+                "AdamWeightDecayOptimizer_1",
+                "global_step",
+        ] for n in name):
             logger.info("Skipping {}".format("/".join(name)))
             continue
         pointer = model
@@ -76,11 +80,14 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
             elif scope_names[0] == "squad":
                 pointer = getattr(pointer, "classifier")
             # Special in deepscale.
-            elif name_str.find("bert/pooler/dense") >= 0 and scope_names[0] == "dense":
+            elif name_str.find(
+                    "bert/pooler/dense") >= 0 and scope_names[0] == "dense":
                 pointer = getattr(pointer, "dense_act")
-            elif name_str.find("bert/embeddings/LayerNorm/gamma") >= 0 and scope_names[0] == "gamma":
+            elif (name_str.find("bert/embeddings/LayerNorm/gamma") >= 0
+                  and scope_names[0] == "gamma"):
                 pointer = getattr(pointer, "weight")
-            elif name_str.find("bert/embeddings/LayerNorm/beta") >= 0 and scope_names[0] == "beta":
+            elif (name_str.find("bert/embeddings/LayerNorm/beta") >= 0
+                  and scope_names[0] == "beta"):
                 pointer = getattr(pointer, "bias")
             else:
                 try:
@@ -96,7 +103,7 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
                 pointer = pointer[num]
 
                 # For transofrmer kernel layers.
-                if scope_names[0] == 'layer':
+                if scope_names[0] == "layer":
                     if name_str.find("attention/self/query/kernel") > 0:
                         key = "qw"
                     elif name_str.find("attention/self/query/bias") > 0:
@@ -121,16 +128,22 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
                         pointer = getattr(pointer, "inter_w")
                     elif name_str.find("intermediate/dense/bias") > 0:
                         pointer = getattr(pointer, "inter_b")
-                    elif name_str.find("output/dense/kernel") > 0 and name_str.find("attention") < 0:
+                    elif (name_str.find("output/dense/kernel") > 0
+                          and name_str.find("attention") < 0):
                         pointer = getattr(pointer, "output_w")
-                    elif name_str.find("output/dense/bias") > 0 and name_str.find("attention") < 0:
+                    elif (name_str.find("output/dense/bias") > 0
+                          and name_str.find("attention") < 0):
                         pointer = getattr(pointer, "output_b")
-                    elif name_str.find("output/LayerNorm/gamma") > 0 and name_str.find("attention") < 0:
+                    elif (name_str.find("output/LayerNorm/gamma") > 0
+                          and name_str.find("attention") < 0):
                         pointer = getattr(pointer, "norm_w")
-                    elif name_str.find("output/LayerNorm/beta") > 0 and name_str.find("attention") < 0:
+                    elif (name_str.find("output/LayerNorm/beta") > 0
+                          and name_str.find("attention") < 0):
                         pointer = getattr(pointer, "norm_b")
                     else:
-                        raise ValueError(f"unexpect scope name {name_str} in transformer layer.")
+                        raise ValueError(
+                            f"unexpect scope name {name_str} in transformer layer."
+                        )
                     break
 
         if skipping:
@@ -161,7 +174,8 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
             continue
 
         # DeepScale BERT model has voc_size 8 aligned.
-        if voc_size_diff > 0 and name_str.find("embeddings/word_embeddings") >= 0:
+        if voc_size_diff > 0 and name_str.find(
+                "embeddings/word_embeddings") >= 0:
             z = np.zeros((voc_size_diff, array.shape[1]), dtype=array.dtype)
             array = np.concatenate((array, z), axis=0)
 
@@ -170,9 +184,9 @@ def load_tf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
 
     return model
 
+
 def load_hf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
-    """ Load huggingface checkpoints and convert to a deepscale model.
-    """
+    """Load huggingface checkpoints and convert to a deepscale model."""
     hf_path = os.path.abspath(ckpt_path)
     logger.info("Converting Huggingface checkpoint from {}".format(hf_path))
     # Load weights from Huggingface model
@@ -181,7 +195,8 @@ def load_hf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
     qkv = {}
     for name_str in ckpt.keys():
         array = ckpt[name_str].numpy()
-        logger.info("Loading Huggingface weight {} with shape {}".format(name_str, array.shape))
+        logger.info("Loading Huggingface weight {} with shape {}".format(
+            name_str, array.shape))
         name = name_str.split(".")
         pointer = model
         key = None
@@ -235,16 +250,22 @@ def load_hf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
                     pointer = getattr(pointer, "inter_w")
                 elif name_str.find("intermediate.dense.bias") > 0:
                     pointer = getattr(pointer, "inter_b")
-                elif name_str.find("output.dense.weight") > 0 and name_str.find("attention") < 0:
+                elif (name_str.find("output.dense.weight") > 0
+                      and name_str.find("attention") < 0):
                     pointer = getattr(pointer, "output_w")
-                elif name_str.find("output.dense.bias") > 0 and name_str.find("attention") < 0:
+                elif (name_str.find("output.dense.bias") > 0
+                      and name_str.find("attention") < 0):
                     pointer = getattr(pointer, "output_b")
-                elif name_str.find("output.LayerNorm.weight") > 0 and name_str.find("attention") < 0:
+                elif (name_str.find("output.LayerNorm.weight") > 0
+                      and name_str.find("attention") < 0):
                     pointer = getattr(pointer, "norm_w")
-                elif name_str.find("output.LayerNorm.bias") > 0 and name_str.find("attention") < 0:
+                elif (name_str.find("output.LayerNorm.bias") > 0
+                      and name_str.find("attention") < 0):
                     pointer = getattr(pointer, "norm_b")
                 else:
-                    raise ValueError(f"unexpect scope name {name_str} in transformer layer.")
+                    raise ValueError(
+                        f"unexpect scope name {name_str} in transformer layer."
+                    )
                 break
 
         if skipping:
@@ -270,7 +291,8 @@ def load_hf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
             continue
 
         # DeepScale BERT model has voc_size 8 aligned.
-        if voc_size_diff > 0 and name_str.find("embeddings.word_embeddings") >= 0:
+        if voc_size_diff > 0 and name_str.find(
+                "embeddings.word_embeddings") >= 0:
             z = np.zeros((voc_size_diff, array.shape[1]), dtype=array.dtype)
             array = np.concatenate((array, z), axis=0)
 
@@ -279,9 +301,9 @@ def load_hf_weights_in_bert_kernel(model, ckpt_path, voc_size_diff):
 
     return model
 
+
 def load_hf_weights_in_bert_torch(model, ckpt_path, voc_size_diff):
-    """ Load huggingface checkpoints and convert to a deepscale model.
-    """
+    """Load huggingface checkpoints and convert to a deepscale model."""
     hf_path = os.path.abspath(ckpt_path)
     logger.info("Converting Huggingface checkpoint from {}".format(hf_path))
     # Load weights from Huggingface model
@@ -290,7 +312,8 @@ def load_hf_weights_in_bert_torch(model, ckpt_path, voc_size_diff):
     qkv = {}
     for name_str in ckpt.keys():
         array = ckpt[name_str].numpy()
-        logger.info("Loading Huggingface weight {} with shape {}".format(name_str, array.shape))
+        logger.info("Loading Huggingface weight {} with shape {}".format(
+            name_str, array.shape))
         name = name_str.split(".")
         pointer = model
         key = None
@@ -314,7 +337,8 @@ def load_hf_weights_in_bert_torch(model, ckpt_path, voc_size_diff):
             continue
 
         # DeepScale BERT model has voc_size 8 aligned.
-        if voc_size_diff > 0 and name_str.find("embeddings.word_embeddings") >= 0:
+        if voc_size_diff > 0 and name_str.find(
+                "embeddings.word_embeddings") >= 0:
             z = np.zeros((voc_size_diff, array.shape[1]), dtype=array.dtype)
             array = np.concatenate((array, z), axis=0)
 
@@ -323,7 +347,9 @@ def load_hf_weights_in_bert_torch(model, ckpt_path, voc_size_diff):
 
     return model
 
-def convert_ckpt_to_deepscale(model, ckpt_type, ckpt_path, vocab_diff, kernel_enabled):
+
+def convert_ckpt_to_deepscale(model, ckpt_type, ckpt_path, vocab_diff,
+                              kernel_enabled):
 
     # Load weights from checkpoint
     if ckpt_type == "HF":
@@ -335,6 +361,8 @@ def convert_ckpt_to_deepscale(model, ckpt_type, ckpt_path, vocab_diff, kernel_en
         if kernel_enabled:
             load_tf_weights_in_bert_kernel(model, ckpt_path, vocab_diff)
         else:
-            raise ValueError("--deepscale_transformer_kernel is required for loading TF checkpoint.")
+            raise ValueError(
+                "--deepscale_transformer_kernel is required for loading TF checkpoint."
+            )
     else:
         raise ValueError(f"Invalid ckpt_type.")

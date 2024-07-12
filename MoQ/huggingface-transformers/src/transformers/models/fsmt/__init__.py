@@ -20,22 +20,28 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_torch_available
 
-
 _import_structure = {
     "configuration_fsmt": ["FSMT_PRETRAINED_CONFIG_ARCHIVE_MAP", "FSMTConfig"],
     "tokenization_fsmt": ["FSMTTokenizer"],
 }
 
 if is_torch_available():
-    _import_structure["modeling_fsmt"] = ["FSMTForConditionalGeneration", "FSMTModel", "PretrainedFSMTModel"]
-
+    _import_structure["modeling_fsmt"] = [
+        "FSMTForConditionalGeneration",
+        "FSMTModel",
+        "PretrainedFSMTModel",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_fsmt import FSMT_PRETRAINED_CONFIG_ARCHIVE_MAP, FSMTConfig
     from .tokenization_fsmt import FSMTTokenizer
 
     if is_torch_available():
-        from .modeling_fsmt import FSMTForConditionalGeneration, FSMTModel, PretrainedFSMTModel
+        from .modeling_fsmt import (
+            FSMTForConditionalGeneration,
+            FSMTModel,
+            PretrainedFSMTModel,
+        )
 
 else:
     import importlib

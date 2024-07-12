@@ -5,13 +5,11 @@ from ..file_utils import add_end_docstrings, is_tf_available, is_torch_available
 from ..utils import logging
 from .base import PIPELINE_INIT_ARGS, Pipeline
 
-
 if is_tf_available():
     import tensorflow as tf
 
 if is_torch_available():
     import torch
-
 
 logger = logging.get_logger(__name__)
 
@@ -54,9 +52,12 @@ class Conversation:
 
         conversation.add_user_input("Is it good?")
     """
-
     def __init__(
-        self, text: str = None, conversation_id: uuid.UUID = None, past_user_inputs=None, generated_responses=None
+        self,
+        text: str = None,
+        conversation_id: uuid.UUID = None,
+        past_user_inputs=None,
+        generated_responses=None,
     ):
         if not conversation_id:
             conversation_id = uuid.uuid4()
@@ -75,11 +76,9 @@ class Conversation:
             return False
         if self.uuid == other.uuid:
             return True
-        return (
-            self.new_user_input == other.new_user_input
-            and self.past_user_inputs == other.past_user_inputs
-            and self.generated_responses == other.generated_responses
-        )
+        return (self.new_user_input == other.new_user_input
+                and self.past_user_inputs == other.past_user_inputs
+                and self.generated_responses == other.generated_responses)
 
     def add_user_input(self, text: str, overwrite: bool = False):
         """
@@ -94,16 +93,14 @@ class Conversation:
         if self.new_user_input:
             if overwrite:
                 logger.warning(
-                    'User input added while unprocessed input was existing: "{}" was overwritten with: "{}".'.format(
-                        self.new_user_input, text
-                    )
-                )
+                    'User input added while unprocessed input was existing: "{}" was overwritten with: "{}".'
+                    .format(self.new_user_input, text))
                 self.new_user_input = text
             else:
                 logger.warning(
                     'User input added while unprocessed input was existing: "{}" new input ignored: "{}". '
-                    "Set `overwrite` to True to overwrite unprocessed user input".format(self.new_user_input, text)
-                )
+                    "Set `overwrite` to True to overwrite unprocessed user input"
+                    .format(self.new_user_input, text))
         else:
             self.new_user_input = text
 
@@ -132,7 +129,8 @@ class Conversation:
         Retuns: Iterator of (is_user, text_chunk) in chronological order of the conversation. ``is_user`` is a
         :obj:`bool`, ``text_chunks`` is a :obj:`str`.
         """
-        for user_input, generated_response in zip(self.past_user_inputs, self.generated_responses):
+        for user_input, generated_response in zip(self.past_user_inputs,
+                                                  self.generated_responses):
             yield True, user_input
             yield False, generated_response
         if self.new_user_input:
@@ -188,23 +186,22 @@ class ConversationalPipeline(Pipeline):
 
         conversational_pipeline([conversation_1, conversation_2])
     """
-
     def __init__(self, min_length_for_response=32, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         # We need at least an eos_token
-        assert self.tokenizer.eos_token_id is not None, "ConversationalPipeline tokenizer should have an EOS token set"
+        assert (
+            self.tokenizer.eos_token_id is not None
+        ), "ConversationalPipeline tokenizer should have an EOS token set"
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         self.min_length_for_response = min_length_for_response
 
-    def __call__(
-        self,
-        conversations: Union[Conversation, List[Conversation]],
-        clean_up_tokenization_spaces=True,
-        **generate_kwargs
-    ):
+    def __call__(self,
+                 conversations: Union[Conversation, List[Conversation]],
+                 clean_up_tokenization_spaces=True,
+                 **generate_kwargs):
         r"""
         Generate responses for the conversation(s) given as inputs.
 
@@ -233,15 +230,16 @@ class ConversationalPipeline(Pipeline):
                 if conversation.new_user_input is None:
                     raise ValueError(
                         "Conversation with UUID {} does not contain new user input to process. "
-                        "Add user inputs with the conversation's `add_user_input` method".format(
-                            type(conversation.uuid)
-                        )
-                    )
+                        "Add user inputs with the conversation's `add_user_input` method"
+                        .format(type(conversation.uuid)))
             assert (
-                self.tokenizer.pad_token_id is not None or self.tokenizer.eos_token_id is not None
+                self.tokenizer.pad_token_id is not None
+                or self.tokenizer.eos_token_id is not None
             ), "Please make sure that the tokenizer has a pad_token_id or eos_token_id when using a batch input"
         else:
-            raise ValueError("ConversationalPipeline expects a Conversation or list of Conversations as an input")
+            raise ValueError(
+                "ConversationalPipeline expects a Conversation or list of Conversations as an input"
+            )
 
         with self.device_placement():
 
@@ -262,9 +260,11 @@ class ConversationalPipeline(Pipeline):
 
             if self.model.config.is_encoder_decoder:
                 if self.framework == "pt":
-                    history = torch.cat((inputs["input_ids"], generated_responses[:, 1:]), 1)
+                    history = torch.cat(
+                        (inputs["input_ids"], generated_responses[:, 1:]), 1)
                 elif self.framework == "tf":
-                    history = tf.concat([inputs["input_ids"], generated_responses[:, 1:]], 1)
+                    history = tf.concat(
+                        [inputs["input_ids"], generated_responses[:, 1:]], 1)
             else:
                 history = generated_responses
 
@@ -279,11 +279,12 @@ class ConversationalPipeline(Pipeline):
                 conversation.mark_processed()
                 conversation.generated_responses.append(
                     self.tokenizer.decode(
-                        generated_responses[conversation_index][start_position:],
+                        generated_responses[conversation_index]
+                        [start_position:],
                         skip_special_tokens=True,
-                        clean_up_tokenization_spaces=clean_up_tokenization_spaces,
-                    )
-                )
+                        clean_up_tokenization_spaces=
+                        clean_up_tokenization_spaces,
+                    ))
                 output.append(conversation)
             if len(output) == 1:
                 return output[0]
@@ -323,23 +324,36 @@ class ConversationalPipeline(Pipeline):
             outputs.append(sequence_tokens)
         return outputs
 
-    def _legacy_parse_and_tokenize(self, conversation: List[Conversation]) -> List[int]:
+    def _legacy_parse_and_tokenize(
+            self, conversation: List[Conversation]) -> List[int]:
         eos_token_id = self.tokenizer.eos_token_id
         input_ids = []
         for is_user, text in conversation.iter_texts():
-            input_ids.extend(self.tokenizer.encode(text, add_special_tokens=False) + [eos_token_id])
+            input_ids.extend(
+                self.tokenizer.encode(text, add_special_tokens=False) +
+                [eos_token_id])
 
         if len(input_ids) > self.tokenizer.model_max_length:
-            input_ids = input_ids[-self.model_max_length :]
+            input_ids = input_ids[-self.model_max_length:]
         return input_ids
 
-    def _parse_and_tokenize(self, conversations: List[Conversation]) -> Dict[str, Any]:
+    def _parse_and_tokenize(
+            self, conversations: List[Conversation]) -> Dict[str, Any]:
         if hasattr(self.tokenizer, "_build_conversation_input_ids"):
-            input_ids = [self.tokenizer._build_conversation_input_ids(conversation) for conversation in conversations]
+            input_ids = [
+                self.tokenizer._build_conversation_input_ids(conversation)
+                for conversation in conversations
+            ]
         else:
             # If the tokenizer cannot handle conversations, we default to only the old version
-            input_ids = [self._legacy_parse_and_tokenize(conversation) for conversation in conversations]
+            input_ids = [
+                self._legacy_parse_and_tokenize(conversation)
+                for conversation in conversations
+            ]
         inputs = self.tokenizer.pad(
-            {"input_ids": input_ids}, padding="longest", return_attention_mask=True, return_tensors="pt"
+            {"input_ids": input_ids},
+            padding="longest",
+            return_attention_mask=True,
+            return_tensors="pt",
         )
         return inputs

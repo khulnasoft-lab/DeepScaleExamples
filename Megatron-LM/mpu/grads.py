@@ -13,10 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Parts of the code here are adapted from PyTorch
 # repo: https://github.com/pytorch/pytorch
-
 
 import torch
 from torch._six import inf
@@ -51,22 +49,26 @@ def clip_grad_norm(parameters, max_norm, norm_type=2):
         total_norm = max(p.grad.data.abs().max() for p in parameters)
         total_norm_cuda = torch.cuda.FloatTensor([float(total_norm)])
         # Take max across all GPUs.
-        torch.distributed.all_reduce(total_norm_cuda,
-                                     op=torch.distributed.ReduceOp.MAX,
-                                     group=get_model_parallel_group())
+        torch.distributed.all_reduce(
+            total_norm_cuda,
+            op=torch.distributed.ReduceOp.MAX,
+            group=get_model_parallel_group(),
+        )
         total_norm = total_norm_cuda[0].item()
     else:
         total_norm = 0
         for p in parameters:
             if p.model_parallel or (get_model_parallel_rank() == 0):
                 param_norm = p.grad.data.norm(norm_type)
-                total_norm += param_norm.item() ** norm_type
+                total_norm += param_norm.item()**norm_type
         # Sum across all model parallel GPUs.
         total_norm_cuda = torch.cuda.FloatTensor([float(total_norm)])
-        torch.distributed.all_reduce(total_norm_cuda,
-                                     op=torch.distributed.ReduceOp.SUM,
-                                     group=get_model_parallel_group())
-        total_norm = total_norm_cuda[0].item() ** (1. / norm_type)
+        torch.distributed.all_reduce(
+            total_norm_cuda,
+            op=torch.distributed.ReduceOp.SUM,
+            group=get_model_parallel_group(),
+        )
+        total_norm = total_norm_cuda[0].item()**(1.0 / norm_type)
     clip_coef = max_norm / (total_norm + 1e-6)
     if clip_coef < 1:
         for p in parameters:

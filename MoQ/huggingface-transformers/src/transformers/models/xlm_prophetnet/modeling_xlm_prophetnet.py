@@ -24,7 +24,6 @@ from ..prophetnet.modeling_prophetnet import (
 )
 from .configuration_xlm_prophetnet import XLMProphetNetConfig
 
-
 logger = logging.get_logger(__name__)
 
 _TOKENIZER_FOR_DOC = "XLMProphetNetTokenizer"
@@ -102,7 +101,8 @@ class XLMProphetNetModel(ProphetNetModel):
     config_class = XLMProphetNetConfig
 
 
-class XLMProphetNetForConditionalGeneration(ProphetNetForConditionalGeneration):
+class XLMProphetNetForConditionalGeneration(ProphetNetForConditionalGeneration
+                                            ):
     r"""
     This class overrides :class:`~transformers.ProphetNetForConditionalGeneration`. Please check the superclass for the
     appropriate documentation alongside usage examples.

@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Finetune utilities."""
 
 import torch
@@ -35,10 +34,10 @@ def process_batch(batch):
     """Process batch and produce inputs for the model."""
     args = get_args()
 
-    tokens = batch['text'].long().cuda().contiguous()
-    types = batch['types'].long().cuda().contiguous()
-    labels = batch['label'].long().cuda().contiguous()
-    attention_mask = batch['padding_mask'].float().cuda().contiguous()
+    tokens = batch["text"].long().cuda().contiguous()
+    types = batch["types"].long().cuda().contiguous()
+    labels = batch["label"].long().cuda().contiguous()
+    attention_mask = batch["padding_mask"].float().cuda().contiguous()
     if args.fp16:
         attention_mask = attention_mask.half()
 
@@ -50,13 +49,13 @@ def _cross_entropy_forward_step(batch, model):
     timers = get_timers()
 
     # Get the batch.
-    timers('batch generator').start()
+    timers("batch generator").start()
     try:
         batch_ = next(batch)
     except BaseException:
         batch_ = batch
     tokens, types, labels, attention_mask = process_batch(batch_)
-    timers('batch generator').stop()
+    timers("batch generator").stop()
 
     # Forward model.
     logits = model(tokens, attention_mask, types)
@@ -68,7 +67,7 @@ def _cross_entropy_forward_step(batch, model):
     # Reduce loss for logging.
     reduced_loss = reduce_losses([loss])
 
-    return loss, {'lm loss': reduced_loss[0]}
+    return loss, {"lm loss": reduced_loss[0]}
 
 
 def build_data_loader(dataset, batch_size, num_workers, drop_last):
@@ -81,13 +80,15 @@ def build_data_loader(dataset, batch_size, num_workers, drop_last):
         dataset, num_replicas=world_size, rank=rank)
 
     # Data loader. Note that batch size is the per GPU batch size.
-    data_loader = torch.utils.data.DataLoader(dataset,
-                                              batch_size=batch_size,
-                                              sampler=sampler,
-                                              shuffle=False,
-                                              num_workers=num_workers,
-                                              drop_last=drop_last,
-                                              pin_memory=True)
+    data_loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=batch_size,
+        sampler=sampler,
+        shuffle=False,
+        num_workers=num_workers,
+        drop_last=drop_last,
+        pin_memory=True,
+    )
 
     return data_loader
 
@@ -107,7 +108,7 @@ def _build_train_valid_dataloaders(train_dataset, valid_dataset):
     """Traing and validation dataloaders."""
     args = get_args()
 
-    print_rank_0('building train and validation dataloaders ...')
+    print_rank_0("building train and validation dataloaders ...")
     # Training dataset.
     train_dataloader = build_data_loader(train_dataset, args.batch_size,
                                          args.num_workers, not args.keep_last)
@@ -123,8 +124,15 @@ def _build_train_valid_dataloaders(train_dataset, valid_dataset):
     return train_dataloader, valid_dataloader
 
 
-def _train(model, optimizer, lr_scheduler, forward_step,
-           train_dataloader, valid_dataloader, end_of_epoch_callback):
+def _train(
+    model,
+    optimizer,
+    lr_scheduler,
+    forward_step,
+    train_dataloader,
+    valid_dataloader,
+    end_of_epoch_callback,
+):
     """Train the model."""
     args = get_args()
     timers = get_timers()
@@ -144,9 +152,9 @@ def _train(model, optimizer, lr_scheduler, forward_step,
     report_memory_flag = True
 
     # For each remaining epoch
-    timers('interval time').start()
+    timers("interval time").start()
     for epoch in range(start_epoch, args.epochs):
-        print_rank_0('working on epoch {} ...'.format(epoch + 1))
+        print_rank_0("working on epoch {} ...".format(epoch + 1))
 
         # Set the data loader epoch to shuffle the index iterator.
         train_dataloader.sampler.set_epoch(args.seed + epoch)
@@ -161,33 +169,36 @@ def _train(model, optimizer, lr_scheduler, forward_step,
             start_iteration = 0
 
             # Train for one step.
-            losses_dict, _ = train_step(forward_step, batch, model,
-                                        optimizer, lr_scheduler)
+            losses_dict, _ = train_step(forward_step, batch, model, optimizer,
+                                        lr_scheduler)
             iteration += 1
 
             # Logging.
-            report_memory_flag = training_log(losses_dict, losses_dict_sum,
-                                              optimizer.param_groups[0]['lr'],
-                                              iteration, optimizer.loss_scale,
-                                              report_memory_flag)
+            report_memory_flag = training_log(
+                losses_dict,
+                losses_dict_sum,
+                optimizer.param_groups[0]["lr"],
+                iteration,
+                optimizer.loss_scale,
+                report_memory_flag,
+            )
 
             # Autoresume
-            if args.adlr_autoresume and \
-               (iteration % args.adlr_autoresume_interval == 0):
-                check_adlr_autoresume_termination(iteration, model,
-                                                  optimizer, lr_scheduler)
+            if args.adlr_autoresume and (iteration %
+                                         args.adlr_autoresume_interval == 0):
+                check_adlr_autoresume_termination(iteration, model, optimizer,
+                                                  lr_scheduler)
 
             # Checkpointing
-            if args.save and args.save_interval and \
-               iteration % args.save_interval == 0:
+            if args.save and args.save_interval and iteration % args.save_interval == 0:
                 save_checkpoint(iteration, model, optimizer, lr_scheduler)
 
             # Evaluation
             if args.eval_interval and iteration % args.eval_interval == 0:
-                prefix = 'iteration {}'.format(iteration)
+                prefix = "iteration {}".format(iteration)
                 evaluate_and_print_results(prefix, forward_step,
-                                           valid_dataloader, model,
-                                           iteration, False)
+                                           valid_dataloader, model, iteration,
+                                           False)
 
         # Checkpointing at the end of each epoch.
         if args.save:
@@ -198,37 +209,40 @@ def _train(model, optimizer, lr_scheduler, forward_step,
             end_of_epoch_callback(model, epoch)
 
 
-def finetune(train_valid_datasets_provider, model_provider,
-             forward_step=_cross_entropy_forward_step,
-             end_of_epoch_callback_provider=None):
+def finetune(
+    train_valid_datasets_provider,
+    model_provider,
+    forward_step=_cross_entropy_forward_step,
+    end_of_epoch_callback_provider=None,
+):
     """Main finetune function used across all tasks."""
     args = get_args()
     timers = get_timers()
 
     # Train and validation data loaders.
-    timers('train/valid/test dataset/dataloder').start()
+    timers("train/valid/test dataset/dataloder").start()
     if args.epochs > 0:
         train_dataset, valid_dataset = train_valid_datasets_provider()
         train_dataloader, valid_dataloader = _build_train_valid_dataloaders(
             train_dataset, valid_dataset)
-    timers('train/valid/test dataset/dataloder').stop()
+    timers("train/valid/test dataset/dataloder").stop()
 
     # Build calback function.
-    timers('callback function').start()
+    timers("callback function").start()
     end_of_epoch_callback = None
     if end_of_epoch_callback_provider is not None:
         end_of_epoch_callback = end_of_epoch_callback_provider()
-    timers('callback function').stop()
+    timers("callback function").stop()
 
     # Build model, optimizer and learning rate scheduler.
-    timers('model and optimizer').start()
+    timers("model and optimizer").start()
     model, optimizer, lr_scheduler = setup_model_and_optimizer(model_provider)
-    timers('model and optimizer').stop()
+    timers("model and optimizer").stop()
 
     # If pretrained checkpoint is provided and we have not trained for
     # any iteration (i.e., iteration is zero), then load the pretrained
     # checkpoint.
-    timers('pretrained checkpoint').start()
+    timers("pretrained checkpoint").start()
     if args.iteration == 0 and args.pretrained_checkpoint is not None:
         original_load = args.load
         args.load = args.pretrained_checkpoint
@@ -238,22 +252,33 @@ def finetune(train_valid_datasets_provider, model_provider,
         # master parameters are also updated.
         if args.fp16:
             optimizer._model_params_to_master_params()
-    timers('pretrained checkpoint').stop()
+    timers("pretrained checkpoint").stop()
 
     # Print setup timing.
-    print_rank_0('done with setups ...')
-    timers.log(['train/valid/test dataset/dataloder', 'callback function',
-                'model and optimizer', 'pretrained checkpoint'])
-    print_rank_0('training ...')
+    print_rank_0("done with setups ...")
+    timers.log([
+        "train/valid/test dataset/dataloder",
+        "callback function",
+        "model and optimizer",
+        "pretrained checkpoint",
+    ])
+    print_rank_0("training ...")
 
     # Finetune the model.
     if args.epochs > 0:
-        _train(model, optimizer, lr_scheduler, forward_step,
-               train_dataloader, valid_dataloader, end_of_epoch_callback)
+        _train(
+            model,
+            optimizer,
+            lr_scheduler,
+            forward_step,
+            train_dataloader,
+            valid_dataloader,
+            end_of_epoch_callback,
+        )
     # Or just evaluate.
     else:
         if end_of_epoch_callback is not None:
-            print_rank_0('evaluation only mode, setting epoch to -1')
+            print_rank_0("evaluation only mode, setting epoch to -1")
             end_of_epoch_callback(model, epoch=-1, output_predictions=True)
 
-    print_rank_0('done :-)')
+    print_rank_0("done :-)")

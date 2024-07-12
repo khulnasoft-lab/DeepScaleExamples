@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # Most of the code here has been copied from:
 #   https://github.com/google-research/albert/blob/master/create_pretraining_data.py
 # with some modifications.
@@ -27,8 +26,8 @@ from megatron import get_args, print_rank_0
 from megatron.data.blendable_dataset import BlendableDataset
 from megatron.data.indexed_dataset import make_dataset as make_indexed_dataset
 
-DSET_TYPE_STD = 'standard_bert'
-DSET_TYPE_ICT = 'ict'
+DSET_TYPE_STD = "standard_bert"
+DSET_TYPE_ICT = "ict"
 
 DSET_TYPES = [DSET_TYPE_ICT, DSET_TYPE_STD]
 
@@ -40,11 +39,11 @@ def get_datasets_weights_and_num_samples(data_prefix,
     #   weight-1, data-prefix-1, weight-2, data-prefix-2, ..
     assert len(data_prefix) % 2 == 0
     num_datasets = len(data_prefix) // 2
-    weights = [0]*num_datasets
-    prefixes = [0]*num_datasets
+    weights = [0] * num_datasets
+    prefixes = [0] * num_datasets
     for i in range(num_datasets):
-        weights[i] = float(data_prefix[2*i])
-        prefixes[i] = (data_prefix[2*i+1]).strip()
+        weights[i] = float(data_prefix[2 * i])
+        prefixes[i] = (data_prefix[2 * i + 1]).strip()
     # Normalize weights
     weight_sum = 0.0
     for weight in weights:
@@ -57,10 +56,10 @@ def get_datasets_weights_and_num_samples(data_prefix,
     # samples left to feed to the network.
     datasets_train_valid_test_num_samples = []
     for weight in weights:
-        datasets_train_valid_test_num_samples.append(
-            [int(math.ceil(val * weight * 1.005))
-             for val in train_valid_test_num_samples])
-
+        datasets_train_valid_test_num_samples.append([
+            int(math.ceil(val * weight * 1.005))
+            for val in train_valid_test_num_samples
+        ])
 
     return prefixes, weights, datasets_train_valid_test_num_samples
 
@@ -70,11 +69,13 @@ def compile_helper():
     is invoked on a single process."""
     import os
     import subprocess
+
     path = os.path.abspath(os.path.dirname(__file__))
-    ret = subprocess.run(['make', '-C', path])
+    ret = subprocess.run(["make", "-C", path])
     if ret.returncode != 0:
         print("Making C++ dataset helpers module failed, exiting.")
         import sys
+
         sys.exit(1)
 
 
@@ -84,7 +85,7 @@ def get_a_and_b_segments(sample, np_rng):
     # Number of sentences in the sample.
     n_sentences = len(sample)
     # Make sure we always have two sentences.
-    assert n_sentences > 1, 'make sure each sample has at least two sentences.'
+    assert n_sentences > 1, "make sure each sample has at least two sentences."
 
     # First part:
     # `a_end` is how many sentences go into the `A`.
@@ -110,9 +111,10 @@ def get_a_and_b_segments(sample, np_rng):
     return tokens_a, tokens_b, is_next_random
 
 
-def truncate_segments(tokens_a, tokens_b, len_a, len_b, max_num_tokens, np_rng):
+def truncate_segments(tokens_a, tokens_b, len_a, len_b, max_num_tokens,
+                      np_rng):
     """Truncates a pair of sequences to a maximum sequence length."""
-    #print(len_a, len_b, max_num_tokens)
+    # print(len_a, len_b, max_num_tokens)
     assert len_a > 0
     if len_a + len_b <= max_num_tokens:
         return False
@@ -153,7 +155,7 @@ def create_tokens_and_tokentypes(tokens_a, tokens_b, cls_id, sep_id):
         # [SEP].
         tokens.append(sep_id)
         tokentypes.append(1)
-    
+
     return tokens, tokentypes
 
 
@@ -170,16 +172,21 @@ def is_start_piece(piece):
     return not piece.startswith("##")
 
 
-def create_masked_lm_predictions(tokens,
-                                 vocab_id_list, vocab_id_to_token_dict,
-                                 masked_lm_prob,
-                                 cls_id, sep_id, mask_id,
-                                 max_predictions_per_seq,
-                                 np_rng,
-                                 max_ngrams=3,
-                                 do_whole_word_mask=True,
-                                 favor_longer_ngram=False,
-                                 do_permutation=False):
+def create_masked_lm_predictions(
+    tokens,
+    vocab_id_list,
+    vocab_id_to_token_dict,
+    masked_lm_prob,
+    cls_id,
+    sep_id,
+    mask_id,
+    max_predictions_per_seq,
+    np_rng,
+    max_ngrams=3,
+    do_whole_word_mask=True,
+    favor_longer_ngram=False,
+    do_permutation=False,
+):
     """Creates the predictions for the masked LM objective.
     Note: Tokens here are vocab ids and not text tokens."""
 
@@ -189,7 +196,7 @@ def create_masked_lm_predictions(tokens,
     # on-the-fly whole word masking is possible.
     token_boundary = [0] * len(tokens)
 
-    for (i, token) in enumerate(tokens):
+    for i, token in enumerate(tokens):
         if token == cls_id or token == sep_id:
             token_boundary[i] = 1
             continue
@@ -199,8 +206,8 @@ def create_masked_lm_predictions(tokens,
         # Note that Whole Word Masking does *not* change the training code
         # at all -- we still predict each WordPiece independently, softmaxed
         # over the entire vocabulary.
-        if (do_whole_word_mask and len(cand_indexes) >= 1 and
-                not is_start_piece(vocab_id_to_token_dict[token])):
+        if (do_whole_word_mask and len(cand_indexes) >= 1
+                and not is_start_piece(vocab_id_to_token_dict[token])):
             cand_indexes[-1].append(i)
         else:
             cand_indexes.append([i])
@@ -213,8 +220,8 @@ def create_masked_lm_predictions(tokens,
     masked_lm_labels = []
 
     if masked_lm_prob == 0:
-        return (output_tokens, masked_lm_positions,
-                masked_lm_labels, token_boundary)
+        return (output_tokens, masked_lm_positions, masked_lm_labels,
+                token_boundary)
 
     num_to_predict = min(max_predictions_per_seq,
                          max(1, int(round(len(tokens) * masked_lm_prob))))
@@ -222,7 +229,7 @@ def create_masked_lm_predictions(tokens,
     # Note(mingdachen):
     # By default, we set the probilities to favor shorter ngram sequences.
     ngrams = np.arange(1, max_ngrams + 1, dtype=np.int64)
-    pvals = 1. / np.arange(1, max_ngrams + 1)
+    pvals = 1.0 / np.arange(1, max_ngrams + 1)
     pvals /= pvals.sum(keepdims=True)
 
     if favor_longer_ngram:
@@ -251,9 +258,11 @@ def create_masked_lm_predictions(tokens,
                 if index in covered_indexes:
                     continue
 
-        n = np_rng.choice(ngrams[:len(cand_index_set)],
-                          p=pvals[:len(cand_index_set)] /
-                          pvals[:len(cand_index_set)].sum(keepdims=True))
+        n = np_rng.choice(
+            ngrams[:len(cand_index_set)],
+            p=pvals[:len(cand_index_set)] /
+            pvals[:len(cand_index_set)].sum(keepdims=True),
+        )
         index_set = sum(cand_index_set[n - 1], [])
         n -= 1
         # Note(mingdachen):
@@ -288,11 +297,13 @@ def create_masked_lm_predictions(tokens,
                     masked_token = tokens[index]
                 # 10% of the time, replace with random word
                 else:
-                    masked_token = vocab_id_list[np_rng.randint(0, len(vocab_id_list))]
+                    masked_token = vocab_id_list[np_rng.randint(
+                        0, len(vocab_id_list))]
 
             output_tokens[index] = masked_token
 
-            masked_lms.append(MaskedLmInstance(index=index, label=tokens[index]))
+            masked_lms.append(
+                MaskedLmInstance(index=index, label=tokens[index]))
     assert len(masked_lms) <= num_to_predict
 
     np_rng.shuffle(ngram_indexes)
@@ -311,9 +322,11 @@ def create_masked_lm_predictions(tokens,
                     if index in covered_indexes or index in select_indexes:
                         continue
 
-            n = np.random.choice(ngrams[:len(cand_index_set)],
-                                 p=pvals[:len(cand_index_set)] /
-                                 pvals[:len(cand_index_set)].sum(keepdims=True))
+            n = np.random.choice(
+                ngrams[:len(cand_index_set)],
+                p=pvals[:len(cand_index_set)] /
+                pvals[:len(cand_index_set)].sum(keepdims=True),
+            )
             index_set = sum(cand_index_set[n - 1], [])
             n -= 1
 
@@ -344,7 +357,8 @@ def create_masked_lm_predictions(tokens,
 
         for src_i, tgt_i in zip(select_indexes, permute_indexes):
             output_tokens[src_i] = orig_token[tgt_i]
-            masked_lms.append(MaskedLmInstance(index=src_i, label=orig_token[src_i]))
+            masked_lms.append(
+                MaskedLmInstance(index=src_i, label=orig_token[src_i]))
 
     masked_lms = sorted(masked_lms, key=lambda x: x.index)
 
@@ -352,7 +366,8 @@ def create_masked_lm_predictions(tokens,
         masked_lm_positions.append(p.index)
         masked_lm_labels.append(p.label)
 
-    return (output_tokens, masked_lm_positions, masked_lm_labels, token_boundary)
+    return (output_tokens, masked_lm_positions, masked_lm_labels,
+            token_boundary)
 
 
 def pad_and_convert_to_numpy(tokens, tokentypes, masked_positions,
@@ -388,26 +403,38 @@ def pad_and_convert_to_numpy(tokens, tokentypes, masked_positions,
     return tokens_np, tokentypes_np, labels_np, padding_mask_np, loss_mask_np
 
 
-def build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
-                                    train_valid_test_num_samples,
-                                    max_seq_length, masked_lm_prob,
-                                    short_seq_prob, seed, skip_warmup,
-                                    binary_head,
-                                    dataset_type='standard_bert'):
+def build_train_valid_test_datasets(
+    data_prefix,
+    data_impl,
+    splits_string,
+    train_valid_test_num_samples,
+    max_seq_length,
+    masked_lm_prob,
+    short_seq_prob,
+    seed,
+    skip_warmup,
+    binary_head,
+    dataset_type="standard_bert",
+):
 
     if len(data_prefix) == 1:
-        return _build_train_valid_test_datasets(data_prefix[0],
-                                                data_impl, splits_string,
-                                                train_valid_test_num_samples,
-                                                max_seq_length, masked_lm_prob,
-                                                short_seq_prob, seed,
-                                                skip_warmup,
-                                                binary_head,
-                                                dataset_type=dataset_type)
+        return _build_train_valid_test_datasets(
+            data_prefix[0],
+            data_impl,
+            splits_string,
+            train_valid_test_num_samples,
+            max_seq_length,
+            masked_lm_prob,
+            short_seq_prob,
+            seed,
+            skip_warmup,
+            binary_head,
+            dataset_type=dataset_type,
+        )
     # Blending dataset.
     # Parse the values.
-    output = get_datasets_weights_and_num_samples(data_prefix,
-                                                  train_valid_test_num_samples)
+    output = get_datasets_weights_and_num_samples(
+        data_prefix, train_valid_test_num_samples)
     prefixes, weights, datasets_train_valid_test_num_samples = output
 
     # Build individual datasets.
@@ -416,10 +443,18 @@ def build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
     test_datasets = []
     for i in range(len(prefixes)):
         train_ds, valid_ds, test_ds = _build_train_valid_test_datasets(
-            prefixes[i], data_impl, splits_string,
+            prefixes[i],
+            data_impl,
+            splits_string,
             datasets_train_valid_test_num_samples[i],
-            max_seq_length, masked_lm_prob, short_seq_prob,
-            seed, skip_warmup, binary_head, dataset_type=dataset_type)
+            max_seq_length,
+            masked_lm_prob,
+            short_seq_prob,
+            seed,
+            skip_warmup,
+            binary_head,
+            dataset_type=dataset_type,
+        )
         if train_ds:
             train_datasets.append(train_ds)
         if valid_ds:
@@ -442,25 +477,29 @@ def build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
             blending_test_dataset)
 
 
-def _build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
-                                     train_valid_test_num_samples,
-                                     max_seq_length, masked_lm_prob,
-                                     short_seq_prob, seed, skip_warmup,
-                                     binary_head,
-                                     dataset_type='standard_bert'):
-    
+def _build_train_valid_test_datasets(
+    data_prefix,
+    data_impl,
+    splits_string,
+    train_valid_test_num_samples,
+    max_seq_length,
+    masked_lm_prob,
+    short_seq_prob,
+    seed,
+    skip_warmup,
+    binary_head,
+    dataset_type="standard_bert",
+):
+
     if dataset_type not in DSET_TYPES:
         raise ValueError("Invalid dataset_type: ", dataset_type)
 
     # Indexed dataset.
-    indexed_dataset = get_indexed_dataset_(data_prefix,
-                                           data_impl,
-                                           skip_warmup)
+    indexed_dataset = get_indexed_dataset_(data_prefix, data_impl, skip_warmup)
 
     if dataset_type == DSET_TYPE_ICT:
         args = get_args()
-        title_dataset = get_indexed_dataset_(args.titles_data_path,
-                                             data_impl,
+        title_dataset = get_indexed_dataset_(args.titles_data_path, data_impl,
                                              skip_warmup)
 
     # Get start and end indices of train/valid/train into doc-idx
@@ -470,25 +509,27 @@ def _build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
     splits = get_train_valid_test_split_(splits_string, total_num_of_documents)
 
     # Print stats about the splits.
-    print_rank_0(' > dataset split:')
+    print_rank_0(" > dataset split:")
 
     def print_split_stats(name, index):
-        print_rank_0('    {}:'.format(name))
-        print_rank_0('     document indices in [{}, {}) total of {} '
-                     'documents'.format(splits[index], splits[index + 1],
+        print_rank_0("    {}:".format(name))
+        print_rank_0("     document indices in [{}, {}) total of {} "
+                     "documents".format(splits[index], splits[index + 1],
                                         splits[index + 1] - splits[index]))
         start_index = indexed_dataset.doc_idx[splits[index]]
         end_index = indexed_dataset.doc_idx[splits[index + 1]]
-        print_rank_0('     sentence indices in [{}, {}) total of {} '
-                     'sentences'.format(start_index, end_index,
+        print_rank_0("     sentence indices in [{}, {}) total of {} "
+                     "sentences".format(start_index, end_index,
                                         end_index - start_index))
-    print_split_stats('train', 0)
-    print_split_stats('validation', 1)
-    print_split_stats('test', 2)
+
+    print_split_stats("train", 0)
+    print_split_stats("validation", 1)
+    print_split_stats("test", 2)
 
     def build_dataset(index, name):
         from megatron.data.bert_dataset import BertDataset
         from megatron.data.ict_dataset import ICTDataset
+
         dataset = None
         if splits[index + 1] > splits[index]:
             # Get the pointer to the original doc-idx so we can set it later.
@@ -507,7 +548,7 @@ def _build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
                 max_num_samples=train_valid_test_num_samples[index],
                 max_seq_length=max_seq_length,
                 seed=seed,
-                binary_head=binary_head
+                binary_head=binary_head,
             )
 
             if dataset_type == DSET_TYPE_ICT:
@@ -517,64 +558,60 @@ def _build_train_valid_test_datasets(data_prefix, data_impl, splits_string,
                     title_dataset=title_dataset,
                     query_in_block_prob=args.query_in_block_prob,
                     use_one_sent_docs=args.use_one_sent_docs,
-                    **kwargs
-                )
+                    **kwargs)
             else:
-                dataset = BertDataset(
-                    indexed_dataset=indexed_dataset,
-                    masked_lm_prob=masked_lm_prob,
-                    short_seq_prob=short_seq_prob,
-                    **kwargs
-                )
+                dataset = BertDataset(indexed_dataset=indexed_dataset,
+                                      masked_lm_prob=masked_lm_prob,
+                                      short_seq_prob=short_seq_prob,
+                                      **kwargs)
 
             # Set the original pointer so dataset remains the main dataset.
             indexed_dataset.set_doc_idx(doc_idx_ptr)
             # Checks.
             assert indexed_dataset.doc_idx[0] == 0
-            assert indexed_dataset.doc_idx.shape[0] == \
-                (total_num_of_documents + 1)
+            assert indexed_dataset.doc_idx.shape[0] == (
+                total_num_of_documents + 1)
         return dataset
 
-    train_dataset = build_dataset(0, 'train')
-    valid_dataset = build_dataset(1, 'valid')
-    test_dataset = build_dataset(2, 'test')
+    train_dataset = build_dataset(0, "train")
+    valid_dataset = build_dataset(1, "valid")
+    test_dataset = build_dataset(2, "test")
 
     return (train_dataset, valid_dataset, test_dataset)
 
 
 def get_indexed_dataset_(data_prefix, data_impl, skip_warmup):
 
-    print_rank_0(' > building dataset index ...')
+    print_rank_0(" > building dataset index ...")
 
     start_time = time.time()
-    indexed_dataset = make_indexed_dataset(data_prefix,
-                                           data_impl,
-                                           skip_warmup)
+    indexed_dataset = make_indexed_dataset(data_prefix, data_impl, skip_warmup)
     assert indexed_dataset.sizes.shape[0] == indexed_dataset.doc_idx[-1]
-    print_rank_0(' > finished creating indexed dataset in {:4f} '
-                 'seconds'.format(time.time() - start_time))
+    print_rank_0(" > finished creating indexed dataset in {:4f} "
+                 "seconds".format(time.time() - start_time))
 
-    print_rank_0(' > indexed dataset stats:')
-    print_rank_0('    number of documents: {}'.format(
-        indexed_dataset.doc_idx.shape[0] - 1))
-    print_rank_0('    number of sentences: {}'.format(
+    print_rank_0(" > indexed dataset stats:")
+    print_rank_0(
+        "    number of documents: {}".format(indexed_dataset.doc_idx.shape[0] -
+                                             1))
+    print_rank_0("    number of sentences: {}".format(
         indexed_dataset.sizes.shape[0]))
 
     return indexed_dataset
 
 
 def get_train_valid_test_split_(splits_string, size):
-    """ Get dataset splits from comma or '/' separated string list."""
+    """Get dataset splits from comma or '/' separated string list."""
 
     splits = []
-    if splits_string.find(',') != -1:
-        splits = [float(s) for s in splits_string.split(',')]
-    elif splits_string.find('/') != -1:
-        splits = [float(s) for s in splits_string.split('/')]
+    if splits_string.find(",") != -1:
+        splits = [float(s) for s in splits_string.split(",")]
+    elif splits_string.find("/") != -1:
+        splits = [float(s) for s in splits_string.split("/")]
     else:
         splits = [float(splits_string)]
     while len(splits) < 3:
-        splits.append(0.)
+        splits.append(0.0)
     splits = splits[:3]
     splits_sum = sum(splits)
     assert splits_sum > 0.0
@@ -589,5 +626,3 @@ def get_train_valid_test_split_(splits_string, size):
     assert len(splits_index) == 4
     assert splits_index[-1] == size
     return splits_index
-
-

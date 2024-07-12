@@ -47,7 +47,8 @@ def print_rank_0(message):
 
 
 def is_last_rank():
-    return torch.distributed.get_rank() == (torch.distributed.get_world_size() - 1)
+    return torch.distributed.get_rank() == (
+        torch.distributed.get_world_size() - 1)
 
 
 def print_rank_last(message):

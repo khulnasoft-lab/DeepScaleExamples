@@ -3,9 +3,9 @@ import numpy as np
 from ..file_utils import add_end_docstrings, is_tf_available, is_torch_available
 from .base import PIPELINE_INIT_ARGS, Pipeline
 
-
 if is_tf_available():
-    from ..models.auto.modeling_tf_auto import TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING
+    from ..models.auto.modeling_tf_auto import (
+        TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, )
 
 if is_torch_available():
     from ..models.auto.modeling_auto import MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING
@@ -34,15 +34,12 @@ class TextClassificationPipeline(Pipeline):
     the up-to-date list of available models on `huggingface.co/models
     <https://huggingface.co/models?filter=text-classification>`__.
     """
-
     def __init__(self, return_all_scores: bool = False, **kwargs):
         super().__init__(**kwargs)
 
         self.check_model_type(
-            TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING
-            if self.framework == "tf"
-            else MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING
-        )
+            TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING if self.framework ==
+            "tf" else MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING)
 
         self.return_all_scores = return_all_scores
 
@@ -69,11 +66,12 @@ class TextClassificationPipeline(Pipeline):
         else:
             scores = np.exp(outputs) / np.exp(outputs).sum(-1, keepdims=True)
         if self.return_all_scores:
-            return [
-                [{"label": self.model.config.id2label[i], "score": score.item()} for i, score in enumerate(item)]
-                for item in scores
-            ]
+            return [[{
+                "label": self.model.config.id2label[i],
+                "score": score.item()
+            } for i, score in enumerate(item)] for item in scores]
         else:
-            return [
-                {"label": self.model.config.id2label[item.argmax()], "score": item.max().item()} for item in scores
-            ]
+            return [{
+                "label": self.model.config.id2label[item.argmax()],
+                "score": item.max().item(),
+            } for item in scores]

@@ -14,7 +14,6 @@
 # limitations under the License.
 """PyTorch BERT model specific for generation. """
 
-
 import torch
 import torch.utils.checkpoint
 from torch import nn
@@ -26,12 +25,14 @@ from ...file_utils import (
     add_start_docstrings_to_model_forward,
     replace_return_docstrings,
 )
-from ...modeling_outputs import BaseModelOutputWithPastAndCrossAttentions, CausalLMOutputWithCrossAttentions
+from ...modeling_outputs import (
+    BaseModelOutputWithPastAndCrossAttentions,
+    CausalLMOutputWithCrossAttentions,
+)
 from ...modeling_utils import PreTrainedModel
 from ...utils import logging
 from ..bert.modeling_bert import BertEncoder
 from .configuration_bert_generation import BertGenerationConfig
-
 
 logger = logging.get_logger(__name__)
 
@@ -39,9 +40,11 @@ _CONFIG_FOR_DOC = "BertGenerationConfig"
 _TOKENIZER_FOR_DOC = "BertGenerationTokenizer"
 
 
-def load_tf_weights_in_bert_generation(
-    model, tf_hub_path, model_class, is_encoder_named_decoder=False, is_encoder=False
-):
+def load_tf_weights_in_bert_generation(model,
+                                       tf_hub_path,
+                                       model_class,
+                                       is_encoder_named_decoder=False,
+                                       is_encoder=False):
     try:
         import numpy as np
         import tensorflow.compat.v1 as tf
@@ -86,7 +89,8 @@ def load_tf_weights_in_bert_generation(
                 elif sub_layer == "LayerNorm":
                     is_embedding = False
                 if "layer" in sub_layer:
-                    model_pointer = model_pointer.layer[int(sub_layer.split("_")[-1])]
+                    model_pointer = model_pointer.layer[int(
+                        sub_layer.split("_")[-1])]
                 elif sub_layer in ["kernel", "gamma"]:
                     model_pointer = model_pointer.weight
                 elif sub_layer == "beta":
@@ -98,17 +102,21 @@ def load_tf_weights_in_bert_generation(
                 elif is_encoder_named_decoder and sub_layer == "decoder":
                     model_pointer = model_pointer.encoder
                 else:
-                    if sub_layer == "attention" and "encdec" in sub_layers[i + 1]:
+                    if sub_layer == "attention" and "encdec" in sub_layers[i +
+                                                                           1]:
                         continue
                     try:
                         model_pointer = getattr(model_pointer, sub_layer)
                     except AttributeError:
-                        logger.info(f"Skipping to initialize {key} at {sub_layer}...")
+                        logger.info(
+                            f"Skipping to initialize {key} at {sub_layer}...")
                         raise AttributeError
 
             array = np.asarray(sess.run(all_variables[key]))
             if not is_embedding:
-                logger.info("Transposing numpy weight of shape {} for {}".format(array.shape, key))
+                logger.info(
+                    "Transposing numpy weight of shape {} for {}".format(
+                        array.shape, key))
                 array = np.transpose(array)
             else:
                 model_pointer = model_pointer.weight
@@ -125,26 +133,38 @@ def load_tf_weights_in_bert_generation(
             model_pointer.data = torch.from_numpy(array.astype(np.float32))
             keep_track_variables.pop(key, None)
 
-        logger.info("Weights not copied to PyTorch model: {}".format(", ".join(keep_track_variables.keys())))
+        logger.info("Weights not copied to PyTorch model: {}".format(", ".join(
+            keep_track_variables.keys())))
         return model
 
 
 class BertGenerationEmbeddings(nn.Module):
     """Construct the embeddings from word and position embeddings."""
-
     def __init__(self, config):
         super().__init__()
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.hidden_size, padding_idx=config.pad_token_id)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
+        self.word_embeddings = nn.Embedding(config.vocab_size,
+                                            config.hidden_size,
+                                            padding_idx=config.pad_token_id)
+        self.position_embeddings = nn.Embedding(config.max_position_embeddings,
+                                                config.hidden_size)
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
-        self.LayerNorm = torch.nn.LayerNorm(config.hidden_size, eps=config.layer_norm_eps)
+        self.LayerNorm = torch.nn.LayerNorm(config.hidden_size,
+                                            eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
         # position_ids (1, len position emb) is contiguous in memory and exported when serialized
-        self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
+        self.register_buffer(
+            "position_ids",
+            torch.arange(config.max_position_embeddings).expand((1, -1)))
 
-    def forward(self, input_ids=None, position_ids=None, inputs_embeds=None, past_key_values_length=0):
+    def forward(
+        self,
+        input_ids=None,
+        position_ids=None,
+        inputs_embeds=None,
+        past_key_values_length=0,
+    ):
         if input_ids is not None:
             input_shape = input_ids.size()
         else:
@@ -153,7 +173,9 @@ class BertGenerationEmbeddings(nn.Module):
         seq_length = input_shape[1]
 
         if position_ids is None:
-            position_ids = self.position_ids[:, past_key_values_length : seq_length + past_key_values_length]
+            position_ids = self.position_ids[:, past_key_values_length:
+                                             seq_length +
+                                             past_key_values_length]
 
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
@@ -176,11 +198,12 @@ class BertGenerationPreTrainedModel(PreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
     def _init_weights(self, module):
-        """ Initialize the weights """
+        """Initialize the weights"""
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0,
+                                       std=self.config.initializer_range)
         elif isinstance(module, nn.LayerNorm):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
@@ -269,7 +292,6 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
     argument and :obj:`add_cross_attention` set to :obj:`True`; an :obj:`encoder_hidden_states` is then expected as an
     input to the forward pass.
     """
-
     def __init__(self, config):
         super().__init__(config)
         self.config = config
@@ -293,7 +315,8 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
 
-    @add_start_docstrings_to_model_forward(BERT_GENERATION_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        BERT_GENERATION_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/bert_for_seq_generation_L-24_bbc_encoder",
@@ -333,11 +356,13 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
             If set to :obj:`True`, :obj:`past_key_values` key value states are returned and can be used to speed up
             decoding (see :obj:`past_key_values`).
         """
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_attentions = (output_attentions if output_attentions is not None
+                             else self.config.output_attentions)
+        output_hidden_states = (output_hidden_states
+                                if output_hidden_states is not None else
+                                self.config.output_hidden_states)
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         if self.config.is_decoder:
             use_cache = use_cache if use_cache is not None else self.config.use_cache
@@ -345,7 +370,9 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
             use_cache = False
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = input_ids.size()
             batch_size, seq_length = input_shape
@@ -353,32 +380,39 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
             input_shape = inputs_embeds.size()[:-1]
             batch_size, seq_length = input_shape
         else:
-            raise ValueError("You have to specify either input_ids or inputs_embeds")
+            raise ValueError(
+                "You have to specify either input_ids or inputs_embeds")
 
         device = input_ids.device if input_ids is not None else inputs_embeds.device
 
         # past_key_values_length
-        past_key_values_length = past_key_values[0][0].shape[2] if past_key_values is not None else 0
+        past_key_values_length = (past_key_values[0][0].shape[2]
+                                  if past_key_values is not None else 0)
 
         if attention_mask is None:
-            attention_mask = torch.ones(((batch_size, seq_length + past_key_values_length)), device=device)
+            attention_mask = torch.ones(
+                ((batch_size, seq_length + past_key_values_length)),
+                device=device)
 
         # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
         # ourselves in which case we just need to make it broadcastable to all heads.
         extended_attention_mask = None
         if not use_cache:
             extended_attention_mask: torch.Tensor = self.get_extended_attention_mask(
-                attention_mask, input_shape, device
-            )
+                attention_mask, input_shape, device)
 
         # If a 2D or 3D attention mask is provided for the cross-attention
         # we need to make broadcastable to [batch_size, num_heads, seq_length, seq_length]
         if self.config.is_decoder and encoder_hidden_states is not None:
-            encoder_batch_size, encoder_sequence_length, _ = encoder_hidden_states.size()
-            encoder_hidden_shape = (encoder_batch_size, encoder_sequence_length)
+            encoder_batch_size, encoder_sequence_length, _ = (
+                encoder_hidden_states.size())
+            encoder_hidden_shape = (encoder_batch_size,
+                                    encoder_sequence_length)
             if encoder_attention_mask is None:
-                encoder_attention_mask = torch.ones(encoder_hidden_shape, device=device)
-            encoder_extended_attention_mask = self.invert_attention_mask(encoder_attention_mask)
+                encoder_attention_mask = torch.ones(encoder_hidden_shape,
+                                                    device=device)
+            encoder_extended_attention_mask = self.invert_attention_mask(
+                encoder_attention_mask)
         else:
             encoder_extended_attention_mask = None
 
@@ -387,7 +421,8 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
         # attention_probs has shape bsz x n_heads x N x N
         # input head_mask has shape [num_heads] or [num_hidden_layers x num_heads]
         # and head_mask is converted to shape [num_hidden_layers x batch x num_heads x seq_length x seq_length]
-        head_mask = self.get_head_mask(head_mask, self.config.num_hidden_layers)
+        head_mask = self.get_head_mask(head_mask,
+                                       self.config.num_hidden_layers)
 
         embedding_output = self.embeddings(
             input_ids=input_ids,
@@ -411,7 +446,7 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
         sequence_output = encoder_outputs[0]
 
         if not return_dict:
-            return (sequence_output,) + encoder_outputs[1:]
+            return (sequence_output, ) + encoder_outputs[1:]
 
         return BaseModelOutputWithPastAndCrossAttentions(
             last_hidden_state=sequence_output,
@@ -425,7 +460,9 @@ class BertGenerationEncoder(BertGenerationPreTrainedModel):
 class BertGenerationOnlyLMHead(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.decoder = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
+        self.decoder = nn.Linear(config.hidden_size,
+                                 config.vocab_size,
+                                 bias=False)
         self.bias = nn.Parameter(torch.zeros(config.vocab_size))
 
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
@@ -445,7 +482,9 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
         super().__init__(config)
 
         if not config.is_decoder:
-            logger.warn("If you want to use `BertGenerationDecoder` as a standalone, add `is_decoder=True.`")
+            logger.warn(
+                "If you want to use `BertGenerationDecoder` as a standalone, add `is_decoder=True.`"
+            )
 
         self.bert = BertGenerationEncoder(config)
         self.lm_head = BertGenerationOnlyLMHead(config)
@@ -458,8 +497,10 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
     def set_output_embeddings(self, new_embeddings):
         self.lm_head.decoder = new_embeddings
 
-    @add_start_docstrings_to_model_forward(BERT_GENERATION_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @replace_return_docstrings(output_type=CausalLMOutputWithCrossAttentions, config_class=_CONFIG_FOR_DOC)
+    @add_start_docstrings_to_model_forward(
+        BERT_GENERATION_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @replace_return_docstrings(output_type=CausalLMOutputWithCrossAttentions,
+                               config_class=_CONFIG_FOR_DOC)
     def forward(
         self,
         input_ids=None,
@@ -517,7 +558,8 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
 
             >>> prediction_logits = outputs.logits
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
         if labels is not None:
             use_cache = False
 
@@ -542,14 +584,18 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
         lm_loss = None
         if labels is not None:
             # we are doing next-token prediction; shift prediction scores and input ids by one
-            shifted_prediction_scores = prediction_scores[:, :-1, :].contiguous()
+            shifted_prediction_scores = prediction_scores[:, :
+                                                          -1, :].contiguous()
             labels = labels[:, 1:].contiguous()
             loss_fct = CrossEntropyLoss()
-            lm_loss = loss_fct(shifted_prediction_scores.view(-1, self.config.vocab_size), labels.view(-1))
+            lm_loss = loss_fct(
+                shifted_prediction_scores.view(-1, self.config.vocab_size),
+                labels.view(-1),
+            )
 
         if not return_dict:
-            output = (prediction_scores,) + outputs[1:]
-            return ((lm_loss,) + output) if lm_loss is not None else output
+            output = (prediction_scores, ) + outputs[1:]
+            return ((lm_loss, ) + output) if lm_loss is not None else output
 
         return CausalLMOutputWithCrossAttentions(
             loss=lm_loss,
@@ -560,7 +606,11 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
             cross_attentions=outputs.cross_attentions,
         )
 
-    def prepare_inputs_for_generation(self, input_ids, past=None, attention_mask=None, **model_kwargs):
+    def prepare_inputs_for_generation(self,
+                                      input_ids,
+                                      past=None,
+                                      attention_mask=None,
+                                      **model_kwargs):
         input_shape = input_ids.shape
         # if model is used as a decoder in encoder-decoder model, the decoder attention mask is created on the fly
         if attention_mask is None:
@@ -570,10 +620,16 @@ class BertGenerationDecoder(BertGenerationPreTrainedModel):
         if past is not None:
             input_ids = input_ids[:, -1:]
 
-        return {"input_ids": input_ids, "attention_mask": attention_mask, "past_key_values": past}
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "past_key_values": past,
+        }
 
     def _reorder_cache(self, past, beam_idx):
         reordered_past = ()
         for layer_past in past:
-            reordered_past += (tuple(past_state.index_select(0, beam_idx) for past_state in layer_past),)
+            reordered_past += (tuple(
+                past_state.index_select(0, beam_idx)
+                for past_state in layer_past), )
         return reordered_past

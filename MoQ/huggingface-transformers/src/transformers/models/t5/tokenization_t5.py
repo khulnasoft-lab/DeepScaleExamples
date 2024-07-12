@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model T5."""
 
-
 import os
 import re
 import warnings
@@ -25,7 +24,6 @@ import sentencepiece as spm
 
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -41,9 +39,11 @@ VOCAB_FILES_NAMES = {"vocab_file": "spiece.model"}
 ####################################################
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "t5-small": "https://huggingface.co/t5-small/resolve/main/spiece.model",
+        "t5-small":
+        "https://huggingface.co/t5-small/resolve/main/spiece.model",
         "t5-base": "https://huggingface.co/t5-base/resolve/main/spiece.model",
-        "t5-large": "https://huggingface.co/t5-large/resolve/main/spiece.model",
+        "t5-large":
+        "https://huggingface.co/t5-large/resolve/main/spiece.model",
         "t5-3b": "https://huggingface.co/t5-3b/resolve/main/spiece.model",
         "t5-11b": "https://huggingface.co/t5-11b/resolve/main/spiece.model",
     }
@@ -111,14 +111,19 @@ class T5Tokenizer(PreTrainedTokenizer):
         pad_token="<pad>",
         extra_ids=100,
         additional_special_tokens=None,
-        **kwargs
+        **kwargs,
     ):
         # Add extra_ids to the special token list
         if extra_ids > 0 and additional_special_tokens is None:
-            additional_special_tokens = ["<extra_id_{}>".format(i) for i in range(extra_ids)]
+            additional_special_tokens = [
+                "<extra_id_{}>".format(i) for i in range(extra_ids)
+            ]
         elif extra_ids > 0 and additional_special_tokens is not None:
             # Check that we have the right number of extra_id special tokens
-            extra_tokens = len(set(filter(lambda x: bool("extra_id" in x), additional_special_tokens)))
+            extra_tokens = len(
+                set(
+                    filter(lambda x: bool("extra_id" in x),
+                           additional_special_tokens)))
             if extra_tokens != extra_ids:
                 raise ValueError(
                     f"Both extra_ids ({extra_ids}) and additional_special_tokens ({additional_special_tokens}) are provided to T5Tokenizer. "
@@ -145,12 +150,18 @@ class T5Tokenizer(PreTrainedTokenizer):
         return self.sp_model.get_piece_size() + self._extra_ids
 
     def get_vocab(self):
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -173,7 +184,12 @@ class T5Tokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
         # normal case: some special tokens
         if token_ids_1 is None:
             return ([0] * len(token_ids_0)) + [1]
@@ -190,8 +206,9 @@ class T5Tokenizer(PreTrainedTokenizer):
             return token_ids + [self.eos_token_id]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. T5 does not make
         use of token type ids, therefore a list of zeros is returned.
@@ -212,8 +229,9 @@ class T5Tokenizer(PreTrainedTokenizer):
         return len(token_ids_0 + eos + token_ids_1 + eos) * [0]
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A sequence has the following format:
@@ -256,7 +274,7 @@ class T5Tokenizer(PreTrainedTokenizer):
         return pieces
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         if token.startswith("<extra_id_"):
             match = re.match(r"<extra_id_(\d+)>", token)
             num = int(match.group(1))
@@ -272,29 +290,36 @@ class T5Tokenizer(PreTrainedTokenizer):
         return token
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         current_sub_tokens = []
         out_string = ""
         for token in tokens:
             # make sure that special tokens are not decoded using sentencepiece model
             if token in self.all_special_tokens:
-                out_string += self.sp_model.decode_pieces(current_sub_tokens) + token + " "
+                out_string += (
+                    self.sp_model.decode_pieces(current_sub_tokens) + token +
+                    " ")
                 current_sub_tokens = []
             else:
                 current_sub_tokens.append(token)
         out_string += self.sp_model.decode_pieces(current_sub_tokens)
         return out_string.strip()
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
             logger.info(f"Copy vocab file to {out_vocab_file}")
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

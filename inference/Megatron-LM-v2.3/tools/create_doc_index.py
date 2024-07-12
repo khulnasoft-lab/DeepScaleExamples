@@ -1,7 +1,8 @@
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                             os.path.pardir)))
+
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir)))
 
 from megatron import print_rank_0
 from megatron.indexer import IndexBuilder
@@ -22,12 +23,14 @@ def main():
     Check README.md for example script
     """
 
-    initialize_megatron(extra_args_provider=None,
-                        args_defaults={'tokenizer_type': 'BertWordPieceLowerCase'})
+    initialize_megatron(
+        extra_args_provider=None,
+        args_defaults={"tokenizer_type": "BertWordPieceLowerCase"},
+    )
     index_builder = IndexBuilder()
     index_builder.build_and_save_index()
     print_rank_0("Build and save indices: done!")
 
+
 if __name__ == "__main__":
     main()
-

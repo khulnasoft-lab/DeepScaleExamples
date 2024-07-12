@@ -23,12 +23,12 @@ namespace fused_softmax {
 namespace scaled_masked_softmax {
 
 torch::Tensor fwd_cuda(
-    torch::Tensor const& input, 
+    torch::Tensor const& input,
     torch::Tensor const& mask,
     float scale_factor);
 
 torch::Tensor bwd_cuda(
-    torch::Tensor const& output_grads, 
+    torch::Tensor const& output_grads,
     torch::Tensor const& softmax_results,
     float scale_factor);
 
@@ -37,7 +37,7 @@ torch::Tensor fwd(
     torch::Tensor const& mask,
     float scale_factor) {
   AT_ASSERTM(input.dim() == 4, "expected 4D tensor");
-  AT_ASSERTM(input.scalar_type() == at::ScalarType::Half, 
+  AT_ASSERTM(input.scalar_type() == at::ScalarType::Half,
       "Only HALF is supported");
   AT_ASSERTM(mask.dim() == 4, "expected 4D tensor");
 
@@ -45,16 +45,16 @@ torch::Tensor fwd(
 }
 
 torch::Tensor bwd(
-    torch::Tensor const& output_grads, 
+    torch::Tensor const& output_grads,
     torch::Tensor const& softmax_results,
     float scale_factor) {
 
   AT_ASSERTM(output_grads.dim() == 4, "expected 3D tensor");
   AT_ASSERTM(softmax_results.dim() == 4, "expected 3D tensor");
 
-  AT_ASSERTM(output_grads.scalar_type() == at::ScalarType::Half, 
+  AT_ASSERTM(output_grads.scalar_type() == at::ScalarType::Half,
       "Only HALF is supported");
-  AT_ASSERTM(softmax_results.scalar_type() == at::ScalarType::Half, 
+  AT_ASSERTM(softmax_results.scalar_type() == at::ScalarType::Half,
       "Only HALF is supported");
 
   return bwd_cuda(output_grads, softmax_results, scale_factor);
@@ -65,10 +65,10 @@ torch::Tensor bwd(
 } // end namespace multihead_attn
 
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
-  m.def("forward", 
-        &multihead_attn::fused_softmax::scaled_masked_softmax::fwd, 
+  m.def("forward",
+        &multihead_attn::fused_softmax::scaled_masked_softmax::fwd,
 	"Self Multihead Attention scaled, time masked softmax -- Forward.");
-  m.def("backward", 
+  m.def("backward",
         &multihead_attn::fused_softmax::scaled_masked_softmax::bwd,
 	"Self Multihead Attention scaled, time masked softmax -- Backward.");
 }

@@ -14,7 +14,6 @@
 # limitations under the License.
 """Tokenization classes for XLM."""
 
-
 import json
 import os
 import re
@@ -27,7 +26,6 @@ import sacremoses as sm
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {
@@ -37,28 +35,48 @@ VOCAB_FILES_NAMES = {
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "xlm-mlm-en-2048": "https://huggingface.co/xlm-mlm-en-2048/resolve/main/vocab.json",
-        "xlm-mlm-ende-1024": "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/vocab.json",
-        "xlm-mlm-enfr-1024": "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/vocab.json",
-        "xlm-mlm-enro-1024": "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/vocab.json",
-        "xlm-mlm-tlm-xnli15-1024": "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/vocab.json",
-        "xlm-mlm-xnli15-1024": "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/vocab.json",
-        "xlm-clm-enfr-1024": "https://huggingface.co/xlm-clm-enfr-1024/resolve/main/vocab.json",
-        "xlm-clm-ende-1024": "https://huggingface.co/xlm-clm-ende-1024/resolve/main/vocab.json",
-        "xlm-mlm-17-1280": "https://huggingface.co/xlm-mlm-17-1280/resolve/main/vocab.json",
-        "xlm-mlm-100-1280": "https://huggingface.co/xlm-mlm-100-1280/resolve/main/vocab.json",
+        "xlm-mlm-en-2048":
+        "https://huggingface.co/xlm-mlm-en-2048/resolve/main/vocab.json",
+        "xlm-mlm-ende-1024":
+        "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/vocab.json",
+        "xlm-mlm-enfr-1024":
+        "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/vocab.json",
+        "xlm-mlm-enro-1024":
+        "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/vocab.json",
+        "xlm-mlm-tlm-xnli15-1024":
+        "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/vocab.json",
+        "xlm-mlm-xnli15-1024":
+        "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/vocab.json",
+        "xlm-clm-enfr-1024":
+        "https://huggingface.co/xlm-clm-enfr-1024/resolve/main/vocab.json",
+        "xlm-clm-ende-1024":
+        "https://huggingface.co/xlm-clm-ende-1024/resolve/main/vocab.json",
+        "xlm-mlm-17-1280":
+        "https://huggingface.co/xlm-mlm-17-1280/resolve/main/vocab.json",
+        "xlm-mlm-100-1280":
+        "https://huggingface.co/xlm-mlm-100-1280/resolve/main/vocab.json",
     },
     "merges_file": {
-        "xlm-mlm-en-2048": "https://huggingface.co/xlm-mlm-en-2048/resolve/main/merges.txt",
-        "xlm-mlm-ende-1024": "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/merges.txt",
-        "xlm-mlm-enfr-1024": "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/merges.txt",
-        "xlm-mlm-enro-1024": "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/merges.txt",
-        "xlm-mlm-tlm-xnli15-1024": "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/merges.txt",
-        "xlm-mlm-xnli15-1024": "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/merges.txt",
-        "xlm-clm-enfr-1024": "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/merges.txt",
-        "xlm-clm-ende-1024": "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/merges.txt",
-        "xlm-mlm-17-1280": "https://huggingface.co/xlm-mlm-17-1280/resolve/main/merges.txt",
-        "xlm-mlm-100-1280": "https://huggingface.co/xlm-mlm-100-1280/resolve/main/merges.txt",
+        "xlm-mlm-en-2048":
+        "https://huggingface.co/xlm-mlm-en-2048/resolve/main/merges.txt",
+        "xlm-mlm-ende-1024":
+        "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/merges.txt",
+        "xlm-mlm-enfr-1024":
+        "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/merges.txt",
+        "xlm-mlm-enro-1024":
+        "https://huggingface.co/xlm-mlm-enro-1024/resolve/main/merges.txt",
+        "xlm-mlm-tlm-xnli15-1024":
+        "https://huggingface.co/xlm-mlm-tlm-xnli15-1024/resolve/main/merges.txt",
+        "xlm-mlm-xnli15-1024":
+        "https://huggingface.co/xlm-mlm-xnli15-1024/resolve/main/merges.txt",
+        "xlm-clm-enfr-1024":
+        "https://huggingface.co/xlm-mlm-enfr-1024/resolve/main/merges.txt",
+        "xlm-clm-ende-1024":
+        "https://huggingface.co/xlm-mlm-ende-1024/resolve/main/merges.txt",
+        "xlm-mlm-17-1280":
+        "https://huggingface.co/xlm-mlm-17-1280/resolve/main/merges.txt",
+        "xlm-mlm-100-1280":
+        "https://huggingface.co/xlm-mlm-100-1280/resolve/main/merges.txt",
     },
 }
 
@@ -76,21 +94,41 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "xlm-mlm-en-2048": {"do_lowercase_and_remove_accent": True},
+    "xlm-mlm-en-2048": {
+        "do_lowercase_and_remove_accent": True
+    },
     "xlm-mlm-ende-1024": {
         "do_lowercase_and_remove_accent": True,
-        "id2lang": {0: "de", 1: "en"},
-        "lang2id": {"de": 0, "en": 1},
+        "id2lang": {
+            0: "de",
+            1: "en"
+        },
+        "lang2id": {
+            "de": 0,
+            "en": 1
+        },
     },
     "xlm-mlm-enfr-1024": {
         "do_lowercase_and_remove_accent": True,
-        "id2lang": {0: "en", 1: "fr"},
-        "lang2id": {"en": 0, "fr": 1},
+        "id2lang": {
+            0: "en",
+            1: "fr"
+        },
+        "lang2id": {
+            "en": 0,
+            "fr": 1
+        },
     },
     "xlm-mlm-enro-1024": {
         "do_lowercase_and_remove_accent": True,
-        "id2lang": {0: "en", 1: "ro"},
-        "lang2id": {"en": 0, "ro": 1},
+        "id2lang": {
+            0: "en",
+            1: "ro"
+        },
+        "lang2id": {
+            "en": 0,
+            "ro": 1
+        },
     },
     "xlm-mlm-tlm-xnli15-1024": {
         "do_lowercase_and_remove_accent": True,
@@ -168,13 +206,25 @@ PRETRAINED_INIT_CONFIGURATION = {
     },
     "xlm-clm-enfr-1024": {
         "do_lowercase_and_remove_accent": True,
-        "id2lang": {0: "en", 1: "fr"},
-        "lang2id": {"en": 0, "fr": 1},
+        "id2lang": {
+            0: "en",
+            1: "fr"
+        },
+        "lang2id": {
+            "en": 0,
+            "fr": 1
+        },
     },
     "xlm-clm-ende-1024": {
         "do_lowercase_and_remove_accent": True,
-        "id2lang": {0: "de", 1: "en"},
-        "lang2id": {"de": 0, "en": 1},
+        "id2lang": {
+            0: "de",
+            1: "en"
+        },
+        "lang2id": {
+            "de": 0,
+            "en": 1
+        },
     },
     "xlm-mlm-17-1280": {
         "do_lowercase_and_remove_accent": False,
@@ -585,33 +635,31 @@ class XLMTokenizer(PreTrainedTokenizer):
     pretrained_init_configuration = PRETRAINED_INIT_CONFIGURATION
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        unk_token="<unk>",
-        bos_token="<s>",
-        sep_token="</s>",
-        pad_token="<pad>",
-        cls_token="</s>",
-        mask_token="<special1>",
-        additional_special_tokens=[
-            "<special0>",
-            "<special1>",
-            "<special2>",
-            "<special3>",
-            "<special4>",
-            "<special5>",
-            "<special6>",
-            "<special7>",
-            "<special8>",
-            "<special9>",
-        ],
-        lang2id=None,
-        id2lang=None,
-        do_lowercase_and_remove_accent=True,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 unk_token="<unk>",
+                 bos_token="<s>",
+                 sep_token="</s>",
+                 pad_token="<pad>",
+                 cls_token="</s>",
+                 mask_token="<special1>",
+                 additional_special_tokens=[
+                     "<special0>",
+                     "<special1>",
+                     "<special2>",
+                     "<special3>",
+                     "<special4>",
+                     "<special5>",
+                     "<special6>",
+                     "<special7>",
+                     "<special8>",
+                     "<special9>",
+                 ],
+                 lang2id=None,
+                 id2lang=None,
+                 do_lowercase_and_remove_accent=True,
+                 **kwargs):
         super().__init__(
             unk_token=unk_token,
             bos_token=bos_token,
@@ -682,13 +730,14 @@ class XLMTokenizer(PreTrainedTokenizer):
                 import Mykytea
 
                 self.ja_word_tokenizer = Mykytea.Mykytea(
-                    "-model %s/local/share/kytea/model.bin" % os.path.expanduser("~")
-                )
+                    "-model %s/local/share/kytea/model.bin" %
+                    os.path.expanduser("~"))
             except (AttributeError, ImportError):
                 logger.error(
                     "Make sure you install KyTea (https://github.com/neubig/kytea) and it's python wrapper (https://github.com/chezou/Mykytea-python) with the following steps"
                 )
-                logger.error("1. git clone git@github.com:neubig/kytea.git && cd kytea")
+                logger.error(
+                    "1. git clone git@github.com:neubig/kytea.git && cd kytea")
                 logger.error("2. autoreconf -i")
                 logger.error("3. ./configure --prefix=$HOME/local")
                 logger.error("4. make && make install")
@@ -704,7 +753,7 @@ class XLMTokenizer(PreTrainedTokenizer):
         return dict(self.encoder, **self.added_tokens_encoder)
 
     def bpe(self, token):
-        word = tuple(token[:-1]) + (token[-1] + "</w>",)
+        word = tuple(token[:-1]) + (token[-1] + "</w>", )
         if token in self.cache:
             return self.cache[token]
         pairs = get_pairs(word)
@@ -713,7 +762,8 @@ class XLMTokenizer(PreTrainedTokenizer):
             return token + "</w>"
 
         while True:
-            bigram = min(pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
+            bigram = min(
+                pairs, key=lambda pair: self.bpe_ranks.get(pair, float("inf")))
             if bigram not in self.bpe_ranks:
                 break
             first, second = bigram
@@ -729,7 +779,8 @@ class XLMTokenizer(PreTrainedTokenizer):
                     new_word.extend(word[i:j])
                     i = j
 
-                if word[i] == first and i < len(word) - 1 and word[i + 1] == second:
+                if word[i] == first and i < len(word) - 1 and word[
+                        i + 1] == second:
                     new_word.append(first + second)
                     i += 2
                 else:
@@ -824,7 +875,9 @@ class XLMTokenizer(PreTrainedTokenizer):
                 else:
                     jieba = sys.modules["jieba"]
             except (AttributeError, ImportError):
-                logger.error("Make sure you install Jieba (https://github.com/fxsjy/jieba) with the following steps")
+                logger.error(
+                    "Make sure you install Jieba (https://github.com/fxsjy/jieba) with the following steps"
+                )
                 logger.error("1. pip install jieba")
                 raise
             text = " ".join(jieba.cut(text))
@@ -847,7 +900,7 @@ class XLMTokenizer(PreTrainedTokenizer):
         return split_tokens
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.encoder.get(token, self.encoder.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -855,13 +908,14 @@ class XLMTokenizer(PreTrainedTokenizer):
         return self.decoder.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = "".join(tokens).replace("</w>", " ").strip()
         return out_string
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. An XLM sequence has the following format:
@@ -887,7 +941,10 @@ class XLMTokenizer(PreTrainedTokenizer):
         return bos + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -913,18 +970,20 @@ class XLMTokenizer(PreTrainedTokenizer):
                 )
             return list(
                 map(
-                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
                     token_ids_0,
-                )
-            )
+                ))
 
         if token_ids_1 is not None:
-            return [1] + ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
+            return [1] + ([0] * len(token_ids_0)) + [1] + (
+                [0] * len(token_ids_1)) + [1]
         return [1] + ([0] * len(token_ids_0)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. An XLM sequence
         pair mask has the following format:
@@ -950,17 +1009,25 @@ class XLMTokenizer(PreTrainedTokenizer):
         cls = [self.cls_token_id]
         if token_ids_1 is None:
             return len(cls + token_ids_0 + sep) * [0]
-        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 + sep) * [1]
+        return len(cls + token_ids_0 + sep) * [0] + len(token_ids_1 +
+                                                        sep) * [1]
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
         merge_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["merges_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["merges_file"],
         )
 
         with open(vocab_file, "w", encoding="utf-8") as f:
@@ -968,12 +1035,13 @@ class XLMTokenizer(PreTrainedTokenizer):
 
         index = 0
         with open(merge_file, "w", encoding="utf-8") as writer:
-            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(), key=lambda kv: kv[1]):
+            for bpe_tokens, token_index in sorted(self.bpe_ranks.items(),
+                                                  key=lambda kv: kv[1]):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: BPE merge indices are not consecutive."
-                        " Please check that the tokenizer is not corrupted!".format(merge_file)
-                    )
+                        " Please check that the tokenizer is not corrupted!".
+                        format(merge_file))
                     index = token_index
                 writer.write(" ".join(bpe_tokens) + "\n")
                 index += 1

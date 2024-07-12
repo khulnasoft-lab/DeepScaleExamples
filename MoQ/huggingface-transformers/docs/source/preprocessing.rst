@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -46,8 +46,8 @@ is its ``__call__``: you just need to feed your sentence to your tokenizer objec
 
     >>> encoded_input = tokenizer("Hello, I'm a single sentence!")
     >>> print(encoded_input)
-    {'input_ids': [101, 138, 18696, 155, 1942, 3190, 1144, 1572, 13745, 1104, 159, 9664, 2107, 102], 
-     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], 
+    {'input_ids': [101, 138, 18696, 155, 1942, 3190, 1144, 1572, 13745, 1104, 159, 9664, 2107, 102],
+     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
      'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
 
 This returns a dictionary string to list of ints. The `input_ids <glossary.html#input-ids>`__ are the indices
@@ -108,7 +108,7 @@ You can do all of this by using the following options when feeding your list of 
                           [ 101, 1262, 1103, 1304, 1304, 1314, 1141,  102,    0]]),
      'token_type_ids': tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                               [0, 0, 0, 0, 0, 0, 0, 0, 0]]), 
+                               [0, 0, 0, 0, 0, 0, 0, 0, 0]]),
      'attention_mask': tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 0, 0, 0, 0],
                                [1, 1, 1, 1, 1, 1, 1, 1, 0]])}
@@ -120,7 +120,7 @@ You can do all of this by using the following options when feeding your list of 
                           [ 101, 1262, 1103, 1304, 1304, 1314, 1141,  102,    0]]),
      'token_type_ids': tf.Tensor([[0, 0, 0, 0, 0, 0, 0, 0, 0],
                                [0, 0, 0, 0, 0, 0, 0, 0, 0],
-                               [0, 0, 0, 0, 0, 0, 0, 0, 0]]), 
+                               [0, 0, 0, 0, 0, 0, 0, 0, 0]]),
      'attention_mask': tf.Tensor([[1, 1, 1, 1, 1, 1, 1, 1, 1],
                                [1, 1, 1, 1, 1, 0, 0, 0, 0],
                                [1, 1, 1, 1, 1, 1, 1, 1, 0]])}
@@ -150,8 +150,8 @@ This will once again return a dict string to list of ints:
 
     >>> encoded_input = tokenizer("How old are you?", "I'm 6 years old")
     >>> print(encoded_input)
-    {'input_ids': [101, 1731, 1385, 1132, 1128, 136, 102, 146, 112, 182, 127, 1201, 1385, 102], 
-     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1], 
+    {'input_ids': [101, 1731, 1385, 1132, 1128, 136, 102, 146, 112, 182, 127, 1201, 1385, 102],
+     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
      'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]}
 
 This shows us what the `token_type_ids <glossary.html#token-type-ids>`__ are for: they indicate to the model which part
@@ -180,14 +180,14 @@ list of first sentences and the list of second sentences:
     ...                              "And I go with the very last one"]
     >>> encoded_inputs = tokenizer(batch_sentences, batch_of_second_sentences)
     >>> print(encoded_inputs)
-    {'input_ids': [[101, 8667, 146, 112, 182, 170, 1423, 5650, 102, 146, 112, 182, 170, 5650, 1115, 2947, 1114, 1103, 1148, 5650, 102], 
-                   [101, 1262, 1330, 5650, 102, 1262, 146, 1431, 1129, 12544, 1114, 1103, 1248, 5650, 102], 
-                   [101, 1262, 1103, 1304, 1304, 1314, 1141, 102, 1262, 146, 1301, 1114, 1103, 1304, 1314, 1141, 102]], 
-    'token_type_ids': [[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-                       [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-                       [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]], 
-    'attention_mask': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
-                       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+    {'input_ids': [[101, 8667, 146, 112, 182, 170, 1423, 5650, 102, 146, 112, 182, 170, 5650, 1115, 2947, 1114, 1103, 1148, 5650, 102],
+                   [101, 1262, 1330, 5650, 102, 1262, 146, 1431, 1129, 12544, 1114, 1103, 1248, 5650, 102],
+                   [101, 1262, 1103, 1304, 1304, 1314, 1141, 102, 1262, 146, 1301, 1114, 1103, 1304, 1314, 1141, 102]],
+    'token_type_ids': [[0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                       [0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                       [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+    'attention_mask': [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                       [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]}
 
 As we can see, it returns a dictionary where each value is a list of lists of ints.
@@ -308,7 +308,7 @@ tokenizer. For instance, we have:
     >>> encoded_input = tokenizer(["Hello", "I'm", "a", "single", "sentence"], is_split_into_words=True)
     >>> print(encoded_input)
     {'input_ids': [101, 8667, 146, 112, 182, 170, 1423, 5650, 102],
-     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0], 
+     'token_type_ids': [0, 0, 0, 0, 0, 0, 0, 0, 0],
      'attention_mask': [1, 1, 1, 1, 1, 1, 1, 1, 1]}
 
 Note that the tokenizer still adds the ids of special tokens (if applicable) unless you pass

@@ -21,7 +21,6 @@ from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 from .tokenization_blenderbot_small import BlenderbotSmallTokenizer
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {}
@@ -47,17 +46,15 @@ class BlenderbotSmallTokenizerFast(PreTrainedTokenizerFast):
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     slow_tokenizer_class = BlenderbotSmallTokenizer
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        unk_token="<|endoftext|>",
-        bos_token="<|endoftext|>",
-        eos_token="<|endoftext|>",
-        add_prefix_space=False,
-        trim_offsets=True,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 unk_token="<|endoftext|>",
+                 bos_token="<|endoftext|>",
+                 eos_token="<|endoftext|>",
+                 add_prefix_space=False,
+                 trim_offsets=True,
+                 **kwargs):
         super().__init__(
             ByteLevelBPETokenizer(
                 vocab_file=vocab_file,
@@ -80,8 +77,9 @@ class BlenderbotSmallTokenizerFast(PreTrainedTokenizerFast):
         return output + [self.eos_token_id] + token_ids_1 + [self.eos_token_id]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. BlenderbotSmall
         does not make use of token type ids, therefore a list of zeros is returned.

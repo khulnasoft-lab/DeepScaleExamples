@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tf_available, is_torch_available
 
-
 _import_structure = {
     "configuration_xlm": ["XLM_PRETRAINED_CONFIG_ARCHIVE_MAP", "XLMConfig"],
     "tokenization_xlm": ["XLMTokenizer"],
@@ -51,7 +50,6 @@ if is_tf_available():
         "TFXLMPreTrainedModel",
         "TFXLMWithLMHeadModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_xlm import XLM_PRETRAINED_CONFIG_ARCHIVE_MAP, XLMConfig

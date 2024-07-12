@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 
 from transformers import DistilBertConfig, is_tf_available
@@ -21,7 +20,6 @@ from transformers.testing_utils import require_tf, slow
 
 from .test_configuration_common import ConfigTester
 from .test_modeling_tf_common import TFModelTesterMixin, ids_tensor
-
 
 if is_tf_available():
     import tensorflow as tf
@@ -66,18 +64,22 @@ class TFDistilBertModelTester:
         self.scope = None
 
     def prepare_config_and_inputs(self):
-        input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
+        input_ids = ids_tensor([self.batch_size, self.seq_length],
+                               self.vocab_size)
 
         input_mask = None
         if self.use_input_mask:
-            input_mask = ids_tensor([self.batch_size, self.seq_length], vocab_size=2)
+            input_mask = ids_tensor([self.batch_size, self.seq_length],
+                                    vocab_size=2)
 
         sequence_labels = None
         token_labels = None
         choice_labels = None
         if self.use_labels:
-            sequence_labels = ids_tensor([self.batch_size], self.type_sequence_label_size)
-            token_labels = ids_tensor([self.batch_size, self.seq_length], self.num_labels)
+            sequence_labels = ids_tensor([self.batch_size],
+                                         self.type_sequence_label_size)
+            token_labels = ids_tensor([self.batch_size, self.seq_length],
+                                      self.num_labels)
             choice_labels = ids_tensor([self.batch_size], self.num_choices)
 
         config = DistilBertConfig(
@@ -93,10 +95,23 @@ class TFDistilBertModelTester:
             initializer_range=self.initializer_range,
         )
 
-        return config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        return (
+            config,
+            input_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
+        )
 
     def create_and_check_distilbert_model(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDistilBertModel(config=config)
         inputs = {"input_ids": input_ids, "attention_mask": input_mask}
@@ -107,18 +122,35 @@ class TFDistilBertModelTester:
 
         result = model(inputs)
 
-        self.parent.assertEqual(result.last_hidden_state.shape, (self.batch_size, self.seq_length, self.hidden_size))
+        self.parent.assertEqual(
+            result.last_hidden_state.shape,
+            (self.batch_size, self.seq_length, self.hidden_size),
+        )
 
     def create_and_check_distilbert_for_masked_lm(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDistilBertForMaskedLM(config=config)
         inputs = {"input_ids": input_ids, "attention_mask": input_mask}
         result = model(inputs)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.seq_length, self.vocab_size))
+        self.parent.assertEqual(
+            result.logits.shape,
+            (self.batch_size, self.seq_length, self.vocab_size))
 
     def create_and_check_distilbert_for_question_answering(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         model = TFDistilBertForQuestionAnswering(config=config)
         inputs = {
@@ -126,44 +158,77 @@ class TFDistilBertModelTester:
             "attention_mask": input_mask,
         }
         result = model(inputs)
-        self.parent.assertEqual(result.start_logits.shape, (self.batch_size, self.seq_length))
-        self.parent.assertEqual(result.end_logits.shape, (self.batch_size, self.seq_length))
+        self.parent.assertEqual(result.start_logits.shape,
+                                (self.batch_size, self.seq_length))
+        self.parent.assertEqual(result.end_logits.shape,
+                                (self.batch_size, self.seq_length))
 
     def create_and_check_distilbert_for_sequence_classification(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         config.num_labels = self.num_labels
         model = TFDistilBertForSequenceClassification(config)
         inputs = {"input_ids": input_ids, "attention_mask": input_mask}
         result = model(inputs)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.num_labels))
+        self.parent.assertEqual(result.logits.shape,
+                                (self.batch_size, self.num_labels))
 
     def create_and_check_distilbert_for_multiple_choice(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         config.num_choices = self.num_choices
         model = TFDistilBertForMultipleChoice(config)
-        multiple_choice_inputs_ids = tf.tile(tf.expand_dims(input_ids, 1), (1, self.num_choices, 1))
-        multiple_choice_input_mask = tf.tile(tf.expand_dims(input_mask, 1), (1, self.num_choices, 1))
+        multiple_choice_inputs_ids = tf.tile(tf.expand_dims(input_ids, 1),
+                                             (1, self.num_choices, 1))
+        multiple_choice_input_mask = tf.tile(tf.expand_dims(input_mask, 1),
+                                             (1, self.num_choices, 1))
         inputs = {
             "input_ids": multiple_choice_inputs_ids,
             "attention_mask": multiple_choice_input_mask,
         }
         result = model(inputs)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.num_choices))
+        self.parent.assertEqual(result.logits.shape,
+                                (self.batch_size, self.num_choices))
 
     def create_and_check_distilbert_for_token_classification(
-        self, config, input_ids, input_mask, sequence_labels, token_labels, choice_labels
+        self,
+        config,
+        input_ids,
+        input_mask,
+        sequence_labels,
+        token_labels,
+        choice_labels,
     ):
         config.num_labels = self.num_labels
         model = TFDistilBertForTokenClassification(config)
         inputs = {"input_ids": input_ids, "attention_mask": input_mask}
         result = model(inputs)
-        self.parent.assertEqual(result.logits.shape, (self.batch_size, self.seq_length, self.num_labels))
+        self.parent.assertEqual(
+            result.logits.shape,
+            (self.batch_size, self.seq_length, self.num_labels))
 
     def prepare_config_and_inputs_for_common(self):
         config_and_inputs = self.prepare_config_and_inputs()
-        (config, input_ids, input_mask, sequence_labels, token_labels, choice_labels) = config_and_inputs
+        (
+            config,
+            input_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
+        ) = config_and_inputs
         inputs_dict = {"input_ids": input_ids, "attention_mask": input_mask}
         return config, inputs_dict
 
@@ -171,24 +236,22 @@ class TFDistilBertModelTester:
 @require_tf
 class TFDistilBertModelTest(TFModelTesterMixin, unittest.TestCase):
 
-    all_model_classes = (
-        (
-            TFDistilBertModel,
-            TFDistilBertForMaskedLM,
-            TFDistilBertForQuestionAnswering,
-            TFDistilBertForSequenceClassification,
-            TFDistilBertForTokenClassification,
-            TFDistilBertForMultipleChoice,
-        )
-        if is_tf_available()
-        else None
-    )
+    all_model_classes = ((
+        TFDistilBertModel,
+        TFDistilBertForMaskedLM,
+        TFDistilBertForQuestionAnswering,
+        TFDistilBertForSequenceClassification,
+        TFDistilBertForTokenClassification,
+        TFDistilBertForMultipleChoice,
+    ) if is_tf_available() else None)
     test_head_masking = False
     test_onnx = False
 
     def setUp(self):
         self.model_tester = TFDistilBertModelTester(self)
-        self.config_tester = ConfigTester(self, config_class=DistilBertConfig, dim=37)
+        self.config_tester = ConfigTester(self,
+                                          config_class=DistilBertConfig,
+                                          dim=37)
 
     def test_config(self):
         self.config_tester.run_common_tests()
@@ -199,27 +262,33 @@ class TFDistilBertModelTest(TFModelTesterMixin, unittest.TestCase):
 
     def test_for_masked_lm(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_distilbert_for_masked_lm(*config_and_inputs)
+        self.model_tester.create_and_check_distilbert_for_masked_lm(
+            *config_and_inputs)
 
     def test_for_question_answering(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_distilbert_for_question_answering(*config_and_inputs)
+        self.model_tester.create_and_check_distilbert_for_question_answering(
+            *config_and_inputs)
 
     def test_for_sequence_classification(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_distilbert_for_sequence_classification(*config_and_inputs)
+        self.model_tester.create_and_check_distilbert_for_sequence_classification(
+            *config_and_inputs)
 
     def test_for_multiple_choice(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_distilbert_for_multiple_choice(*config_and_inputs)
+        self.model_tester.create_and_check_distilbert_for_multiple_choice(
+            *config_and_inputs)
 
     def test_for_token_classification(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_distilbert_for_token_classification(*config_and_inputs)
+        self.model_tester.create_and_check_distilbert_for_token_classification(
+            *config_and_inputs)
 
     @slow
     def test_model_from_pretrained(self):
-        for model_name in list(TF_DISTILBERT_PRETRAINED_MODEL_ARCHIVE_LIST[:1]):
+        for model_name in list(
+                TF_DISTILBERT_PRETRAINED_MODEL_ARCHIVE_LIST[:1]):
             model = TFDistilBertModel.from_pretrained(model_name)
             self.assertIsNotNone(model)
 
@@ -235,13 +304,9 @@ class TFDistilBertModelIntegrationTest(unittest.TestCase):
         expected_shape = [1, 6, 768]
         self.assertEqual(output.shape, expected_shape)
 
-        expected_slice = tf.constant(
-            [
-                [
-                    [0.19261885, -0.13732955, 0.4119799],
-                    [0.22150156, -0.07422661, 0.39037204],
-                    [0.22756018, -0.0896414, 0.3701467],
-                ]
-            ]
-        )
+        expected_slice = tf.constant([[
+            [0.19261885, -0.13732955, 0.4119799],
+            [0.22150156, -0.07422661, 0.39037204],
+            [0.22756018, -0.0896414, 0.3701467],
+        ]])
         tf.debugging.assert_near(output[:, :3, :3], expected_slice, atol=1e-4)

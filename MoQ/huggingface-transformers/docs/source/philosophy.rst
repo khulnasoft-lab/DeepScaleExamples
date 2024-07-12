@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -82,4 +82,3 @@ All these classes can be instantiated from pretrained instances and saved locall
   stored locally (or on a server) by the user,
 - :obj:`save_pretrained()` lets you save a model/configuration/tokenizer locally so that it can be reloaded using
   :obj:`from_pretrained()`.
-

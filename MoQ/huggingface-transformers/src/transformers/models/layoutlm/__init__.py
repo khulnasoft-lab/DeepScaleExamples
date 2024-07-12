@@ -20,9 +20,11 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tokenizers_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_layoutlm": ["LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP", "LayoutLMConfig"],
+    "configuration_layoutlm": [
+        "LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "LayoutLMConfig",
+    ],
     "tokenization_layoutlm": ["LayoutLMTokenizer"],
 }
 
@@ -38,9 +40,11 @@ if is_torch_available():
         "LayoutLMModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_layoutlm import LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP, LayoutLMConfig
+    from .configuration_layoutlm import (
+        LAYOUTLM_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        LayoutLMConfig,
+    )
     from .tokenization_layoutlm import LayoutLMTokenizer
 
     if is_tokenizers_available():

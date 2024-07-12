@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import itertools
 import json
 from lsh import cache, minhash
@@ -25,7 +24,8 @@ import sys
 #   https://github.com/mattilyra/LSH/blob/master/examples/Introduction.ipynb
 def shingles(text, char_ngram=5):
     return set(text[head:head + char_ngram]
-               for head in range(0, len(text) - char_ngram))
+               for head in range(0,
+                                 len(text) - char_ngram))
 
 
 # This function is adapted from:
@@ -36,9 +36,9 @@ def jaccard(set_a, set_b):
     return len(intersection) / len(union)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    print('finding possible duplicate content ...')
+    print("finding possible duplicate content ...")
 
     input = sys.argv[1]
     output = sys.argv[2]
@@ -49,25 +49,29 @@ if __name__ == '__main__':
     counter = 0
     url_doc = {}
     start_time = time.time()
-    with open(input, 'r') as f:
+    with open(input, "r") as f:
         for line in f:
             try:
                 myjson = json.loads(line)
-                url = myjson['url']
-                text = myjson['text']
+                url = myjson["url"]
+                text = myjson["text"]
                 counter += 1
                 url_doc[url] = text
                 lshcache.add_fingerprint(hasher.fingerprint(text), url)
             except Exception as e:
-                print('Error:', e)
+                print("Error:", e)
             if counter % 10000 == 0:
-                print(' [read]> processed {} documents in {:.2f} seconds ...'.
-                      format(counter, time.time() - start_time), flush=True)
+                print(
+                    " [read]> processed {} documents in {:.2f} seconds ...".
+                    format(counter,
+                           time.time() - start_time),
+                    flush=True,
+                )
 
     counter = 0
     start_time = time.time()
     deduped = 0
-    with open(output, 'wb') as f:
+    with open(output, "wb") as f:
         for b in lshcache.bins:
             for bucket_id in b:
                 if len(b[bucket_id]) > 1:
@@ -77,24 +81,28 @@ if __name__ == '__main__':
                     remove_urls = []
                     for i in range(1, len(items)):
                         counter += 1
-                        other_url= items[i]
+                        other_url = items[i]
                         other_shingles = shingles(url_doc[other_url])
                         try:
-                            jaccard_sim = jaccard(main_dhingles, other_shingles)
+                            jaccard_sim = jaccard(main_dhingles,
+                                                  other_shingles)
                         except Exception as e:
-                            print('Error:', e)
+                            print("Error:", e)
                         if jaccard_sim > 0.5:
                             remove_urls.append({other_url: jaccard_sim})
                             deduped += 1
                         if counter % 10000 == 0:
-                            print(' [write]> processed {} documents in {:.2f} '
-                                  'seoncds and deduped {} documents ...'.
-                                  format(counter, time.time() - start_time,
-                                         deduped), flush=True)
+                            print(
+                                " [write]> processed {} documents in {:.2f} "
+                                "seoncds and deduped {} documents ...".format(
+                                    counter,
+                                    time.time() - start_time, deduped),
+                                flush=True,
+                            )
                     if len(remove_urls) > 0:
                         myjson = json.dumps({main_url: remove_urls},
                                             ensure_ascii=False)
-                        f.write(myjson.encode('utf-8'))
-                        f.write('\n'.encode('utf-8'))
+                        f.write(myjson.encode("utf-8"))
+                        f.write("\n".encode("utf-8"))
 
-    print('done :-)')
+    print("done :-)")

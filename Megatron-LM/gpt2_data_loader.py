@@ -41,20 +41,24 @@ def make_gpt2_dataloaders(args):
 
     def make_data_loader_(data_path):
         # Build the dataset.
-        dataset = GPT2Dataset(data_path, input_data_sizes_file,
-                              seq_length, initial_seed)
+        dataset = GPT2Dataset(data_path, input_data_sizes_file, seq_length,
+                              initial_seed)
         # Use a simple sampler with distributed batch sampler.
         sampler = torch.utils.data.SequentialSampler(dataset)
-        batch_sampler = DistributedBatchSampler(sampler=sampler,
-                                                batch_size=global_batch_size,
-                                                drop_last=True,
-                                                rank=rank,
-                                                world_size=world_size)
+        batch_sampler = DistributedBatchSampler(
+            sampler=sampler,
+            batch_size=global_batch_size,
+            drop_last=True,
+            rank=rank,
+            world_size=world_size,
+        )
         # Torch dataloader.
-        return torch.utils.data.DataLoader(dataset,
-                                           batch_sampler=batch_sampler,
-                                           num_workers=num_workers,
-                                           pin_memory=True)
+        return torch.utils.data.DataLoader(
+            dataset,
+            batch_sampler=batch_sampler,
+            num_workers=num_workers,
+            pin_memory=True,
+        )
 
     train = make_data_loader_(args.train_data_path)
     valid = make_data_loader_(args.val_data_path)
@@ -72,17 +76,20 @@ def make_gpt2_dataloaders(args):
         args.do_test = True
 
     # Tokenizer.
-    tokenizer = GPT2Tokenizer.from_pretrained('gpt2', cache_dir=args.cache_dir)
-    eod_token = tokenizer.encoder['<|endoftext|>']
+    tokenizer = GPT2Tokenizer.from_pretrained("gpt2", cache_dir=args.cache_dir)
+    eod_token = tokenizer.encoder["<|endoftext|>"]
     num_tokens = eod_token + 1
 
     return (train, valid, test), num_tokens, eod_token
 
 
 class GPT2Dataset(Dataset):
-
-    def __init__(self, data_path, sizes_filename, seq_length,
-                 initial_seed, max_epochs=100):
+    def __init__(self,
+                 data_path,
+                 sizes_filename,
+                 seq_length,
+                 initial_seed,
+                 max_epochs=100):
         # Input parameters.
         self.data_path = data_path
         self.sizes_filename = sizes_filename
@@ -107,43 +114,43 @@ class GPT2Dataset(Dataset):
         self.data_length = self.shards_start_index[-1]
 
         # Data.
-        self.shards_data = [None]*self.shards_name.size
-        self.shards_sample_index = [None]*self.shards_name.size
+        self.shards_data = [None] * self.shards_name.size
+        self.shards_sample_index = [None] * self.shards_name.size
 
     def __len__(self):
         return self.data_length
 
     def __getitem__(self, idx):
         # Find which shard we need.
-        shard_index = np.searchsorted(self.shards_start_index,
-                                      idx, side='right') - 1
+        shard_index = np.searchsorted(
+            self.shards_start_index, idx, side="right") - 1
         # data index in the shard.
         data_idx = idx - self.shards_start_index[shard_index]
         # Load the shard if it is not in memory.
-        #self.lock.acquire()
+        # self.lock.acquire()
         if self.shards_data[shard_index] is None:
-            print('global rank {} is building data for shard index {} ...'.
+            print("global rank {} is building data for shard index {} ...".
                   format(torch.distributed.get_rank(), shard_index))
             self.build_dataset_(shard_index)
-        #assert self.shards_data[shard_index] is not None
-        #self.lock.release()
+        # assert self.shards_data[shard_index] is not None
+        # self.lock.release()
         # Start index.
         start_index = self.shards_sample_index[shard_index][data_idx]
         # Add one for label shift.
         end_index = start_index + self.seq_length + 1
         data = self.shards_data[shard_index][start_index:end_index]
-        return {'text': np.array(data, dtype=np.int64)}
+        return {"text": np.array(data, dtype=np.int64)}
 
     def build_dataset_(self, shard_index):
         # Garbage collect so we don't use a lot of memory.
         # Leave the last one in case other threads have not catche up yet.
-        #for i in range(shard_index - 1):
+        # for i in range(shard_index - 1):
         for i in range(shard_index):
             self.shards_data[i] = None
             self.shards_sample_index[i] = None
         # Read the shard.
         filename = os.path.join(self.data_path, self.shards_name[shard_index])
-        print('loading {}'.format(filename))
+        print("loading {}".format(filename))
         data = np.load(filename, allow_pickle=True)
         # Shuffle the data
         rng = np.random.RandomState(self.initial_seed + shard_index)
@@ -162,11 +169,12 @@ class GPT2Dataset(Dataset):
         # Load the sizes file.
         sizes_filename = os.path.join(self.data_path, self.sizes_filename)
         if torch.distributed.get_rank() == 0:
-            print(' > loading sizes from {}'.format(sizes_filename))
-        with open(sizes_filename, 'r') as f:
+            print(" > loading sizes from {}".format(sizes_filename))
+        with open(sizes_filename, "r") as f:
             self.master_shard_size_dict = json.load(f)
         if torch.distributed.get_rank() == 0:
-            print('   found {} shards'.format(len(self.master_shard_size_dict)))
+            print("   found {} shards".format(len(
+                self.master_shard_size_dict)))
         # Adjust sizes to be a multiple of seq_length.
         self.shard_size_dict = self.master_shard_size_dict.copy()
         total_samples = 0
@@ -176,7 +184,7 @@ class GPT2Dataset(Dataset):
             total_samples += size // self.seq_length
             self.shard_size_dict[shard] = size
         if torch.distributed.get_rank() == 0:
-            print('   found {} samples in the dataset'.format(total_samples))
+            print("   found {} samples in the dataset".format(total_samples))
         # Build a list of shards.
         shards_ = np.sort(np.array(list(self.shard_size_dict.keys())))
         rng = np.random.RandomState(self.initial_seed)
@@ -190,12 +198,13 @@ class GPT2Dataset(Dataset):
         self.shards_start_index = np.zeros(self.shards_name.size, dtype=np.int)
         self.shards_start_index[0] = 0
         for i in range(1, self.shards_name.size):
-            shard = str(self.shards_name[i-1])
+            shard = str(self.shards_name[i - 1])
             size = self.shard_size_dict[shard]
-            self.shards_start_index[i] = self.shards_start_index[i-1] + \
-                                         size // self.seq_length
+            self.shards_start_index[i] = (self.shards_start_index[i - 1] +
+                                          size // self.seq_length)
 
-'''
+
+"""
 if __name__ == '__main__':
 
     print('gpt2 data loader ...')
@@ -208,4 +217,4 @@ if __name__ == '__main__':
         if i % 512000 == 0:
             print(i)
         data = dataset[i]
-'''
+"""

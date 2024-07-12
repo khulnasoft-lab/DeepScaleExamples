@@ -17,7 +17,8 @@ import unittest
 from .test_pipelines_common import MonoInputPipelineCommonMixin
 
 
-class SentimentAnalysisPipelineTests(MonoInputPipelineCommonMixin, unittest.TestCase):
+class SentimentAnalysisPipelineTests(MonoInputPipelineCommonMixin,
+                                     unittest.TestCase):
     pipeline_task = "sentiment-analysis"
     small_models = [
         "sshleifer/tiny-distilbert-base-uncased-finetuned-sst-2-english"

@@ -72,7 +72,7 @@ python run_chinese_ref.py \
     --save_path=path_to_reference_file
 ```
 
-Then you can run the script like this: 
+Then you can run the script like this:
 
 
 ```bash

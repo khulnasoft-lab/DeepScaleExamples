@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Megatron initialization."""
 
 import random
@@ -28,50 +27,58 @@ from megatron import get_args
 from megatron import get_tensorboard_writer
 from megatron import mpu
 from megatron.global_vars import set_global_variables
-from megatron.mpu import (set_tensor_model_parallel_rank,
-                          set_tensor_model_parallel_world_size)
+from megatron.mpu import (
+    set_tensor_model_parallel_rank,
+    set_tensor_model_parallel_world_size,
+)
 
 
-def initialize_megatron(extra_args_provider=None, args_defaults={},
-                        ignore_unknown_args=False, allow_no_cuda=False):
+def initialize_megatron(
+    extra_args_provider=None,
+    args_defaults={},
+    ignore_unknown_args=False,
+    allow_no_cuda=False,
+):
     """Set global variables, initialize distributed, and
     set autoresume and random seeds.
-    `allow_no_cuda` should not be set unless using megatron for cpu only 
-    data processing. In general this arg should not be set unless you know 
+    `allow_no_cuda` should not be set unless using megatron for cpu only
+    data processing. In general this arg should not be set unless you know
     what you are doing.
-    Returns a function to finalize distributed env initialization 
+    Returns a function to finalize distributed env initialization
     (optionally, only when args.lazy_mpu_init == True)
     """
     if not allow_no_cuda:
         # Make sure cuda is available.
-        assert torch.cuda.is_available(), 'Megatron requires CUDA.'
+        assert torch.cuda.is_available(), "Megatron requires CUDA."
 
     # Parse args, build tokenizer, and set adlr-autoresume,
     # tensorboard-writer, and timers.
-    set_global_variables(extra_args_provider=extra_args_provider,
-                         args_defaults=args_defaults,
-                         ignore_unknown_args=ignore_unknown_args)
+    set_global_variables(
+        extra_args_provider=extra_args_provider,
+        args_defaults=args_defaults,
+        ignore_unknown_args=ignore_unknown_args,
+    )
 
     # torch.distributed initialization
     def finish_mpu_init():
         args = get_args()
         # Pytorch distributed.
         _initialize_distributed()
-        
+
         # Random seeds for reproducibility.
         if args.rank == 0:
-            print('> setting random seeds to {} ...'.format(args.seed))
+            print("> setting random seeds to {} ...".format(args.seed))
         _set_random_seed(args.seed)
 
     args = get_args()
-    if  args.lazy_mpu_init:
-        args.use_cpu_initialization=True
+    if args.lazy_mpu_init:
+        args.use_cpu_initialization = True
         # delayed initialization of DDP-related stuff
-        # We only set basic DDP globals    
+        # We only set basic DDP globals
         set_tensor_model_parallel_world_size(args.tensor_model_parallel_size)
         # and return function for external DDP manager
         # to call when it has DDP initialized
-        set_tensor_model_parallel_rank(args.rank)    
+        set_tensor_model_parallel_rank(args.rank)
         return finish_mpu_init
     else:
         # Megatron's MPU is the master. Complete initialization right away.
@@ -79,7 +86,7 @@ def initialize_megatron(extra_args_provider=None, args_defaults={},
 
         # Initialize memory buffers.
         _initialize_mem_buffs()
-        
+
         # Autoresume.
         _init_autoresume()
 
@@ -100,11 +107,15 @@ def _compile_dependencies():
     # TODO: move this to ninja
     if torch.distributed.get_rank() == 0:
         start_time = time.time()
-        print('> compiling dataset index builder ...')
+        print("> compiling dataset index builder ...")
         from megatron.data.dataset_utils import compile_helper
+
         compile_helper()
-        print('>>> done with dataset index builder. Compilation time: {:.3f} '
-              'seconds'.format(time.time() - start_time), flush=True)
+        print(
+            ">>> done with dataset index builder. Compilation time: {:.3f} "
+            "seconds".format(time.time() - start_time),
+            flush=True,
+        )
 
     # ==================
     # Load fused kernels
@@ -112,26 +123,28 @@ def _compile_dependencies():
 
     # Custom kernel constraints check.
     seq_len = args.seq_length
-    attn_batch_size = \
-        (args.num_attention_heads / args.tensor_model_parallel_size) * \
-        args.micro_batch_size
+    attn_batch_size = (args.num_attention_heads /
+                       args.tensor_model_parallel_size) * args.micro_batch_size
     # Constraints on sequence length and attn_batch_size to enable warp based
     # optimization and upper triangular optimization (for causal mask)
-    custom_kernel_constraint = seq_len > 16 and seq_len <=2048 and \
-        seq_len % 4 == 0 and attn_batch_size % 4 == 0
+    custom_kernel_constraint = (seq_len > 16 and seq_len <= 2048
+                                and seq_len % 4 == 0
+                                and attn_batch_size % 4 == 0)
     # Print a warning.
-    if not ((args.fp16 or args.bf16) and
-            custom_kernel_constraint and
-            args.masked_softmax_fusion):
+    if not ((args.fp16 or args.bf16) and custom_kernel_constraint
+            and args.masked_softmax_fusion):
         if args.rank == 0:
-            print('WARNING: constraints for invoking optimized'
-                  ' fused softmax kernel are not met. We default'
-                  ' back to unfused kernel invocations.', flush=True)
-    
+            print(
+                "WARNING: constraints for invoking optimized"
+                " fused softmax kernel are not met. We default"
+                " back to unfused kernel invocations.",
+                flush=True,
+            )
+
     # Always build on rank zero first.
     if torch.distributed.get_rank() == 0:
         start_time = time.time()
-        print('> compiling and loading fused kernels ...', flush=True)
+        print("> compiling and loading fused kernels ...", flush=True)
         fused_kernels.load(args)
         torch.distributed.barrier()
     else:
@@ -143,10 +156,12 @@ def _compile_dependencies():
     # the lock is released.
     torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        print('>>> done with compiling and loading fused kernels. '
-              'Compilation time: {:.3f} seconds'.format(
-                  time.time() - start_time), flush=True)
-
+        print(
+            ">>> done with compiling and loading fused kernels. "
+            "Compilation time: {:.3f} seconds".format(time.time() -
+                                                      start_time),
+            flush=True,
+        )
 
 
 def _initialize_distributed():
@@ -157,43 +172,51 @@ def _initialize_distributed():
     if torch.distributed.is_initialized():
 
         if args.rank == 0:
-            print('torch distributed is already initialized, '
-                  'skipping initialization ...', flush=True)
+            print(
+                "torch distributed is already initialized, "
+                "skipping initialization ...",
+                flush=True,
+            )
         args.rank = torch.distributed.get_rank()
         args.world_size = torch.distributed.get_world_size()
 
     else:
 
         if args.rank == 0:
-            print('> initializing torch distributed ...', flush=True)
+            print("> initializing torch distributed ...", flush=True)
         # Manually set the device ids.
         if device_count > 0:
             device = args.rank % device_count
             if args.local_rank is not None:
-                assert args.local_rank == device, \
-                    'expected local-rank to be the same as rank % device-count.'
+                assert (
+                    args.local_rank == device
+                ), "expected local-rank to be the same as rank % device-count."
             else:
                 args.local_rank = device
             torch.cuda.set_device(device)
         # Call the init process
-        init_method = 'tcp://'
-        master_ip = os.getenv('MASTER_ADDR', 'localhost')
-        master_port = os.getenv('MASTER_PORT', '6000')
-        init_method += master_ip + ':' + master_port
+        init_method = "tcp://"
+        master_ip = os.getenv("MASTER_ADDR", "localhost")
+        master_port = os.getenv("MASTER_PORT", "6000")
+        init_method += master_ip + ":" + master_port
         torch.distributed.init_process_group(
             backend=args.distributed_backend,
-            world_size=args.world_size, rank=args.rank,
-            init_method=init_method)
+            world_size=args.world_size,
+            rank=args.rank,
+            init_method=init_method,
+        )
 
     # Set the tensor model-parallel, pipeline model-parallel, and
     # data-parallel communicators.
     if device_count > 0:
         if mpu.model_parallel_is_initialized():
-            print('model parallel is already initialized')
+            print("model parallel is already initialized")
         else:
-            mpu.initialize_model_parallel(args.tensor_model_parallel_size,
-                                          args.pipeline_model_parallel_size,
-                                          args.virtual_pipeline_model_parallel_size)
+            mpu.initialize_model_parallel(
+                args.tensor_model_parallel_size,
+                args.pipeline_model_parallel_size,
+                args.virtual_pipeline_model_parallel_size,
+            )
 
 
 def _init_autoresume():
@@ -216,7 +239,8 @@ def _set_random_seed(seed_):
         if torch.cuda.device_count() > 0:
             mpu.model_parallel_cuda_manual_seed(seed)
     else:
-        raise ValueError('Seed ({}) should be a positive integer.'.format(seed))
+        raise ValueError(
+            "Seed ({}) should be a positive integer.".format(seed))
 
 
 def write_args_to_tensorboard():
@@ -225,7 +249,8 @@ def write_args_to_tensorboard():
     writer = get_tensorboard_writer()
     if writer:
         for arg in vars(args):
-            writer.add_text(arg, str(getattr(args, arg)),
+            writer.add_text(arg,
+                            str(getattr(args, arg)),
                             global_step=args.iteration)
 
 

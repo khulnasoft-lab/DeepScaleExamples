@@ -18,15 +18,20 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_sentencepiece_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_sentencepiece_available,
+    is_torch_available,
+)
 
 _import_structure = {
     "configuration_bert_generation": ["BertGenerationConfig"],
 }
 
 if is_sentencepiece_available():
-    _import_structure["tokenization_bert_generation"] = ["BertGenerationTokenizer"]
+    _import_structure["tokenization_bert_generation"] = [
+        "BertGenerationTokenizer"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_bert_generation"] = [
@@ -34,7 +39,6 @@ if is_torch_available():
         "BertGenerationEncoder",
         "load_tf_weights_in_bert_generation",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_bert_generation import BertGenerationConfig

@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -80,17 +80,17 @@ An instantiated benchmark object can then simply be run by calling ``benchmark.r
     >>> print(results)
     ====================       INFERENCE - SPEED - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length     Time in s                  
+    Model Name             Batch Size     Seq Length     Time in s
     --------------------------------------------------------------------------------
-    bert-base-uncased          8               8             0.006     
-    bert-base-uncased          8               32            0.006     
-    bert-base-uncased          8              128            0.018     
-    bert-base-uncased          8              512            0.088     
+    bert-base-uncased          8               8             0.006
+    bert-base-uncased          8               32            0.006
+    bert-base-uncased          8              128            0.018
+    bert-base-uncased          8              512            0.088
     --------------------------------------------------------------------------------
 
     ====================      INFERENCE - MEMORY - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length    Memory in MB 
+    Model Name             Batch Size     Seq Length    Memory in MB
     --------------------------------------------------------------------------------
     bert-base-uncased          8               8             1227
     bert-base-uncased          8               32            1281
@@ -127,7 +127,7 @@ An instantiated benchmark object can then simply be run by calling ``benchmark.r
     >>> print(results)
     ====================       INFERENCE - SPEED - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length     Time in s                  
+    Model Name             Batch Size     Seq Length     Time in s
     --------------------------------------------------------------------------------
     bert-base-uncased          8               8             0.005
     bert-base-uncased          8               32            0.008
@@ -137,7 +137,7 @@ An instantiated benchmark object can then simply be run by calling ``benchmark.r
 
     ====================      INFERENCE - MEMORY - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length    Memory in MB 
+    Model Name             Batch Size     Seq Length    Memory in MB
     --------------------------------------------------------------------------------
     bert-base-uncased          8               8             1330
     bert-base-uncased          8               32            1330
@@ -195,37 +195,37 @@ configurations must be inserted with the benchmark args as follows.
     >>> benchmark.run()
     ====================       INFERENCE - SPEED - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length       Time in s                  
+    Model Name             Batch Size     Seq Length       Time in s
     --------------------------------------------------------------------------------
     bert-base                  8              128            0.006
     bert-base                  8              512            0.006
-    bert-base                  8              128            0.018     
-    bert-base                  8              512            0.088     
-    bert-384-hid              8               8             0.006     
-    bert-384-hid              8               32            0.006     
-    bert-384-hid              8              128            0.011     
-    bert-384-hid              8              512            0.054     
-    bert-6-lay                 8               8             0.003     
-    bert-6-lay                 8               32            0.004     
-    bert-6-lay                 8              128            0.009     
+    bert-base                  8              128            0.018
+    bert-base                  8              512            0.088
+    bert-384-hid              8               8             0.006
+    bert-384-hid              8               32            0.006
+    bert-384-hid              8              128            0.011
+    bert-384-hid              8              512            0.054
+    bert-6-lay                 8               8             0.003
+    bert-6-lay                 8               32            0.004
+    bert-6-lay                 8              128            0.009
     bert-6-lay                 8              512            0.044
     --------------------------------------------------------------------------------
 
     ====================      INFERENCE - MEMORY - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length      Memory in MB 
+    Model Name             Batch Size     Seq Length      Memory in MB
     --------------------------------------------------------------------------------
     bert-base                  8               8             1277
     bert-base                  8               32            1281
-    bert-base                  8              128            1307     
-    bert-base                  8              512            1539     
-    bert-384-hid              8               8             1005     
-    bert-384-hid              8               32            1027     
-    bert-384-hid              8              128            1035     
-    bert-384-hid              8              512            1255     
-    bert-6-lay                 8               8             1097     
-    bert-6-lay                 8               32            1101     
-    bert-6-lay                 8              128            1127     
+    bert-base                  8              128            1307
+    bert-base                  8              512            1539
+    bert-384-hid              8               8             1005
+    bert-384-hid              8               32            1027
+    bert-384-hid              8              128            1035
+    bert-384-hid              8              512            1255
+    bert-6-lay                 8               8             1097
+    bert-6-lay                 8               32            1101
+    bert-6-lay                 8              128            1127
     bert-6-lay                 8              512            1359
     --------------------------------------------------------------------------------
 
@@ -265,7 +265,7 @@ configurations must be inserted with the benchmark args as follows.
     >>> benchmark.run()
     ====================       INFERENCE - SPEED - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length       Time in s                  
+    Model Name             Batch Size     Seq Length       Time in s
     --------------------------------------------------------------------------------
     bert-base                  8               8             0.005
     bert-base                  8               32            0.008
@@ -283,7 +283,7 @@ configurations must be inserted with the benchmark args as follows.
 
     ====================      INFERENCE - MEMORY - RESULT       ====================
     --------------------------------------------------------------------------------
-    Model Name             Batch Size     Seq Length      Memory in MB 
+    Model Name             Batch Size     Seq Length      Memory in MB
     --------------------------------------------------------------------------------
     bert-base                  8               8             1330
     bert-base                  8               32            1330

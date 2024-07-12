@@ -35,8 +35,12 @@ from transformers import (
     set_seed,
 )
 from transformers.trainer_utils import is_main_process
-from utils_hans import HansDataset, InputFeatures, hans_processors, hans_tasks_num_labels
-
+from utils_hans import (
+    HansDataset,
+    InputFeatures,
+    hans_processors,
+    hans_tasks_num_labels,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -48,17 +52,30 @@ class ModelArguments:
     """
 
     model_name_or_path: str = field(
-        metadata={"help": "Path to pretrained model or model identifier from huggingface.co/models"}
-    )
+        metadata={
+            "help":
+            "Path to pretrained model or model identifier from huggingface.co/models"
+        })
     config_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained config name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained config name or path if not the same as model_name"
+        },
     )
     tokenizer_name: Optional[str] = field(
-        default=None, metadata={"help": "Pretrained tokenizer name or path if not the same as model_name"}
+        default=None,
+        metadata={
+            "help":
+            "Pretrained tokenizer name or path if not the same as model_name"
+        },
     )
     cache_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "Where do you want to store the pretrained models downloaded from huggingface.co"},
+        metadata={
+            "help":
+            "Where do you want to store the pretrained models downloaded from huggingface.co"
+        },
     )
 
 
@@ -69,24 +86,32 @@ class DataTrainingArguments:
     """
 
     task_name: str = field(
-        metadata={"help": "The name of the task to train selected in the list: " + ", ".join(hans_processors.keys())}
-    )
+        metadata={
+            "help":
+            "The name of the task to train selected in the list: " +
+            ", ".join(hans_processors.keys())
+        })
     data_dir: str = field(
-        metadata={"help": "The input data dir. Should contain the .tsv files (or other data files) for the task."}
-    )
+        metadata={
+            "help":
+            "The input data dir. Should contain the .tsv files (or other data files) for the task."
+        })
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
 
 
-def hans_data_collator(features: List[InputFeatures]) -> Dict[str, torch.Tensor]:
+def hans_data_collator(
+        features: List[InputFeatures]) -> Dict[str, torch.Tensor]:
     """
     Data collator that removes the "pairID" key if present.
     """
@@ -100,15 +125,13 @@ def main():
     # or by passing the --help flag to this script.
     # We now keep distinct sets of args, for a cleaner separation of concerns.
 
-    parser = HfArgumentParser((ModelArguments, DataTrainingArguments, TrainingArguments))
+    parser = HfArgumentParser(
+        (ModelArguments, DataTrainingArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
-    if (
-        os.path.exists(training_args.output_dir)
-        and os.listdir(training_args.output_dir)
-        and training_args.do_train
-        and not training_args.overwrite_output_dir
-    ):
+    if (os.path.exists(training_args.output_dir)
+            and os.listdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         raise ValueError(
             f"Output directory ({training_args.output_dir}) already exists and is not empty. Use --overwrite_output_dir to overcome."
         )
@@ -117,7 +140,8 @@ def main():
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
-        level=logging.INFO if training_args.local_rank in [-1, 0] else logging.WARN,
+        level=logging.INFO
+        if training_args.local_rank in [-1, 0] else logging.WARN,
     )
     logger.warning(
         "Process rank: %s, device: %s, n_gpu: %s, distributed training: %s, 16-bits training: %s",
@@ -149,13 +173,15 @@ def main():
     # download model & vocab.
 
     config = AutoConfig.from_pretrained(
-        model_args.config_name if model_args.config_name else model_args.model_name_or_path,
+        (model_args.config_name
+         if model_args.config_name else model_args.model_name_or_path),
         num_labels=num_labels,
         finetuning_task=data_args.task_name,
         cache_dir=model_args.cache_dir,
     )
     tokenizer = AutoTokenizer.from_pretrained(
-        model_args.tokenizer_name if model_args.tokenizer_name else model_args.model_name_or_path,
+        (model_args.tokenizer_name
+         if model_args.tokenizer_name else model_args.model_name_or_path),
         cache_dir=model_args.cache_dir,
     )
     model = AutoModelForSequenceClassification.from_pretrained(
@@ -166,29 +192,21 @@ def main():
     )
 
     # Get datasets
-    train_dataset = (
-        HansDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-        )
-        if training_args.do_train
-        else None
-    )
-    eval_dataset = (
-        HansDataset(
-            data_dir=data_args.data_dir,
-            tokenizer=tokenizer,
-            task=data_args.task_name,
-            max_seq_length=data_args.max_seq_length,
-            overwrite_cache=data_args.overwrite_cache,
-            evaluate=True,
-        )
-        if training_args.do_eval
-        else None
-    )
+    train_dataset = (HansDataset(
+        data_dir=data_args.data_dir,
+        tokenizer=tokenizer,
+        task=data_args.task_name,
+        max_seq_length=data_args.max_seq_length,
+        overwrite_cache=data_args.overwrite_cache,
+    ) if training_args.do_train else None)
+    eval_dataset = (HansDataset(
+        data_dir=data_args.data_dir,
+        tokenizer=tokenizer,
+        task=data_args.task_name,
+        max_seq_length=data_args.max_seq_length,
+        overwrite_cache=data_args.overwrite_cache,
+        evaluate=True,
+    ) if training_args.do_eval else None)
 
     # Initialize our Trainer
     trainer = Trainer(
@@ -202,8 +220,8 @@ def main():
     # Training
     if training_args.do_train:
         trainer.train(
-            model_path=model_args.model_name_or_path if os.path.isdir(model_args.model_name_or_path) else None
-        )
+            model_path=(model_args.model_name_or_path if os.path.
+                        isdir(model_args.model_name_or_path) else None))
         trainer.save_model()
         # For convenience, we also re-save the tokenizer to the same directory,
         # so that you can share your model easily on huggingface.co/models =)
@@ -219,13 +237,15 @@ def main():
         preds = np.argmax(preds, axis=1)
 
         pair_ids = [ex.pairID for ex in eval_dataset]
-        output_eval_file = os.path.join(training_args.output_dir, "hans_predictions.txt")
+        output_eval_file = os.path.join(training_args.output_dir,
+                                        "hans_predictions.txt")
         label_list = eval_dataset.get_labels()
         if trainer.is_world_master():
             with open(output_eval_file, "w") as writer:
                 writer.write("pairID,gold_label\n")
                 for pid, pred in zip(pair_ids, preds):
-                    writer.write("ex" + str(pid) + "," + label_list[int(pred)] + "\n")
+                    writer.write("ex" + str(pid) + "," +
+                                 label_list[int(pred)] + "\n")
 
         trainer._log(output.metrics)
 

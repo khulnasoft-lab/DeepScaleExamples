@@ -21,35 +21,56 @@ from ...utils import logging
 from ..gpt2.tokenization_gpt2_fast import GPT2TokenizerFast
 from .tokenization_roberta import RobertaTokenizer
 
-
 logger = logging.get_logger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": "vocab.json", "merges_file": "merges.txt", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "vocab.json",
+    "merges_file": "merges.txt",
+    "tokenizer_file": "tokenizer.json",
+}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "roberta-base": "https://huggingface.co/roberta-base/resolve/main/vocab.json",
-        "roberta-large": "https://huggingface.co/roberta-large/resolve/main/vocab.json",
-        "roberta-large-mnli": "https://huggingface.co/roberta-large-mnli/resolve/main/vocab.json",
-        "distilroberta-base": "https://huggingface.co/distilroberta-base/resolve/main/vocab.json",
-        "roberta-base-openai-detector": "https://huggingface.co/roberta-base/resolve/main/vocab.json",
-        "roberta-large-openai-detector": "https://huggingface.co/roberta-large/resolve/main/vocab.json",
+        "roberta-base":
+        "https://huggingface.co/roberta-base/resolve/main/vocab.json",
+        "roberta-large":
+        "https://huggingface.co/roberta-large/resolve/main/vocab.json",
+        "roberta-large-mnli":
+        "https://huggingface.co/roberta-large-mnli/resolve/main/vocab.json",
+        "distilroberta-base":
+        "https://huggingface.co/distilroberta-base/resolve/main/vocab.json",
+        "roberta-base-openai-detector":
+        "https://huggingface.co/roberta-base/resolve/main/vocab.json",
+        "roberta-large-openai-detector":
+        "https://huggingface.co/roberta-large/resolve/main/vocab.json",
     },
     "merges_file": {
-        "roberta-base": "https://huggingface.co/roberta-base/resolve/main/merges.txt",
-        "roberta-large": "https://huggingface.co/roberta-large/resolve/main/merges.txt",
-        "roberta-large-mnli": "https://huggingface.co/roberta-large-mnli/resolve/main/merges.txt",
-        "distilroberta-base": "https://huggingface.co/distilroberta-base/resolve/main/merges.txt",
-        "roberta-base-openai-detector": "https://huggingface.co/roberta-base/resolve/main/merges.txt",
-        "roberta-large-openai-detector": "https://huggingface.co/roberta-large/resolve/main/merges.txt",
+        "roberta-base":
+        "https://huggingface.co/roberta-base/resolve/main/merges.txt",
+        "roberta-large":
+        "https://huggingface.co/roberta-large/resolve/main/merges.txt",
+        "roberta-large-mnli":
+        "https://huggingface.co/roberta-large-mnli/resolve/main/merges.txt",
+        "distilroberta-base":
+        "https://huggingface.co/distilroberta-base/resolve/main/merges.txt",
+        "roberta-base-openai-detector":
+        "https://huggingface.co/roberta-base/resolve/main/merges.txt",
+        "roberta-large-openai-detector":
+        "https://huggingface.co/roberta-large/resolve/main/merges.txt",
     },
     "tokenizer_file": {
-        "roberta-base": "https://huggingface.co/roberta-base/resolve/main/tokenizer.json",
-        "roberta-large": "https://huggingface.co/roberta-large/resolve/main/tokenizer.json",
-        "roberta-large-mnli": "https://huggingface.co/roberta-large-mnli/resolve/main/tokenizer.json",
-        "distilroberta-base": "https://huggingface.co/distilroberta-base/resolve/main/tokenizer.json",
-        "roberta-base-openai-detector": "https://huggingface.co/roberta-base/resolve/main/tokenizer.json",
-        "roberta-large-openai-detector": "https://huggingface.co/roberta-large/resolve/main/tokenizer.json",
+        "roberta-base":
+        "https://huggingface.co/roberta-base/resolve/main/tokenizer.json",
+        "roberta-large":
+        "https://huggingface.co/roberta-large/resolve/main/tokenizer.json",
+        "roberta-large-mnli":
+        "https://huggingface.co/roberta-large-mnli/resolve/main/tokenizer.json",
+        "distilroberta-base":
+        "https://huggingface.co/distilroberta-base/resolve/main/tokenizer.json",
+        "roberta-base-openai-detector":
+        "https://huggingface.co/roberta-base/resolve/main/tokenizer.json",
+        "roberta-large-openai-detector":
+        "https://huggingface.co/roberta-large/resolve/main/tokenizer.json",
     },
 }
 
@@ -141,22 +162,20 @@ class RobertaTokenizerFast(GPT2TokenizerFast):
     model_input_names = ["input_ids", "attention_mask"]
     slow_tokenizer_class = RobertaTokenizer
 
-    def __init__(
-        self,
-        vocab_file,
-        merges_file,
-        tokenizer_file=None,
-        errors="replace",
-        bos_token="<s>",
-        eos_token="</s>",
-        sep_token="</s>",
-        cls_token="<s>",
-        unk_token="<unk>",
-        pad_token="<pad>",
-        mask_token="<mask>",
-        add_prefix_space=False,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 merges_file,
+                 tokenizer_file=None,
+                 errors="replace",
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 sep_token="</s>",
+                 cls_token="<s>",
+                 unk_token="<unk>",
+                 pad_token="<pad>",
+                 mask_token="<mask>",
+                 add_prefix_space=False,
+                 **kwargs):
         super().__init__(
             vocab_file,
             merges_file,
@@ -196,7 +215,8 @@ class RobertaTokenizerFast(GPT2TokenizerFast):
         """
         # Mask token behave like a normal word, i.e. include the space before it
         # So we set lstrip to True
-        value = AddedToken(value, lstrip=True, rstrip=False) if isinstance(value, str) else value
+        value = (AddedToken(value, lstrip=True, rstrip=False) if isinstance(
+            value, str) else value)
         self._mask_token = value
 
     def build_inputs_with_special_tokens(self, token_ids_0, token_ids_1=None):
@@ -207,8 +227,9 @@ class RobertaTokenizerFast(GPT2TokenizerFast):
         return output + [self.eos_token_id] + token_ids_1 + [self.eos_token_id]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. RoBERTa does not
         make use of token type ids, therefore a list of zeros is returned.

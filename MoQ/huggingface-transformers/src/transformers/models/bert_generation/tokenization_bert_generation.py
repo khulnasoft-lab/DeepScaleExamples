@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model BertGeneration."""
 
-
 import os
 from shutil import copyfile
 from typing import List, Optional, Tuple
@@ -23,7 +22,6 @@ import sentencepiece as spm
 
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -55,21 +53,23 @@ class BertGenerationTokenizer(PreTrainedTokenizer):
     """
 
     vocab_files_names = VOCAB_FILES_NAMES
-    pretrained_vocab_files_map = {"vocab_file": {"bert_for_seq_generation": tokenizer_url}}
+    pretrained_vocab_files_map = {
+        "vocab_file": {
+            "bert_for_seq_generation": tokenizer_url
+        }
+    }
     max_model_input_sizes = {"bert_for_seq_generation": 512}
     prefix_tokens: List[int] = []
     model_input_names = ["input_ids", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        bos_token="<s>",
-        eos_token="</s>",
-        unk_token="<unk>",
-        pad_token="<pad>",
-        sep_token="<::::>",
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 unk_token="<unk>",
+                 pad_token="<pad>",
+                 sep_token="<::::>",
+                 **kwargs):
         # Add extra_ids to the special token list
         super().__init__(
             bos_token=bos_token,
@@ -90,7 +90,10 @@ class BertGenerationTokenizer(PreTrainedTokenizer):
         return self.sp_model.get_piece_size()
 
     def get_vocab(self):
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -113,7 +116,7 @@ class BertGenerationTokenizer(PreTrainedTokenizer):
         return pieces
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.sp_model.piece_to_id(token)
 
     def _convert_id_to_token(self, index):
@@ -122,19 +125,24 @@ class BertGenerationTokenizer(PreTrainedTokenizer):
         return token
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = self.sp_model.decode_pieces(tokens)
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

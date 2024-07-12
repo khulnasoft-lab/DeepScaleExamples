@@ -88,4 +88,3 @@
     default:								\
       AT_ERROR(#NAME, " not implemented for '", toString(TYPEIN), "'");	\
     }
-

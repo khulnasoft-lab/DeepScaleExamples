@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Tokenization classes."""
 
 from __future__ import absolute_import
@@ -43,13 +42,16 @@ def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):
     model_name = m.group(1)
 
     lower_models = [
-        "uncased_L-24_H-1024_A-16", "uncased_L-12_H-768_A-12",
-        "multilingual_L-12_H-768_A-12", "chinese_L-12_H-768_A-12"
+        "uncased_L-24_H-1024_A-16",
+        "uncased_L-12_H-768_A-12",
+        "multilingual_L-12_H-768_A-12",
+        "chinese_L-12_H-768_A-12",
     ]
 
     cased_models = [
-        "cased_L-12_H-768_A-12", "cased_L-24_H-1024_A-16",
-        "multi_cased_L-12_H-768_A-12"
+        "cased_L-12_H-768_A-12",
+        "cased_L-24_H-1024_A-16",
+        "multi_cased_L-12_H-768_A-12",
     ]
 
     is_bad_config = False
@@ -71,8 +73,9 @@ def validate_case_matches_checkpoint(do_lower_case, init_checkpoint):
             "However, `%s` seems to be a %s model, so you "
             "should pass in `--do_lower_case=%s` so that the fine-tuning matches "
             "how the model was pre-training. If this error is wrong, please "
-            "just comment out this check." % (actual_flag, init_checkpoint,
-                                              model_name, case_name, opposite_flag))
+            "just comment out this check." %
+            (actual_flag, init_checkpoint, model_name, case_name,
+             opposite_flag))
 
 
 def convert_to_unicode(text):
@@ -160,7 +163,6 @@ def whitespace_tokenize(text):
 
 class FullTokenizer(object):
     """Runs end-to-end tokenziation."""
-
     def __init__(self, vocab_file, do_lower_case=True):
         self.vocab = load_vocab(vocab_file)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
@@ -187,7 +189,6 @@ class FullTokenizer(object):
 
 class BasicTokenizer(object):
     """Runs basic tokenization (punctuation splitting, lower casing, etc.)."""
-
     def __init__(self, do_lower_case=True):
         """Constructs a BasicTokenizer.
 
@@ -274,14 +275,14 @@ class BasicTokenizer(object):
         # as is Japanese Hiragana and Katakana. Those alphabets are used to write
         # space-separated words, so they are not treated specially and handled
         # like the all of the other languages.
-        if ((cp >= 0x4E00 and cp <= 0x9FFF) or  #
-            (cp >= 0x3400 and cp <= 0x4DBF) or  #
-            (cp >= 0x20000 and cp <= 0x2A6DF) or  #
-            (cp >= 0x2A700 and cp <= 0x2B73F) or  #
-            (cp >= 0x2B740 and cp <= 0x2B81F) or  #
-            (cp >= 0x2B820 and cp <= 0x2CEAF) or
-            (cp >= 0xF900 and cp <= 0xFAFF) or  #
-                (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
+        if ((cp >= 0x4E00 and cp <= 0x9FFF)  #
+                or (cp >= 0x3400 and cp <= 0x4DBF)  #
+                or (cp >= 0x20000 and cp <= 0x2A6DF)  #
+                or (cp >= 0x2A700 and cp <= 0x2B73F)  #
+                or (cp >= 0x2B740 and cp <= 0x2B81F)  #
+                or (cp >= 0x2B820 and cp <= 0x2CEAF)
+                or (cp >= 0xF900 and cp <= 0xFAFF)  #
+                or (cp >= 0x2F800 and cp <= 0x2FA1F)):  #
             return True
 
         return False
@@ -291,7 +292,7 @@ class BasicTokenizer(object):
         output = []
         for char in text:
             cp = ord(char)
-            if cp == 0 or cp == 0xfffd or _is_control(char):
+            if cp == 0 or cp == 0xFFFD or _is_control(char):
                 continue
             if _is_whitespace(char):
                 output.append(" ")
@@ -302,7 +303,6 @@ class BasicTokenizer(object):
 
 class WordpieceTokenizer(object):
     """Runs WordPiece tokenziation."""
-
     def __init__(self, vocab, unk_token="[UNK]", max_input_chars_per_word=200):
         self.vocab = vocab
         self.unk_token = unk_token
@@ -393,8 +393,8 @@ def _is_punctuation(char):
     # Characters such as "^", "$", and "`" are not in the Unicode
     # Punctuation class but we treat them as punctuation anyways, for
     # consistency.
-    if ((cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64) or
-            (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126)):
+    if ((cp >= 33 and cp <= 47) or (cp >= 58 and cp <= 64)
+            or (cp >= 91 and cp <= 96) or (cp >= 123 and cp <= 126)):
         return True
     cat = unicodedata.category(char)
     if cat.startswith("P"):

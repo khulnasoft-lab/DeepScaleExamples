@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 import warnings
 from collections import OrderedDict
 
@@ -44,7 +43,10 @@ from ..bert.modeling_tf_bert import (
     TFBertLMHeadModel,
     TFBertModel,
 )
-from ..blenderbot.modeling_tf_blenderbot import TFBlenderbotForConditionalGeneration, TFBlenderbotModel
+from ..blenderbot.modeling_tf_blenderbot import (
+    TFBlenderbotForConditionalGeneration,
+    TFBlenderbotModel,
+)
 from ..blenderbot_small.modeling_tf_blenderbot_small import (
     TFBlenderbotSmallForConditionalGeneration,
     TFBlenderbotSmallModel,
@@ -65,7 +67,11 @@ from ..convbert.modeling_tf_convbert import (
     TFConvBertForTokenClassification,
     TFConvBertModel,
 )
-from ..ctrl.modeling_tf_ctrl import TFCTRLForSequenceClassification, TFCTRLLMHeadModel, TFCTRLModel
+from ..ctrl.modeling_tf_ctrl import (
+    TFCTRLForSequenceClassification,
+    TFCTRLLMHeadModel,
+    TFCTRLModel,
+)
 from ..distilbert.modeling_tf_distilbert import (
     TFDistilBertForMaskedLM,
     TFDistilBertForMultipleChoice,
@@ -101,7 +107,11 @@ from ..funnel.modeling_tf_funnel import (
     TFFunnelForTokenClassification,
     TFFunnelModel,
 )
-from ..gpt2.modeling_tf_gpt2 import TFGPT2ForSequenceClassification, TFGPT2LMHeadModel, TFGPT2Model
+from ..gpt2.modeling_tf_gpt2 import (
+    TFGPT2ForSequenceClassification,
+    TFGPT2LMHeadModel,
+    TFGPT2Model,
+)
 from ..led.modeling_tf_led import TFLEDForConditionalGeneration, TFLEDModel
 from ..longformer.modeling_tf_longformer import (
     TFLongformerForMaskedLM,
@@ -133,8 +143,15 @@ from ..mpnet.modeling_tf_mpnet import (
     TFMPNetModel,
 )
 from ..mt5.modeling_tf_mt5 import TFMT5ForConditionalGeneration, TFMT5Model
-from ..openai.modeling_tf_openai import TFOpenAIGPTForSequenceClassification, TFOpenAIGPTLMHeadModel, TFOpenAIGPTModel
-from ..pegasus.modeling_tf_pegasus import TFPegasusForConditionalGeneration, TFPegasusModel
+from ..openai.modeling_tf_openai import (
+    TFOpenAIGPTForSequenceClassification,
+    TFOpenAIGPTLMHeadModel,
+    TFOpenAIGPTModel,
+)
+from ..pegasus.modeling_tf_pegasus import (
+    TFPegasusForConditionalGeneration,
+    TFPegasusModel,
+)
 from ..roberta.modeling_tf_roberta import (
     TFRobertaForMaskedLM,
     TFRobertaForMultipleChoice,
@@ -208,249 +225,223 @@ from .configuration_auto import (
     replace_list_option_in_docstrings,
 )
 
-
 logger = logging.get_logger(__name__)
 
+TF_MODEL_MAPPING = OrderedDict([
+    # Base model mapping
+    (ConvBertConfig, TFConvBertModel),
+    (LEDConfig, TFLEDModel),
+    (LxmertConfig, TFLxmertModel),
+    (MT5Config, TFMT5Model),
+    (T5Config, TFT5Model),
+    (DistilBertConfig, TFDistilBertModel),
+    (AlbertConfig, TFAlbertModel),
+    (BartConfig, TFBartModel),
+    (CamembertConfig, TFCamembertModel),
+    (XLMRobertaConfig, TFXLMRobertaModel),
+    (LongformerConfig, TFLongformerModel),
+    (RobertaConfig, TFRobertaModel),
+    (BertConfig, TFBertModel),
+    (OpenAIGPTConfig, TFOpenAIGPTModel),
+    (GPT2Config, TFGPT2Model),
+    (MobileBertConfig, TFMobileBertModel),
+    (TransfoXLConfig, TFTransfoXLModel),
+    (XLNetConfig, TFXLNetModel),
+    (FlaubertConfig, TFFlaubertModel),
+    (XLMConfig, TFXLMModel),
+    (CTRLConfig, TFCTRLModel),
+    (ElectraConfig, TFElectraModel),
+    (FunnelConfig, TFFunnelModel),
+    (DPRConfig, TFDPRQuestionEncoder),
+    (MPNetConfig, TFMPNetModel),
+    (BartConfig, TFBartModel),
+    (MBartConfig, TFMBartModel),
+    (MarianConfig, TFMarianModel),
+    (PegasusConfig, TFPegasusModel),
+    (BlenderbotConfig, TFBlenderbotModel),
+    (BlenderbotSmallConfig, TFBlenderbotSmallModel),
+])
 
-TF_MODEL_MAPPING = OrderedDict(
-    [
-        # Base model mapping
-        (ConvBertConfig, TFConvBertModel),
-        (LEDConfig, TFLEDModel),
-        (LxmertConfig, TFLxmertModel),
-        (MT5Config, TFMT5Model),
-        (T5Config, TFT5Model),
-        (DistilBertConfig, TFDistilBertModel),
-        (AlbertConfig, TFAlbertModel),
-        (BartConfig, TFBartModel),
-        (CamembertConfig, TFCamembertModel),
-        (XLMRobertaConfig, TFXLMRobertaModel),
-        (LongformerConfig, TFLongformerModel),
-        (RobertaConfig, TFRobertaModel),
-        (BertConfig, TFBertModel),
-        (OpenAIGPTConfig, TFOpenAIGPTModel),
-        (GPT2Config, TFGPT2Model),
-        (MobileBertConfig, TFMobileBertModel),
-        (TransfoXLConfig, TFTransfoXLModel),
-        (XLNetConfig, TFXLNetModel),
-        (FlaubertConfig, TFFlaubertModel),
-        (XLMConfig, TFXLMModel),
-        (CTRLConfig, TFCTRLModel),
-        (ElectraConfig, TFElectraModel),
-        (FunnelConfig, TFFunnelModel),
-        (DPRConfig, TFDPRQuestionEncoder),
-        (MPNetConfig, TFMPNetModel),
-        (BartConfig, TFBartModel),
-        (MBartConfig, TFMBartModel),
-        (MarianConfig, TFMarianModel),
-        (PegasusConfig, TFPegasusModel),
-        (BlenderbotConfig, TFBlenderbotModel),
-        (BlenderbotSmallConfig, TFBlenderbotSmallModel),
-    ]
-)
+TF_MODEL_FOR_PRETRAINING_MAPPING = OrderedDict([
+    # Model for pre-training mapping
+    (LxmertConfig, TFLxmertForPreTraining),
+    (T5Config, TFT5ForConditionalGeneration),
+    (DistilBertConfig, TFDistilBertForMaskedLM),
+    (AlbertConfig, TFAlbertForPreTraining),
+    (BartConfig, TFBartForConditionalGeneration),
+    (CamembertConfig, TFCamembertForMaskedLM),
+    (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
+    (RobertaConfig, TFRobertaForMaskedLM),
+    (BertConfig, TFBertForPreTraining),
+    (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
+    (GPT2Config, TFGPT2LMHeadModel),
+    (MobileBertConfig, TFMobileBertForPreTraining),
+    (TransfoXLConfig, TFTransfoXLLMHeadModel),
+    (XLNetConfig, TFXLNetLMHeadModel),
+    (FlaubertConfig, TFFlaubertWithLMHeadModel),
+    (XLMConfig, TFXLMWithLMHeadModel),
+    (CTRLConfig, TFCTRLLMHeadModel),
+    (ElectraConfig, TFElectraForPreTraining),
+    (FunnelConfig, TFFunnelForPreTraining),
+    (MPNetConfig, TFMPNetForMaskedLM),
+])
 
-TF_MODEL_FOR_PRETRAINING_MAPPING = OrderedDict(
-    [
-        # Model for pre-training mapping
-        (LxmertConfig, TFLxmertForPreTraining),
-        (T5Config, TFT5ForConditionalGeneration),
-        (DistilBertConfig, TFDistilBertForMaskedLM),
-        (AlbertConfig, TFAlbertForPreTraining),
-        (BartConfig, TFBartForConditionalGeneration),
-        (CamembertConfig, TFCamembertForMaskedLM),
-        (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
-        (RobertaConfig, TFRobertaForMaskedLM),
-        (BertConfig, TFBertForPreTraining),
-        (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
-        (GPT2Config, TFGPT2LMHeadModel),
-        (MobileBertConfig, TFMobileBertForPreTraining),
-        (TransfoXLConfig, TFTransfoXLLMHeadModel),
-        (XLNetConfig, TFXLNetLMHeadModel),
-        (FlaubertConfig, TFFlaubertWithLMHeadModel),
-        (XLMConfig, TFXLMWithLMHeadModel),
-        (CTRLConfig, TFCTRLLMHeadModel),
-        (ElectraConfig, TFElectraForPreTraining),
-        (FunnelConfig, TFFunnelForPreTraining),
-        (MPNetConfig, TFMPNetForMaskedLM),
-    ]
-)
+TF_MODEL_WITH_LM_HEAD_MAPPING = OrderedDict([
+    # Model with LM heads mapping
+    (ConvBertConfig, TFConvBertForMaskedLM),
+    (LEDConfig, TFLEDForConditionalGeneration),
+    (T5Config, TFT5ForConditionalGeneration),
+    (DistilBertConfig, TFDistilBertForMaskedLM),
+    (AlbertConfig, TFAlbertForMaskedLM),
+    (MarianConfig, TFMarianMTModel),
+    (BartConfig, TFBartForConditionalGeneration),
+    (CamembertConfig, TFCamembertForMaskedLM),
+    (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
+    (LongformerConfig, TFLongformerForMaskedLM),
+    (RobertaConfig, TFRobertaForMaskedLM),
+    (BertConfig, TFBertForMaskedLM),
+    (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
+    (GPT2Config, TFGPT2LMHeadModel),
+    (MobileBertConfig, TFMobileBertForMaskedLM),
+    (TransfoXLConfig, TFTransfoXLLMHeadModel),
+    (XLNetConfig, TFXLNetLMHeadModel),
+    (FlaubertConfig, TFFlaubertWithLMHeadModel),
+    (XLMConfig, TFXLMWithLMHeadModel),
+    (CTRLConfig, TFCTRLLMHeadModel),
+    (ElectraConfig, TFElectraForMaskedLM),
+    (FunnelConfig, TFFunnelForMaskedLM),
+    (MPNetConfig, TFMPNetForMaskedLM),
+])
 
-TF_MODEL_WITH_LM_HEAD_MAPPING = OrderedDict(
-    [
-        # Model with LM heads mapping
-        (ConvBertConfig, TFConvBertForMaskedLM),
-        (LEDConfig, TFLEDForConditionalGeneration),
-        (T5Config, TFT5ForConditionalGeneration),
-        (DistilBertConfig, TFDistilBertForMaskedLM),
-        (AlbertConfig, TFAlbertForMaskedLM),
-        (MarianConfig, TFMarianMTModel),
-        (BartConfig, TFBartForConditionalGeneration),
-        (CamembertConfig, TFCamembertForMaskedLM),
-        (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
-        (LongformerConfig, TFLongformerForMaskedLM),
-        (RobertaConfig, TFRobertaForMaskedLM),
-        (BertConfig, TFBertForMaskedLM),
-        (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
-        (GPT2Config, TFGPT2LMHeadModel),
-        (MobileBertConfig, TFMobileBertForMaskedLM),
-        (TransfoXLConfig, TFTransfoXLLMHeadModel),
-        (XLNetConfig, TFXLNetLMHeadModel),
-        (FlaubertConfig, TFFlaubertWithLMHeadModel),
-        (XLMConfig, TFXLMWithLMHeadModel),
-        (CTRLConfig, TFCTRLLMHeadModel),
-        (ElectraConfig, TFElectraForMaskedLM),
-        (FunnelConfig, TFFunnelForMaskedLM),
-        (MPNetConfig, TFMPNetForMaskedLM),
-    ]
-)
+TF_MODEL_FOR_CAUSAL_LM_MAPPING = OrderedDict([
+    # Model for Causal LM mapping
+    (BertConfig, TFBertLMHeadModel),
+    (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
+    (GPT2Config, TFGPT2LMHeadModel),
+    (TransfoXLConfig, TFTransfoXLLMHeadModel),
+    (XLNetConfig, TFXLNetLMHeadModel),
+    (
+        XLMConfig,
+        TFXLMWithLMHeadModel,
+    ),  # XLM can be MLM and CLM => model should be split similar to BERT; leave here for now
+    (CTRLConfig, TFCTRLLMHeadModel),
+])
 
-TF_MODEL_FOR_CAUSAL_LM_MAPPING = OrderedDict(
-    [
-        # Model for Causal LM mapping
-        (BertConfig, TFBertLMHeadModel),
-        (OpenAIGPTConfig, TFOpenAIGPTLMHeadModel),
-        (GPT2Config, TFGPT2LMHeadModel),
-        (TransfoXLConfig, TFTransfoXLLMHeadModel),
-        (XLNetConfig, TFXLNetLMHeadModel),
-        (
-            XLMConfig,
-            TFXLMWithLMHeadModel,
-        ),  # XLM can be MLM and CLM => model should be split similar to BERT; leave here for now
-        (CTRLConfig, TFCTRLLMHeadModel),
-    ]
-)
+TF_MODEL_FOR_MASKED_LM_MAPPING = OrderedDict([
+    # Model for Masked LM mapping
+    (ConvBertConfig, TFConvBertForMaskedLM),
+    (DistilBertConfig, TFDistilBertForMaskedLM),
+    (AlbertConfig, TFAlbertForMaskedLM),
+    (CamembertConfig, TFCamembertForMaskedLM),
+    (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
+    (LongformerConfig, TFLongformerForMaskedLM),
+    (RobertaConfig, TFRobertaForMaskedLM),
+    (BertConfig, TFBertForMaskedLM),
+    (MobileBertConfig, TFMobileBertForMaskedLM),
+    (FlaubertConfig, TFFlaubertWithLMHeadModel),
+    (XLMConfig, TFXLMWithLMHeadModel),
+    (ElectraConfig, TFElectraForMaskedLM),
+    (FunnelConfig, TFFunnelForMaskedLM),
+    (MPNetConfig, TFMPNetForMaskedLM),
+])
 
-TF_MODEL_FOR_MASKED_LM_MAPPING = OrderedDict(
-    [
-        # Model for Masked LM mapping
-        (ConvBertConfig, TFConvBertForMaskedLM),
-        (DistilBertConfig, TFDistilBertForMaskedLM),
-        (AlbertConfig, TFAlbertForMaskedLM),
-        (CamembertConfig, TFCamembertForMaskedLM),
-        (XLMRobertaConfig, TFXLMRobertaForMaskedLM),
-        (LongformerConfig, TFLongformerForMaskedLM),
-        (RobertaConfig, TFRobertaForMaskedLM),
-        (BertConfig, TFBertForMaskedLM),
-        (MobileBertConfig, TFMobileBertForMaskedLM),
-        (FlaubertConfig, TFFlaubertWithLMHeadModel),
-        (XLMConfig, TFXLMWithLMHeadModel),
-        (ElectraConfig, TFElectraForMaskedLM),
-        (FunnelConfig, TFFunnelForMaskedLM),
-        (MPNetConfig, TFMPNetForMaskedLM),
-    ]
-)
+TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING = OrderedDict([
+    # Model for Seq2Seq Causal LM mapping
+    (LEDConfig, TFLEDForConditionalGeneration),
+    (MT5Config, TFMT5ForConditionalGeneration),
+    (T5Config, TFT5ForConditionalGeneration),
+    (MarianConfig, TFMarianMTModel),
+    (MBartConfig, TFMBartForConditionalGeneration),
+    (PegasusConfig, TFPegasusForConditionalGeneration),
+    (BlenderbotConfig, TFBlenderbotForConditionalGeneration),
+    (BlenderbotSmallConfig, TFBlenderbotSmallForConditionalGeneration),
+    (BartConfig, TFBartForConditionalGeneration),
+])
 
+TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING = OrderedDict([
+    # Model for Sequence Classification mapping
+    (ConvBertConfig, TFConvBertForSequenceClassification),
+    (DistilBertConfig, TFDistilBertForSequenceClassification),
+    (AlbertConfig, TFAlbertForSequenceClassification),
+    (CamembertConfig, TFCamembertForSequenceClassification),
+    (XLMRobertaConfig, TFXLMRobertaForSequenceClassification),
+    (LongformerConfig, TFLongformerForSequenceClassification),
+    (RobertaConfig, TFRobertaForSequenceClassification),
+    (BertConfig, TFBertForSequenceClassification),
+    (XLNetConfig, TFXLNetForSequenceClassification),
+    (MobileBertConfig, TFMobileBertForSequenceClassification),
+    (FlaubertConfig, TFFlaubertForSequenceClassification),
+    (XLMConfig, TFXLMForSequenceClassification),
+    (ElectraConfig, TFElectraForSequenceClassification),
+    (FunnelConfig, TFFunnelForSequenceClassification),
+    (GPT2Config, TFGPT2ForSequenceClassification),
+    (MPNetConfig, TFMPNetForSequenceClassification),
+    (OpenAIGPTConfig, TFOpenAIGPTForSequenceClassification),
+    (TransfoXLConfig, TFTransfoXLForSequenceClassification),
+    (CTRLConfig, TFCTRLForSequenceClassification),
+])
 
-TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING = OrderedDict(
-    [
-        # Model for Seq2Seq Causal LM mapping
-        (LEDConfig, TFLEDForConditionalGeneration),
-        (MT5Config, TFMT5ForConditionalGeneration),
-        (T5Config, TFT5ForConditionalGeneration),
-        (MarianConfig, TFMarianMTModel),
-        (MBartConfig, TFMBartForConditionalGeneration),
-        (PegasusConfig, TFPegasusForConditionalGeneration),
-        (BlenderbotConfig, TFBlenderbotForConditionalGeneration),
-        (BlenderbotSmallConfig, TFBlenderbotSmallForConditionalGeneration),
-        (BartConfig, TFBartForConditionalGeneration),
-    ]
-)
+TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING = OrderedDict([
+    # Model for Question Answering mapping
+    (ConvBertConfig, TFConvBertForQuestionAnswering),
+    (DistilBertConfig, TFDistilBertForQuestionAnswering),
+    (AlbertConfig, TFAlbertForQuestionAnswering),
+    (CamembertConfig, TFCamembertForQuestionAnswering),
+    (XLMRobertaConfig, TFXLMRobertaForQuestionAnswering),
+    (LongformerConfig, TFLongformerForQuestionAnswering),
+    (RobertaConfig, TFRobertaForQuestionAnswering),
+    (BertConfig, TFBertForQuestionAnswering),
+    (XLNetConfig, TFXLNetForQuestionAnsweringSimple),
+    (MobileBertConfig, TFMobileBertForQuestionAnswering),
+    (FlaubertConfig, TFFlaubertForQuestionAnsweringSimple),
+    (XLMConfig, TFXLMForQuestionAnsweringSimple),
+    (ElectraConfig, TFElectraForQuestionAnswering),
+    (FunnelConfig, TFFunnelForQuestionAnswering),
+    (MPNetConfig, TFMPNetForQuestionAnswering),
+])
 
-TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING = OrderedDict(
-    [
-        # Model for Sequence Classification mapping
-        (ConvBertConfig, TFConvBertForSequenceClassification),
-        (DistilBertConfig, TFDistilBertForSequenceClassification),
-        (AlbertConfig, TFAlbertForSequenceClassification),
-        (CamembertConfig, TFCamembertForSequenceClassification),
-        (XLMRobertaConfig, TFXLMRobertaForSequenceClassification),
-        (LongformerConfig, TFLongformerForSequenceClassification),
-        (RobertaConfig, TFRobertaForSequenceClassification),
-        (BertConfig, TFBertForSequenceClassification),
-        (XLNetConfig, TFXLNetForSequenceClassification),
-        (MobileBertConfig, TFMobileBertForSequenceClassification),
-        (FlaubertConfig, TFFlaubertForSequenceClassification),
-        (XLMConfig, TFXLMForSequenceClassification),
-        (ElectraConfig, TFElectraForSequenceClassification),
-        (FunnelConfig, TFFunnelForSequenceClassification),
-        (GPT2Config, TFGPT2ForSequenceClassification),
-        (MPNetConfig, TFMPNetForSequenceClassification),
-        (OpenAIGPTConfig, TFOpenAIGPTForSequenceClassification),
-        (TransfoXLConfig, TFTransfoXLForSequenceClassification),
-        (CTRLConfig, TFCTRLForSequenceClassification),
-    ]
-)
+TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING = OrderedDict([
+    # Model for Token Classification mapping
+    (ConvBertConfig, TFConvBertForTokenClassification),
+    (DistilBertConfig, TFDistilBertForTokenClassification),
+    (AlbertConfig, TFAlbertForTokenClassification),
+    (CamembertConfig, TFCamembertForTokenClassification),
+    (FlaubertConfig, TFFlaubertForTokenClassification),
+    (XLMConfig, TFXLMForTokenClassification),
+    (XLMRobertaConfig, TFXLMRobertaForTokenClassification),
+    (LongformerConfig, TFLongformerForTokenClassification),
+    (RobertaConfig, TFRobertaForTokenClassification),
+    (BertConfig, TFBertForTokenClassification),
+    (MobileBertConfig, TFMobileBertForTokenClassification),
+    (XLNetConfig, TFXLNetForTokenClassification),
+    (ElectraConfig, TFElectraForTokenClassification),
+    (FunnelConfig, TFFunnelForTokenClassification),
+    (MPNetConfig, TFMPNetForTokenClassification),
+])
 
-TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING = OrderedDict(
-    [
-        # Model for Question Answering mapping
-        (ConvBertConfig, TFConvBertForQuestionAnswering),
-        (DistilBertConfig, TFDistilBertForQuestionAnswering),
-        (AlbertConfig, TFAlbertForQuestionAnswering),
-        (CamembertConfig, TFCamembertForQuestionAnswering),
-        (XLMRobertaConfig, TFXLMRobertaForQuestionAnswering),
-        (LongformerConfig, TFLongformerForQuestionAnswering),
-        (RobertaConfig, TFRobertaForQuestionAnswering),
-        (BertConfig, TFBertForQuestionAnswering),
-        (XLNetConfig, TFXLNetForQuestionAnsweringSimple),
-        (MobileBertConfig, TFMobileBertForQuestionAnswering),
-        (FlaubertConfig, TFFlaubertForQuestionAnsweringSimple),
-        (XLMConfig, TFXLMForQuestionAnsweringSimple),
-        (ElectraConfig, TFElectraForQuestionAnswering),
-        (FunnelConfig, TFFunnelForQuestionAnswering),
-        (MPNetConfig, TFMPNetForQuestionAnswering),
-    ]
-)
+TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING = OrderedDict([
+    # Model for Multiple Choice mapping
+    (ConvBertConfig, TFConvBertForMultipleChoice),
+    (CamembertConfig, TFCamembertForMultipleChoice),
+    (XLMConfig, TFXLMForMultipleChoice),
+    (XLMRobertaConfig, TFXLMRobertaForMultipleChoice),
+    (LongformerConfig, TFLongformerForMultipleChoice),
+    (RobertaConfig, TFRobertaForMultipleChoice),
+    (BertConfig, TFBertForMultipleChoice),
+    (DistilBertConfig, TFDistilBertForMultipleChoice),
+    (MobileBertConfig, TFMobileBertForMultipleChoice),
+    (XLNetConfig, TFXLNetForMultipleChoice),
+    (FlaubertConfig, TFFlaubertForMultipleChoice),
+    (AlbertConfig, TFAlbertForMultipleChoice),
+    (ElectraConfig, TFElectraForMultipleChoice),
+    (FunnelConfig, TFFunnelForMultipleChoice),
+    (MPNetConfig, TFMPNetForMultipleChoice),
+])
 
-TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING = OrderedDict(
-    [
-        # Model for Token Classification mapping
-        (ConvBertConfig, TFConvBertForTokenClassification),
-        (DistilBertConfig, TFDistilBertForTokenClassification),
-        (AlbertConfig, TFAlbertForTokenClassification),
-        (CamembertConfig, TFCamembertForTokenClassification),
-        (FlaubertConfig, TFFlaubertForTokenClassification),
-        (XLMConfig, TFXLMForTokenClassification),
-        (XLMRobertaConfig, TFXLMRobertaForTokenClassification),
-        (LongformerConfig, TFLongformerForTokenClassification),
-        (RobertaConfig, TFRobertaForTokenClassification),
-        (BertConfig, TFBertForTokenClassification),
-        (MobileBertConfig, TFMobileBertForTokenClassification),
-        (XLNetConfig, TFXLNetForTokenClassification),
-        (ElectraConfig, TFElectraForTokenClassification),
-        (FunnelConfig, TFFunnelForTokenClassification),
-        (MPNetConfig, TFMPNetForTokenClassification),
-    ]
-)
-
-TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING = OrderedDict(
-    [
-        # Model for Multiple Choice mapping
-        (ConvBertConfig, TFConvBertForMultipleChoice),
-        (CamembertConfig, TFCamembertForMultipleChoice),
-        (XLMConfig, TFXLMForMultipleChoice),
-        (XLMRobertaConfig, TFXLMRobertaForMultipleChoice),
-        (LongformerConfig, TFLongformerForMultipleChoice),
-        (RobertaConfig, TFRobertaForMultipleChoice),
-        (BertConfig, TFBertForMultipleChoice),
-        (DistilBertConfig, TFDistilBertForMultipleChoice),
-        (MobileBertConfig, TFMobileBertForMultipleChoice),
-        (XLNetConfig, TFXLNetForMultipleChoice),
-        (FlaubertConfig, TFFlaubertForMultipleChoice),
-        (AlbertConfig, TFAlbertForMultipleChoice),
-        (ElectraConfig, TFElectraForMultipleChoice),
-        (FunnelConfig, TFFunnelForMultipleChoice),
-        (MPNetConfig, TFMPNetForMultipleChoice),
-    ]
-)
-
-TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING = OrderedDict(
-    [
-        (BertConfig, TFBertForNextSentencePrediction),
-        (MobileBertConfig, TFMobileBertForNextSentencePrediction),
-    ]
-)
-
+TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING = OrderedDict([
+    (BertConfig, TFBertForNextSentencePrediction),
+    (MobileBertConfig, TFMobileBertForNextSentencePrediction),
+])
 
 TF_AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
 
@@ -543,13 +534,11 @@ class TFAutoModel(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModel is designed to be instantiated "
             "using the `TFAutoModel.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModel.from_config(config)` methods."
-        )
+            "`TFAutoModel.from_config(config)` methods.")
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_MAPPING, use_model_types=False)
@@ -579,9 +568,10 @@ class TFAutoModel(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_MAPPING)
@@ -589,7 +579,8 @@ class TFAutoModel(object):
         "Instantiate one of the base model classes of the library from a pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
 
         Examples::
@@ -611,19 +602,23 @@ class TFAutoModel(object):
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_MAPPING.keys():
             return TF_MODEL_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in TF_MODEL_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForPreTraining(object):
@@ -635,16 +630,15 @@ class TFAutoModelForPreTraining(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForPreTraining is designed to be instantiated "
             "using the `TFAutoModelForPreTraining.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForPreTraining.from_config(config)` methods."
-        )
+            "`TFAutoModelForPreTraining.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_FOR_PRETRAINING_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with the architecture used for pretraining this
@@ -673,9 +667,11 @@ class TFAutoModelForPreTraining(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_FOR_PRETRAINING_MAPPING)
@@ -684,7 +680,8 @@ class TFAutoModelForPreTraining(object):
         "model---from a pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -705,19 +702,24 @@ class TFAutoModelForPreTraining(object):
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_PRETRAINING_MAPPING.keys():
-            return TF_MODEL_FOR_PRETRAINING_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_PRETRAINING_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_PRETRAINING_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelWithLMHead(object):
@@ -735,16 +737,15 @@ class TFAutoModelWithLMHead(object):
         :class:`~transformers.TFAutoModelForMaskedLM` for masked language models and
         :class:`~transformers.TFAutoModelForSeq2SeqLM` for encoder-decoder models.
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelWithLMHead is designed to be instantiated "
             "using the `TFAutoModelWithLMHead.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelWithLMHead.from_config(config)` methods."
-        )
+            "`TFAutoModelWithLMHead.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_WITH_LM_HEAD_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a language modeling head---from a configuration.
@@ -778,9 +779,11 @@ class TFAutoModelWithLMHead(object):
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_WITH_LM_HEAD_MAPPING)
@@ -789,7 +792,8 @@ class TFAutoModelWithLMHead(object):
         "model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -817,19 +821,24 @@ class TFAutoModelWithLMHead(object):
 
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_WITH_LM_HEAD_MAPPING.keys():
             return TF_MODEL_WITH_LM_HEAD_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_WITH_LM_HEAD_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForCausalLM:
@@ -840,16 +849,15 @@ class TFAutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForCausalLM is designed to be instantiated "
             "using the `TFAutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForCausalLM.from_config(config)` methods."
-        )
+            "`TFAutoModelForCausalLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_FOR_CAUSAL_LM_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a causal language modeling head---from a
@@ -878,9 +886,11 @@ class TFAutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_FOR_CAUSAL_LM_MAPPING)
@@ -889,7 +899,8 @@ class TFAutoModelForCausalLM:
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -910,19 +921,24 @@ class TFAutoModelForCausalLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys():
-            return TF_MODEL_FOR_CAUSAL_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_CAUSAL_LM_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForMaskedLM:
@@ -933,16 +949,15 @@ class TFAutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMaskedLM is designed to be instantiated "
             "using the `TFAutoModelForMaskedLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForMaskedLM.from_config(config)` methods."
-        )
+            "`TFAutoModelForMaskedLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_FOR_MASKED_LM_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a masked language modeling head---from a
@@ -971,9 +986,11 @@ class TFAutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_FOR_MASKED_LM_MAPPING)
@@ -982,7 +999,8 @@ class TFAutoModelForMaskedLM:
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1003,19 +1021,24 @@ class TFAutoModelForMaskedLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_MASKED_LM_MAPPING.keys():
-            return TF_MODEL_FOR_MASKED_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_MASKED_LM_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in TF_MODEL_FOR_MASKED_LM_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForSeq2SeqLM:
@@ -1027,16 +1050,15 @@ class TFAutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSeq2SeqLM is designed to be instantiated "
             "using the `TFAutoModelForSeq2SeqLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForSeq2SeqLM.from_config(config)` methods."
-        )
+            "`TFAutoModelForSeq2SeqLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence-to-sequence language modeling
@@ -1061,24 +1083,28 @@ class TFAutoModelForSeq2SeqLM:
             >>> model = TFAutoModelForSeq2SeqLM.from_config(config)
         """
         if type(config) in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys():
-            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(config)](config)
+            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a sequence-to-sequence language modeling "
         "head---from a pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1099,21 +1125,25 @@ class TFAutoModelForSeq2SeqLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys():
-            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForSequenceClassification(object):
@@ -1125,7 +1155,6 @@ class TFAutoModelForSequenceClassification(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForSequenceClassification is designed to be instantiated "
@@ -1134,7 +1163,8 @@ class TFAutoModelForSequenceClassification(object):
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence classification head---from a
@@ -1159,24 +1189,27 @@ class TFAutoModelForSequenceClassification(object):
             >>> model = TFAutoModelForSequenceClassification.from_config(config)
         """
         if type(config) in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)](config)
+            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a sequence classification head---from a "
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1197,21 +1230,24 @@ class TFAutoModelForSequenceClassification(object):
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          TF_MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForQuestionAnswering(object):
@@ -1223,16 +1259,15 @@ class TFAutoModelForQuestionAnswering(object):
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForQuestionAnswering is designed to be instantiated "
             "using the `TFAutoModelForQuestionAnswering.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForQuestionAnswering.from_config(config)` methods."
-        )
+            "`TFAutoModelForQuestionAnswering.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a question answering head---from a configuration.
@@ -1256,15 +1291,17 @@ class TFAutoModelForQuestionAnswering(object):
             >>> model = TFAutoModelForQuestionAnswering.from_config(config)
         """
         if type(config) in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys():
-            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(config)](config)
+            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING)
@@ -1273,7 +1310,8 @@ class TFAutoModelForQuestionAnswering(object):
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1294,21 +1332,25 @@ class TFAutoModelForQuestionAnswering(object):
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys():
-            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForTokenClassification:
@@ -1319,16 +1361,15 @@ class TFAutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForTokenClassification is designed to be instantiated "
             "using the `TFAutoModelForTokenClassification.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForTokenClassification.from_config(config)` methods."
-        )
+            "`TFAutoModelForTokenClassification.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a token classification head---from a configuration.
@@ -1352,24 +1393,28 @@ class TFAutoModelForTokenClassification:
             >>> model = TFAutoModelForTokenClassification.from_config(config)
         """
         if type(config) in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(config)](config)
+            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a token classification head---from a "
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1390,21 +1435,25 @@ class TFAutoModelForTokenClassification:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys():
-            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForMultipleChoice:
@@ -1416,16 +1465,15 @@ class TFAutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForMultipleChoice is designed to be instantiated "
             "using the `TFAutoModelForMultipleChoice.from_pretrained(pretrained_model_name_or_path)` or "
-            "`TFAutoModelForMultipleChoice.from_config(config)` methods."
-        )
+            "`TFAutoModelForMultipleChoice.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1456,9 +1504,10 @@ class TFAutoModelForMultipleChoice:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING)
@@ -1467,7 +1516,8 @@ class TFAutoModelForMultipleChoice:
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1488,21 +1538,25 @@ class TFAutoModelForMultipleChoice:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys():
-            return TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in TF_MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+            ))
 
 
 class TFAutoModelForNextSentencePrediction:
@@ -1514,7 +1568,6 @@ class TFAutoModelForNextSentencePrediction:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "TFAutoModelForNextSentencePrediction is designed to be instantiated "
@@ -1523,7 +1576,8 @@ class TFAutoModelForNextSentencePrediction:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a next sentence prediction head---from a
@@ -1547,25 +1601,30 @@ class TFAutoModelForNextSentencePrediction:
             >>> config = AutoConfig.from_pretrained('bert-base-uncased')
             >>> model = TFAutoModelForNextSentencePrediction.from_config(config)
         """
-        if type(config) in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys():
-            return TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)](config)
+        if type(config) in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys(
+        ):
+            return TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__ for c in
+                    TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING)
+    @replace_list_option_in_docstrings(
+        TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a next sentence prediction head---from a "
         "pretrained model.",
         TF_AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1586,18 +1645,23 @@ class TFAutoModelForNextSentencePrediction:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
-        if type(config) in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys():
-            return TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+        if type(config) in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys(
+        ):
+            return TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of TFAutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__ for c in
+                    TF_MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+            ))

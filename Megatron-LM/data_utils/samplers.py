@@ -21,6 +21,7 @@ import torch
 from torch.utils import data
 import numpy as np
 
+
 class RandomSampler(data.sampler.Sampler):
     r"""
     Based off of pytorch RandomSampler and DistributedSampler. Essentially a RandomSampler,
@@ -32,7 +33,6 @@ class RandomSampler(data.sampler.Sampler):
         num_samples (int): number of samples to draw, default=len(dataset)
         replacement (bool): samples are drawn with replacement if ``True``, default=False
     """
-
     def __init__(self, data_source, replacement=False, num_samples=None):
         self.data_source = data_source
         self.replacement = replacement
@@ -40,12 +40,14 @@ class RandomSampler(data.sampler.Sampler):
         self.epoch = -1
 
         if self._num_samples is not None and replacement is False:
-            raise ValueError("With replacement=False, num_samples should not be specified, "
-                             "since a random permute will be performed.")
+            raise ValueError(
+                "With replacement=False, num_samples should not be specified, "
+                "since a random permute will be performed.")
 
         if not isinstance(self.num_samples, int) or self.num_samples <= 0:
             raise ValueError("num_samples should be a positive integer "
-                             "value, but got num_samples={}".format(self.num_samples))
+                             "value, but got num_samples={}".format(
+                                 self.num_samples))
         if not isinstance(self.replacement, bool):
             raise ValueError("replacement should be a boolean value, but got "
                              "replacement={}".format(self.replacement))
@@ -63,7 +65,11 @@ class RandomSampler(data.sampler.Sampler):
         if self.epoch >= 0:
             g.manual_seed(self.epoch)
         if self.replacement:
-            return iter(torch.randint(high=n, size=(self.num_samples,), dtype=torch.int64, generator=g).tolist())
+            return iter(
+                torch.randint(high=n,
+                              size=(self.num_samples, ),
+                              dtype=torch.int64,
+                              generator=g).tolist())
         return iter(torch.randperm(n, generator=g).tolist())
 
     def __len__(self):
@@ -72,16 +78,24 @@ class RandomSampler(data.sampler.Sampler):
     def set_epoch(self, epoch):
         self.epoch = epoch
 
+
 class DistributedBatchSampler(data.sampler.BatchSampler):
     """
     similar to normal implementation of distributed sampler, except implementation is at the
     batch sampler level, instead of just the sampler level. This allows wrapping of arbitrary
     data samplers (sequential, random, WeightedRandomSampler, etc.) with this batch sampler.
     """
-    def __init__(self, sampler, batch_size, drop_last, rank=-1, world_size=2, wrap_last=False):
-        super(DistributedBatchSampler, self).__init__(sampler, batch_size, drop_last)
+    def __init__(self,
+                 sampler,
+                 batch_size,
+                 drop_last,
+                 rank=-1,
+                 world_size=2,
+                 wrap_last=False):
+        super(DistributedBatchSampler, self).__init__(sampler, batch_size,
+                                                      drop_last)
         if rank == -1:
-            assert False, 'should not be here'
+            assert False, "should not be here"
             rank = torch.distributed.get_rank()
         self.rank = rank
         self.world_size = world_size
@@ -107,11 +121,13 @@ class DistributedBatchSampler(data.sampler.BatchSampler):
         batch_len = len(batch)
         if batch_len > 0 and not self.drop_last:
             if self.wrap_last:
-                self.sampler.wrap_around -= (self.batch_size)
-                self.wrap_around += (len(batch))
+                self.sampler.wrap_around -= self.batch_size
+                self.wrap_around += len(batch)
                 self.wrap_around %= self.batch_size
                 if isinstance(self.sampler, TransposedSampler):
-                    for i, idx in enumerate(self.data_iterator(self.sampler, wrap_around=True)):
+                    for i, idx in enumerate(
+                            self.data_iterator(self.sampler,
+                                               wrap_around=True)):
                         if i == 0:
                             continue
                         batch.append(idx)
@@ -125,7 +141,7 @@ class DistributedBatchSampler(data.sampler.BatchSampler):
     def data_iterator(self, _iter, wrap_around=False):
         """iterates through data and handles wrap around"""
         for i, idx in enumerate(_iter):
-            if i < self.wrap_around%self.batch_size:
+            if i < self.wrap_around % self.batch_size:
                 continue
             if wrap_around:
                 self.wrap_around += 1
@@ -134,6 +150,6 @@ class DistributedBatchSampler(data.sampler.BatchSampler):
 
     def _batch(self, batch):
         """extracts samples only pertaining to this worker's batch"""
-        start = self.rank*self.batch_size//self.world_size
-        end = (self.rank+1)*self.batch_size//self.world_size
+        start = self.rank * self.batch_size // self.world_size
+        end = (self.rank + 1) * self.batch_size // self.world_size
         return batch[start:end]

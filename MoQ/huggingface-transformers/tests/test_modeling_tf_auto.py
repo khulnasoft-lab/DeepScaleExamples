@@ -13,12 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import unittest
 
 from transformers import is_tf_available
-from transformers.testing_utils import DUMMY_UNKWOWN_IDENTIFIER, SMALL_MODEL_IDENTIFIER, require_tf, slow
-
+from transformers.testing_utils import (
+    DUMMY_UNKWOWN_IDENTIFIER,
+    SMALL_MODEL_IDENTIFIER,
+    require_tf,
+    slow,
+)
 
 if is_tf_available():
     from transformers import (
@@ -54,9 +57,12 @@ if is_tf_available():
         TF_MODEL_MAPPING,
         TF_MODEL_WITH_LM_HEAD_MAPPING,
     )
-    from transformers.models.bert.modeling_tf_bert import TF_BERT_PRETRAINED_MODEL_ARCHIVE_LIST
-    from transformers.models.gpt2.modeling_tf_gpt2 import TF_GPT2_PRETRAINED_MODEL_ARCHIVE_LIST
-    from transformers.models.t5.modeling_tf_t5 import TF_T5_PRETRAINED_MODEL_ARCHIVE_LIST
+    from transformers.models.bert.modeling_tf_bert import (
+        TF_BERT_PRETRAINED_MODEL_ARCHIVE_LIST, )
+    from transformers.models.gpt2.modeling_tf_gpt2 import (
+        TF_GPT2_PRETRAINED_MODEL_ARCHIVE_LIST, )
+    from transformers.models.t5.modeling_tf_t5 import (
+        TF_T5_PRETRAINED_MODEL_ARCHIVE_LIST, )
 
 
 @require_tf
@@ -101,7 +107,8 @@ class TFAutoModelTest(unittest.TestCase):
             self.assertIsInstance(config, GPT2Config)
 
             model = TFAutoModelForCausalLM.from_pretrained(model_name)
-            model, loading_info = TFAutoModelForCausalLM.from_pretrained(model_name, output_loading_info=True)
+            model, loading_info = TFAutoModelForCausalLM.from_pretrained(
+                model_name, output_loading_info=True)
             self.assertIsNotNone(model)
             self.assertIsInstance(model, TFGPT2LMHeadModel)
 
@@ -124,7 +131,8 @@ class TFAutoModelTest(unittest.TestCase):
             self.assertIsInstance(config, BertConfig)
 
             model = TFAutoModelForMaskedLM.from_pretrained(model_name)
-            model, loading_info = TFAutoModelForMaskedLM.from_pretrained(model_name, output_loading_info=True)
+            model, loading_info = TFAutoModelForMaskedLM.from_pretrained(
+                model_name, output_loading_info=True)
             self.assertIsNotNone(model)
             self.assertIsInstance(model, TFBertForMaskedLM)
 
@@ -136,7 +144,8 @@ class TFAutoModelTest(unittest.TestCase):
             self.assertIsInstance(config, T5Config)
 
             model = TFAutoModelForSeq2SeqLM.from_pretrained(model_name)
-            model, loading_info = TFAutoModelForSeq2SeqLM.from_pretrained(model_name, output_loading_info=True)
+            model, loading_info = TFAutoModelForSeq2SeqLM.from_pretrained(
+                model_name, output_loading_info=True)
             self.assertIsNotNone(model)
             self.assertIsInstance(model, TFT5ForConditionalGeneration)
 
@@ -148,7 +157,8 @@ class TFAutoModelTest(unittest.TestCase):
             self.assertIsNotNone(config)
             self.assertIsInstance(config, BertConfig)
 
-            model = TFAutoModelForSequenceClassification.from_pretrained(model_name)
+            model = TFAutoModelForSequenceClassification.from_pretrained(
+                model_name)
             self.assertIsNotNone(model)
             self.assertIsInstance(model, TFBertForSequenceClassification)
 
@@ -194,9 +204,11 @@ class TFAutoModelTest(unittest.TestCase):
         for mapping in mappings:
             mapping = tuple(mapping.items())
             for index, (child_config, child_model) in enumerate(mapping[1:]):
-                for parent_config, parent_model in mapping[: index + 1]:
+                for parent_config, parent_model in mapping[:index + 1]:
                     with self.subTest(
-                        msg="Testing if {} is child of {}".format(child_config.__name__, parent_config.__name__)
-                    ):
-                        self.assertFalse(issubclass(child_config, parent_config))
+                            msg="Testing if {} is child of {}".format(
+                                child_config.__name__,
+                                parent_config.__name__)):
+                        self.assertFalse(
+                            issubclass(child_config, parent_config))
                         self.assertFalse(issubclass(child_model, parent_model))

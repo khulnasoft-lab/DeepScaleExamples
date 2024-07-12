@@ -17,7 +17,8 @@ import unittest
 from .test_pipelines_common import MonoInputPipelineCommonMixin
 
 
-class FeatureExtractionPipelineTests(MonoInputPipelineCommonMixin, unittest.TestCase):
+class FeatureExtractionPipelineTests(MonoInputPipelineCommonMixin,
+                                     unittest.TestCase):
     pipeline_task = "feature-extraction"
     small_models = [
         "sshleifer/tiny-distilbert-base-cased"

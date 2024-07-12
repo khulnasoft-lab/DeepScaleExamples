@@ -26,8 +26,12 @@ from filelock import FileLock
 from ...models.auto.modeling_auto import MODEL_FOR_QUESTION_ANSWERING_MAPPING
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
-from ..processors.squad import SquadFeatures, SquadV1Processor, SquadV2Processor, squad_convert_examples_to_features
-
+from ..processors.squad import (
+    SquadFeatures,
+    SquadV1Processor,
+    SquadV2Processor,
+    squad_convert_examples_to_features,
+)
 
 logger = logging.get_logger(__name__)
 
@@ -42,55 +46,88 @@ class SquadDataTrainingArguments:
     """
 
     model_type: str = field(
-        default=None, metadata={"help": "Model type selected in the list: " + ", ".join(MODEL_TYPES)}
+        default=None,
+        metadata={
+            "help":
+            "Model type selected in the list: " + ", ".join(MODEL_TYPES)
+        },
     )
     data_dir: str = field(
-        default=None, metadata={"help": "The input data dir. Should contain the .json files for the SQuAD task."}
+        default=None,
+        metadata={
+            "help":
+            "The input data dir. Should contain the .json files for the SQuAD task."
+        },
     )
     max_seq_length: int = field(
         default=128,
         metadata={
-            "help": "The maximum total input sequence length after tokenization. Sequences longer "
+            "help":
+            "The maximum total input sequence length after tokenization. Sequences longer "
             "than this will be truncated, sequences shorter will be padded."
         },
     )
     doc_stride: int = field(
         default=128,
-        metadata={"help": "When splitting up a long document into chunks, how much stride to take between chunks."},
+        metadata={
+            "help":
+            "When splitting up a long document into chunks, how much stride to take between chunks."
+        },
     )
     max_query_length: int = field(
         default=64,
         metadata={
-            "help": "The maximum number of tokens for the question. Questions longer than this will "
+            "help":
+            "The maximum number of tokens for the question. Questions longer than this will "
             "be truncated to this length."
         },
     )
     max_answer_length: int = field(
         default=30,
         metadata={
-            "help": "The maximum length of an answer that can be generated. This is needed because the start "
+            "help":
+            "The maximum length of an answer that can be generated. This is needed because the start "
             "and end predictions are not conditioned on one another."
         },
     )
     overwrite_cache: bool = field(
-        default=False, metadata={"help": "Overwrite the cached training and evaluation sets"}
+        default=False,
+        metadata={"help": "Overwrite the cached training and evaluation sets"},
     )
     version_2_with_negative: bool = field(
-        default=False, metadata={"help": "If true, the SQuAD examples contain some that do not have an answer."}
+        default=False,
+        metadata={
+            "help":
+            "If true, the SQuAD examples contain some that do not have an answer."
+        },
     )
     null_score_diff_threshold: float = field(
-        default=0.0, metadata={"help": "If null_score - best_non_null is greater than the threshold predict null."}
+        default=0.0,
+        metadata={
+            "help":
+            "If null_score - best_non_null is greater than the threshold predict null."
+        },
     )
     n_best_size: int = field(
-        default=20, metadata={"help": "If null_score - best_non_null is greater than the threshold predict null."}
+        default=20,
+        metadata={
+            "help":
+            "If null_score - best_non_null is greater than the threshold predict null."
+        },
     )
     lang_id: int = field(
         default=0,
         metadata={
-            "help": "language id of input for language-specific xlm models (see tokenization_xlm.PRETRAINED_INIT_CONFIGURATION)"
+            "help":
+            "language id of input for language-specific xlm models (see tokenization_xlm.PRETRAINED_INIT_CONFIGURATION)"
         },
     )
-    threads: int = field(default=1, metadata={"help": "multiple threads for converting example to features"})
+    threads: int = field(
+        default=1,
+        metadata={
+            "help": "multiple threads for converting example to features"
+        },
+    )
 
 
 class Split(Enum):
@@ -120,7 +157,8 @@ class SquadDataset(Dataset):
     ):
         self.args = args
         self.is_language_sensitive = is_language_sensitive
-        self.processor = SquadV2Processor() if args.version_2_with_negative else SquadV1Processor()
+        self.processor = (SquadV2Processor() if args.version_2_with_negative
+                          else SquadV1Processor())
         if isinstance(mode, str):
             try:
                 mode = Split[mode]
@@ -143,7 +181,8 @@ class SquadDataset(Dataset):
         # and the others will use the cache.
         lock_path = cached_features_file + ".lock"
         with FileLock(lock_path):
-            if os.path.exists(cached_features_file) and not args.overwrite_cache:
+            if os.path.exists(
+                    cached_features_file) and not args.overwrite_cache:
                 start = time.time()
                 self.old_features = torch.load(cached_features_file)
 
@@ -153,7 +192,8 @@ class SquadDataset(Dataset):
                 self.dataset = self.old_features.get("dataset", None)
                 self.examples = self.old_features.get("examples", None)
                 logger.info(
-                    f"Loading features from cached file {cached_features_file} [took %.3f s]", time.time() - start
+                    f"Loading features from cached file {cached_features_file} [took %.3f s]",
+                    time.time() - start,
                 )
 
                 if self.dataset is None or self.examples is None:
@@ -162,9 +202,11 @@ class SquadDataset(Dataset):
                     )
             else:
                 if mode == Split.dev:
-                    self.examples = self.processor.get_dev_examples(args.data_dir)
+                    self.examples = self.processor.get_dev_examples(
+                        args.data_dir)
                 else:
-                    self.examples = self.processor.get_train_examples(args.data_dir)
+                    self.examples = self.processor.get_train_examples(
+                        args.data_dir)
 
                 self.features, self.dataset = squad_convert_examples_to_features(
                     examples=self.examples,
@@ -179,12 +221,18 @@ class SquadDataset(Dataset):
 
                 start = time.time()
                 torch.save(
-                    {"features": self.features, "dataset": self.dataset, "examples": self.examples},
+                    {
+                        "features": self.features,
+                        "dataset": self.dataset,
+                        "examples": self.examples,
+                    },
                     cached_features_file,
                 )
                 # ^ This seems to take a lot of time so I want to investigate why and how we can improve.
                 logger.info(
-                    "Saving features into cached file %s [took %.3f s]", cached_features_file, time.time() - start
+                    "Saving features into cached file %s [took %.3f s]",
+                    cached_features_file,
+                    time.time() - start,
                 )
 
     def __len__(self):
@@ -207,7 +255,9 @@ class SquadDataset(Dataset):
             "token_type_ids": token_type_ids,
         }
 
-        if self.args.model_type in ["xlm", "roberta", "distilbert", "camembert"]:
+        if self.args.model_type in [
+                "xlm", "roberta", "distilbert", "camembert"
+        ]:
             del inputs["token_type_ids"]
 
         if self.args.model_type in ["xlnet", "xlm"]:
@@ -215,11 +265,19 @@ class SquadDataset(Dataset):
             if self.args.version_2_with_negative:
                 inputs.update({"is_impossible": is_impossible})
             if self.is_language_sensitive:
-                inputs.update({"langs": (torch.ones(input_ids.shape, dtype=torch.int64) * self.args.lang_id)})
+                inputs.update({
+                    "langs": (torch.ones(input_ids.shape, dtype=torch.int64) *
+                              self.args.lang_id)
+                })
 
         if self.mode == Split.train:
-            start_positions = torch.tensor(feature.start_position, dtype=torch.long)
-            end_positions = torch.tensor(feature.end_position, dtype=torch.long)
-            inputs.update({"start_positions": start_positions, "end_positions": end_positions})
+            start_positions = torch.tensor(feature.start_position,
+                                           dtype=torch.long)
+            end_positions = torch.tensor(feature.end_position,
+                                         dtype=torch.long)
+            inputs.update({
+                "start_positions": start_positions,
+                "end_positions": end_positions
+            })
 
         return inputs

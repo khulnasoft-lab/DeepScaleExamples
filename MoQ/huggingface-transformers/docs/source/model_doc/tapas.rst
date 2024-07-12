@@ -239,9 +239,9 @@ training example. It is advised to create a PyTorch dataset and a corresponding 
         ...     def __getitem__(self, idx):
         ...         item = data.iloc[idx]
         ...         table = pd.read_csv(table_csv_path + item.table_file).astype(str) # be sure to make your table data text only
-        ...         encoding = self.tokenizer(table=table, 
-        ...                                   queries=item.question, 
-        ...                                   answer_coordinates=item.answer_coordinates, 
+        ...         encoding = self.tokenizer(table=table,
+        ...                                   queries=item.question,
+        ...                                   answer_coordinates=item.answer_coordinates,
         ...                                   answer_text=item.answer_text,
         ...                                   truncation=True,
         ...                                   padding="max_length",
@@ -250,7 +250,7 @@ training example. It is advised to create a PyTorch dataset and a corresponding 
         ...         # remove the batch dimension which the tokenizer adds by default
         ...         encoding = {key: val.squeeze(0) for key, val in encoding.items()}
         ...         # add the float_answer which is also required (weak supervision for aggregation case)
-        ...         encoding["float_answer"] = torch.tensor(item.float_answer) 
+        ...         encoding["float_answer"] = torch.tensor(item.float_answer)
         ...         return encoding
         ...
         ...     def __len__(self):
@@ -295,7 +295,7 @@ the weak supervision for aggregation case):
 
         >>> for epoch in range(2):  # loop over the dataset multiple times
         ...    for idx, batch in enumerate(train_dataloader):
-        ...         # get the inputs; 
+        ...         # get the inputs;
         ...         input_ids = batch["input_ids"]
         ...         attention_mask = batch["attention_mask"]
         ...         token_type_ids = batch["token_type_ids"]
@@ -308,8 +308,8 @@ the weak supervision for aggregation case):
         ...         optimizer.zero_grad()
 
         ...         # forward + backward + optimize
-        ...         outputs = model(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids, 
-        ...                        labels=labels, numeric_values=numeric_values, numeric_values_scale=numeric_values_scale, 
+        ...         outputs = model(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids,
+        ...                        labels=labels, numeric_values=numeric_values, numeric_values_scale=numeric_values_scale,
         ...                        float_answer=float_answer)
         ...         loss = outputs.loss
         ...         loss.backward()
@@ -331,7 +331,7 @@ of that:
 .. code-block::
 
         >>> from transformers import TapasTokenizer, TapasForQuestionAnswering
-        >>> import pandas as pd 
+        >>> import pandas as pd
 
         >>> model_name = 'google/tapas-base-finetuned-wtq'
         >>> model = TapasForQuestionAnswering.from_pretrained(model_name)
@@ -340,11 +340,11 @@ of that:
         >>> data = {'Actors': ["Brad Pitt", "Leonardo Di Caprio", "George Clooney"], 'Number of movies': ["87", "53", "69"]}
         >>> queries = ["What is the name of the first actor?", "How many movies has George Clooney played in?", "What is the total number of movies?"]
         >>> table = pd.DataFrame.from_dict(data)
-        >>> inputs = tokenizer(table=table, queries=queries, padding='max_length', return_tensors="pt") 
+        >>> inputs = tokenizer(table=table, queries=queries, padding='max_length', return_tensors="pt")
         >>> outputs = model(**inputs)
         >>> predicted_answer_coordinates, predicted_aggregation_indices = tokenizer.convert_logits_to_predictions(
-        ...         inputs, 
-        ...         outputs.logits.detach(), 
+        ...         inputs,
+        ...         outputs.logits.detach(),
         ...         outputs.logits_aggregation.detach()
         ... )
 
@@ -371,7 +371,7 @@ of that:
         ...   if predicted_agg == "NONE":
         ...     print("Predicted answer: " + answer)
         ...   else:
-        ...     print("Predicted answer: " + predicted_agg + " > " + answer)    
+        ...     print("Predicted answer: " + predicted_agg + " > " + answer)
         What is the name of the first actor?
         Predicted answer: Brad Pitt
         How many movies has George Clooney played in?

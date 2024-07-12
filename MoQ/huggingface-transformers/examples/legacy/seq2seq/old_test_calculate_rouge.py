@@ -20,7 +20,6 @@ import pandas as pd
 from rouge_cli import calculate_rouge_path
 from utils import calculate_rouge
 
-
 PRED = [
     'Prosecutor: "No videos were used in the crash investigation" German papers say they saw a cell phone video of the final seconds on board Flight 9525. The Germanwings co-pilot says he had a "previous episode of severe depression" German airline confirms it knew of Andreas Lubitz\'s depression years before he took control.',
     "The Palestinian Authority officially becomes the 123rd member of the International Criminal Court. The formal accession was marked with a ceremony at The Hague, in the Netherlands. The Palestinians signed the ICC's founding Rome Statute in January. Israel and the United States opposed the Palestinians' efforts to join the body.",
@@ -35,19 +34,27 @@ TGT = [
 
 
 def test_disaggregated_scores_are_determinstic():
-    no_aggregation = calculate_rouge(PRED, TGT, bootstrap_aggregation=False, rouge_keys=["rouge2", "rougeL"])
+    no_aggregation = calculate_rouge(PRED,
+                                     TGT,
+                                     bootstrap_aggregation=False,
+                                     rouge_keys=["rouge2", "rougeL"])
     assert isinstance(no_aggregation, defaultdict)
-    no_aggregation_just_r2 = calculate_rouge(PRED, TGT, bootstrap_aggregation=False, rouge_keys=["rouge2"])
-    assert (
-        pd.DataFrame(no_aggregation["rouge2"]).fmeasure.mean()
-        == pd.DataFrame(no_aggregation_just_r2["rouge2"]).fmeasure.mean()
-    )
+    no_aggregation_just_r2 = calculate_rouge(PRED,
+                                             TGT,
+                                             bootstrap_aggregation=False,
+                                             rouge_keys=["rouge2"])
+    assert (pd.DataFrame(
+        no_aggregation["rouge2"]).fmeasure.mean() == pd.DataFrame(
+            no_aggregation_just_r2["rouge2"]).fmeasure.mean())
 
 
 def test_newline_cnn_improvement():
     k = "rougeLsum"
     score = calculate_rouge(PRED, TGT, newline_sep=True, rouge_keys=[k])[k]
-    score_no_sep = calculate_rouge(PRED, TGT, newline_sep=False, rouge_keys=[k])[k]
+    score_no_sep = calculate_rouge(PRED,
+                                   TGT,
+                                   newline_sep=False,
+                                   rouge_keys=[k])[k]
     assert score > score_no_sep
 
 
@@ -67,7 +74,8 @@ def test_single_sent_scores_dont_depend_on_newline_sep():
         "Margot Frank, died in 1945, a month earlier than previously thought.",
         'Prosecutor: "No videos were used in the crash investigation" German papers say they saw a cell phone video of the final seconds on board Flight 9525.',
     ]
-    assert calculate_rouge(pred, tgt, newline_sep=True) == calculate_rouge(pred, tgt, newline_sep=False)
+    assert calculate_rouge(pred, tgt, newline_sep=True) == calculate_rouge(
+        pred, tgt, newline_sep=False)
 
 
 def test_pegasus_newline():
@@ -79,16 +87,23 @@ def test_pegasus_newline():
         """ Marseille prosecutor says "so far no videos were used in the crash investigation" despite media reports . Journalists at Bild and Paris Match are "very confident" the video clip is real, an editor says . Andreas Lubitz had informed his Lufthansa training school of an episode of severe depression, airline says ."""
     ]
 
-    prev_score = calculate_rouge(pred, tgt, rouge_keys=["rougeLsum"], newline_sep=False)["rougeLsum"]
-    new_score = calculate_rouge(pred, tgt, rouge_keys=["rougeLsum"])["rougeLsum"]
+    prev_score = calculate_rouge(pred,
+                                 tgt,
+                                 rouge_keys=["rougeLsum"],
+                                 newline_sep=False)["rougeLsum"]
+    new_score = calculate_rouge(pred, tgt,
+                                rouge_keys=["rougeLsum"])["rougeLsum"]
     assert new_score > prev_score
 
 
 def test_rouge_cli():
     data_dir = Path("examples/seq2seq/test_data/wmt_en_ro")
-    metrics = calculate_rouge_path(data_dir.joinpath("test.source"), data_dir.joinpath("test.target"))
+    metrics = calculate_rouge_path(data_dir.joinpath("test.source"),
+                                   data_dir.joinpath("test.target"))
     assert isinstance(metrics, dict)
     metrics_default_dict = calculate_rouge_path(
-        data_dir.joinpath("test.source"), data_dir.joinpath("test.target"), bootstrap_aggregation=False
+        data_dir.joinpath("test.source"),
+        data_dir.joinpath("test.target"),
+        bootstrap_aggregation=False,
     )
     assert isinstance(metrics_default_dict, defaultdict)

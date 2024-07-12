@@ -26,16 +26,20 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_camembert": ["CAMEMBERT_PRETRAINED_CONFIG_ARCHIVE_MAP", "CamembertConfig"],
+    "configuration_camembert": [
+        "CAMEMBERT_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "CamembertConfig",
+    ],
 }
 
 if is_sentencepiece_available():
     _import_structure["tokenization_camembert"] = ["CamembertTokenizer"]
 
 if is_tokenizers_available():
-    _import_structure["tokenization_camembert_fast"] = ["CamembertTokenizerFast"]
+    _import_structure["tokenization_camembert_fast"] = [
+        "CamembertTokenizerFast"
+    ]
 
 if is_torch_available():
     _import_structure["modeling_camembert"] = [
@@ -60,9 +64,11 @@ if is_tf_available():
         "TFCamembertModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_camembert import CAMEMBERT_PRETRAINED_CONFIG_ARCHIVE_MAP, CamembertConfig
+    from .configuration_camembert import (
+        CAMEMBERT_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        CamembertConfig,
+    )
 
     if is_sentencepiece_available():
         from .tokenization_camembert import CamembertTokenizer

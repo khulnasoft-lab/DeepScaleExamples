@@ -25,9 +25,9 @@ from ...file_utils import (
     is_torch_available,
 )
 
-
 _import_structure = {
-    "configuration_marian": ["MARIAN_PRETRAINED_CONFIG_ARCHIVE_MAP", "MarianConfig"],
+    "configuration_marian":
+    ["MARIAN_PRETRAINED_CONFIG_ARCHIVE_MAP", "MarianConfig"],
 }
 
 if is_sentencepiece_available():
@@ -43,8 +43,9 @@ if is_torch_available():
     ]
 
 if is_tf_available():
-    _import_structure["modeling_tf_marian"] = ["TFMarianMTModel", "TFMarianModel"]
-
+    _import_structure["modeling_tf_marian"] = [
+        "TFMarianMTModel", "TFMarianModel"
+    ]
 
 if TYPE_CHECKING:
     from .configuration_marian import MARIAN_PRETRAINED_CONFIG_ARCHIVE_MAP, MarianConfig

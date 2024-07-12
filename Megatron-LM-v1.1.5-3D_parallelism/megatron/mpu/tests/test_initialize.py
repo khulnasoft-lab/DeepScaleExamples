@@ -18,13 +18,14 @@ from commons import initialize_distributed
 import mpu
 import torch
 import sys
+
 sys.path.append("../..")
 
 
 def test_initialize_model_parallel(model_parallel_size):
 
     if torch.distributed.get_rank() == 0:
-        print('> testing initialize_model_parallel with size {} ...'.format(
+        print("> testing initialize_model_parallel with size {} ...".format(
             model_parallel_size))
     model_parallel_size_ = min(model_parallel_size,
                                torch.distributed.get_world_size())
@@ -56,13 +57,13 @@ def test_initialize_model_parallel(model_parallel_size):
 
     torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        print('>> passed the test :-)')
+        print(">> passed the test :-)")
 
 
 def test_get_model_parallel_src_rank(model_parallel_size_):
 
     if torch.distributed.get_rank() == 0:
-        print('> testing get_model_parallel_src_rank with size {} ...'.format(
+        print("> testing get_model_parallel_src_rank with size {} ...".format(
             model_parallel_size_))
     model_parallel_size = min(model_parallel_size_,
                               torch.distributed.get_world_size())
@@ -79,17 +80,17 @@ def test_get_model_parallel_src_rank(model_parallel_size_):
 
     torch.distributed.barrier()
     if torch.distributed.get_rank() == 0:
-        print('>> passed the test :-)')
+        print(">> passed the test :-)")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     initialize_distributed()
     world_size = torch.distributed.get_world_size()
     model_parallel_size = 1
     while model_parallel_size <= world_size:
-        print_separator('test initialize model parallel')
+        print_separator("test initialize model parallel")
         test_initialize_model_parallel(model_parallel_size)
-        print_separator('test model parallel source rank')
+        print_separator("test model parallel source rank")
         test_get_model_parallel_src_rank(model_parallel_size)
         model_parallel_size *= 2

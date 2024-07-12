@@ -21,10 +21,8 @@ from ..file_utils import cached_property, is_tf_available, tf_required
 from ..utils import logging
 from .benchmark_args_utils import BenchmarkArguments
 
-
 if is_tf_available():
     import tensorflow as tf
-
 
 logger = logging.get_logger(__name__)
 
@@ -68,21 +66,26 @@ class TensorFlowBenchmarkArguments(BenchmarkArguments):
         default=0,
         metadata={"help": "CPU / GPU device index. Defaults to 0."},
     )
-    eager_mode: bool = field(default=False, metadata={"help": "Benchmark models in eager model."})
+    eager_mode: bool = field(
+        default=False, metadata={"help": "Benchmark models in eager model."})
     use_xla: bool = field(
         default=False,
         metadata={
-            "help": "Benchmark models using XLA JIT compilation. Note that `eager_model` has to be set to `False`."
+            "help":
+            "Benchmark models using XLA JIT compilation. Note that `eager_model` has to be set to `False`."
         },
     )
 
     @cached_property
     @tf_required
-    def _setup_tpu(self) -> Tuple["tf.distribute.cluster_resolver.TPUClusterResolver"]:
+    def _setup_tpu(
+            self
+    ) -> Tuple["tf.distribute.cluster_resolver.TPUClusterResolver"]:
         if self.tpu:
             try:
                 if self.tpu_name:
-                    tpu = tf.distribute.cluster_resolver.TPUClusterResolver(self.tpu_name)
+                    tpu = tf.distribute.cluster_resolver.TPUClusterResolver(
+                        self.tpu_name)
                 else:
                     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()
             except ValueError:
@@ -91,7 +94,10 @@ class TensorFlowBenchmarkArguments(BenchmarkArguments):
 
     @cached_property
     @tf_required
-    def _setup_strategy(self) -> Tuple["tf.distribute.Strategy", "tf.distribute.cluster_resolver.TPUClusterResolver"]:
+    def _setup_strategy(
+        self,
+    ) -> Tuple["tf.distribute.Strategy",
+               "tf.distribute.cluster_resolver.TPUClusterResolver"]:
         if self.is_tpu:
             tf.config.experimental_connect_to_cluster(self._setup_tpu)
             tf.tpu.experimental.initialize_tpu_system(self._setup_tpu)
@@ -101,11 +107,14 @@ class TensorFlowBenchmarkArguments(BenchmarkArguments):
             # currently no multi gpu is allowed
             if self.is_gpu:
                 # TODO: Currently only single GPU is supported
-                tf.config.set_visible_devices(self.gpu_list[self.device_idx], "GPU")
-                strategy = tf.distribute.OneDeviceStrategy(device=f"/gpu:{self.device_idx}")
+                tf.config.set_visible_devices(self.gpu_list[self.device_idx],
+                                              "GPU")
+                strategy = tf.distribute.OneDeviceStrategy(
+                    device=f"/gpu:{self.device_idx}")
             else:
                 tf.config.set_visible_devices([], "GPU")  # disable GPU
-                strategy = tf.distribute.OneDeviceStrategy(device=f"/cpu:{self.device_idx}")
+                strategy = tf.distribute.OneDeviceStrategy(
+                    device=f"/cpu:{self.device_idx}")
 
         return strategy
 

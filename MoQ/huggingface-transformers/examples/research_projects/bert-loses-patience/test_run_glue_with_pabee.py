@@ -4,8 +4,10 @@ import sys
 from unittest.mock import patch
 
 import run_glue_with_pabee
-from transformers.testing_utils import TestCasePlus, require_torch_non_multi_gpu_but_fix_me
-
+from transformers.testing_utils import (
+    TestCasePlus,
+    require_torch_non_multi_gpu_but_fix_me,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 

@@ -13,18 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import random
 import unittest
 
 import numpy as np
 
 from transformers import is_torch_available
-from transformers.testing_utils import require_sentencepiece, require_tokenizers, require_torch, slow, torch_device
+from transformers.testing_utils import (
+    require_sentencepiece,
+    require_tokenizers,
+    require_torch,
+    slow,
+    torch_device,
+)
 
 from .test_configuration_common import ConfigTester
 from .test_modeling_common import ModelTesterMixin, ids_tensor
-
 
 if is_torch_available():
     import torch
@@ -37,23 +41,20 @@ if is_torch_available():
         DebertaForTokenClassification,
         DebertaModel,
     )
-    from transformers.models.deberta.modeling_deberta import DEBERTA_PRETRAINED_MODEL_ARCHIVE_LIST
+    from transformers.models.deberta.modeling_deberta import (
+        DEBERTA_PRETRAINED_MODEL_ARCHIVE_LIST, )
 
 
 @require_torch
 class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
 
-    all_model_classes = (
-        (
-            DebertaModel,
-            DebertaForMaskedLM,
-            DebertaForSequenceClassification,
-            DebertaForTokenClassification,
-            DebertaForQuestionAnswering,
-        )
-        if is_torch_available()
-        else ()
-    )
+    all_model_classes = ((
+        DebertaModel,
+        DebertaForMaskedLM,
+        DebertaForSequenceClassification,
+        DebertaForTokenClassification,
+        DebertaForQuestionAnswering,
+    ) if is_torch_available() else ())
 
     test_torchscript = False
     test_pruning = False
@@ -116,22 +117,27 @@ class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
             self.scope = scope
 
         def prepare_config_and_inputs(self):
-            input_ids = ids_tensor([self.batch_size, self.seq_length], self.vocab_size)
+            input_ids = ids_tensor([self.batch_size, self.seq_length],
+                                   self.vocab_size)
 
             input_mask = None
             if self.use_input_mask:
-                input_mask = ids_tensor([self.batch_size, self.seq_length], vocab_size=2)
+                input_mask = ids_tensor([self.batch_size, self.seq_length],
+                                        vocab_size=2)
 
             token_type_ids = None
             if self.use_token_type_ids:
-                token_type_ids = ids_tensor([self.batch_size, self.seq_length], self.type_vocab_size)
+                token_type_ids = ids_tensor([self.batch_size, self.seq_length],
+                                            self.type_vocab_size)
 
             sequence_labels = None
             token_labels = None
             choice_labels = None
             if self.use_labels:
-                sequence_labels = ids_tensor([self.batch_size], self.type_sequence_label_size)
-                token_labels = ids_tensor([self.batch_size, self.seq_length], self.num_labels)
+                sequence_labels = ids_tensor([self.batch_size],
+                                             self.type_sequence_label_size)
+                token_labels = ids_tensor([self.batch_size, self.seq_length],
+                                          self.num_labels)
                 choice_labels = ids_tensor([self.batch_size], self.num_choices)
 
             config = DebertaConfig(
@@ -151,58 +157,125 @@ class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
                 pos_att_type=self.pos_att_type,
             )
 
-            return config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            return (
+                config,
+                input_ids,
+                token_type_ids,
+                input_mask,
+                sequence_labels,
+                token_labels,
+                choice_labels,
+            )
 
         def check_loss_output(self, result):
             self.parent.assertListEqual(list(result.loss.size()), [])
 
         def create_and_check_deberta_model(
-            self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            self,
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
         ):
             model = DebertaModel(config=config)
             model.to(torch_device)
             model.eval()
-            sequence_output = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids)[0]
-            sequence_output = model(input_ids, token_type_ids=token_type_ids)[0]
+            sequence_output = model(input_ids,
+                                    attention_mask=input_mask,
+                                    token_type_ids=token_type_ids)[0]
+            sequence_output = model(input_ids,
+                                    token_type_ids=token_type_ids)[0]
             sequence_output = model(input_ids)[0]
 
             self.parent.assertListEqual(
-                list(sequence_output.size()), [self.batch_size, self.seq_length, self.hidden_size]
+                list(sequence_output.size()),
+                [self.batch_size, self.seq_length, self.hidden_size],
             )
 
         def create_and_check_deberta_for_masked_lm(
-            self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            self,
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
         ):
             model = DebertaForMaskedLM(config=config)
             model.to(torch_device)
             model.eval()
-            result = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids, labels=token_labels)
+            result = model(
+                input_ids,
+                attention_mask=input_mask,
+                token_type_ids=token_type_ids,
+                labels=token_labels,
+            )
 
-            self.parent.assertEqual(result.logits.shape, (self.batch_size, self.seq_length, self.vocab_size))
+            self.parent.assertEqual(
+                result.logits.shape,
+                (self.batch_size, self.seq_length, self.vocab_size))
 
         def create_and_check_deberta_for_sequence_classification(
-            self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            self,
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
         ):
             config.num_labels = self.num_labels
             model = DebertaForSequenceClassification(config)
             model.to(torch_device)
             model.eval()
-            result = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids, labels=sequence_labels)
-            self.parent.assertListEqual(list(result.logits.size()), [self.batch_size, self.num_labels])
+            result = model(
+                input_ids,
+                attention_mask=input_mask,
+                token_type_ids=token_type_ids,
+                labels=sequence_labels,
+            )
+            self.parent.assertListEqual(list(result.logits.size()),
+                                        [self.batch_size, self.num_labels])
             self.check_loss_output(result)
 
         def create_and_check_deberta_for_token_classification(
-            self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            self,
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
         ):
             config.num_labels = self.num_labels
             model = DebertaForTokenClassification(config=config)
             model.to(torch_device)
             model.eval()
-            result = model(input_ids, attention_mask=input_mask, token_type_ids=token_type_ids, labels=token_labels)
-            self.parent.assertEqual(result.logits.shape, (self.batch_size, self.seq_length, self.num_labels))
+            result = model(
+                input_ids,
+                attention_mask=input_mask,
+                token_type_ids=token_type_ids,
+                labels=token_labels,
+            )
+            self.parent.assertEqual(
+                result.logits.shape,
+                (self.batch_size, self.seq_length, self.num_labels))
 
         def create_and_check_deberta_for_question_answering(
-            self, config, input_ids, token_type_ids, input_mask, sequence_labels, token_labels, choice_labels
+            self,
+            config,
+            input_ids,
+            token_type_ids,
+            input_mask,
+            sequence_labels,
+            token_labels,
+            choice_labels,
         ):
             model = DebertaForQuestionAnswering(config=config)
             model.to(torch_device)
@@ -214,8 +287,10 @@ class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
                 start_positions=sequence_labels,
                 end_positions=sequence_labels,
             )
-            self.parent.assertEqual(result.start_logits.shape, (self.batch_size, self.seq_length))
-            self.parent.assertEqual(result.end_logits.shape, (self.batch_size, self.seq_length))
+            self.parent.assertEqual(result.start_logits.shape,
+                                    (self.batch_size, self.seq_length))
+            self.parent.assertEqual(result.end_logits.shape,
+                                    (self.batch_size, self.seq_length))
 
         def prepare_config_and_inputs_for_common(self):
             config_and_inputs = self.prepare_config_and_inputs()
@@ -228,12 +303,18 @@ class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
                 token_labels,
                 choice_labels,
             ) = config_and_inputs
-            inputs_dict = {"input_ids": input_ids, "token_type_ids": token_type_ids, "attention_mask": input_mask}
+            inputs_dict = {
+                "input_ids": input_ids,
+                "token_type_ids": token_type_ids,
+                "attention_mask": input_mask,
+            }
             return config, inputs_dict
 
     def setUp(self):
         self.model_tester = DebertaModelTest.DebertaModelTester(self)
-        self.config_tester = ConfigTester(self, config_class=DebertaConfig, hidden_size=37)
+        self.config_tester = ConfigTester(self,
+                                          config_class=DebertaConfig,
+                                          hidden_size=37)
 
     def test_config(self):
         self.config_tester.run_common_tests()
@@ -244,19 +325,23 @@ class DebertaModelTest(ModelTesterMixin, unittest.TestCase):
 
     def test_for_sequence_classification(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_deberta_for_sequence_classification(*config_and_inputs)
+        self.model_tester.create_and_check_deberta_for_sequence_classification(
+            *config_and_inputs)
 
     def test_for_masked_lm(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_deberta_for_masked_lm(*config_and_inputs)
+        self.model_tester.create_and_check_deberta_for_masked_lm(
+            *config_and_inputs)
 
     def test_for_question_answering(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_deberta_for_question_answering(*config_and_inputs)
+        self.model_tester.create_and_check_deberta_for_question_answering(
+            *config_and_inputs)
 
     def test_for_token_classification(self):
         config_and_inputs = self.model_tester.prepare_config_and_inputs()
-        self.model_tester.create_and_check_deberta_for_token_classification(*config_and_inputs)
+        self.model_tester.create_and_check_deberta_for_token_classification(
+            *config_and_inputs)
 
     @slow
     def test_model_from_pretrained(self):
@@ -281,10 +366,16 @@ class DebertaModelIntegrationTest(unittest.TestCase):
         torch.cuda.manual_seed_all(0)
         model = DebertaModel.from_pretrained("microsoft/deberta-base")
 
-        input_ids = torch.tensor([[0, 31414, 232, 328, 740, 1140, 12695, 69, 46078, 1588, 2]])
+        input_ids = torch.tensor(
+            [[0, 31414, 232, 328, 740, 1140, 12695, 69, 46078, 1588, 2]])
         output = model(input_ids)[0]
         # compare the actual values for a slice.
-        expected_slice = torch.tensor(
-            [[[-0.0218, -0.6641, -0.3665], [-0.3907, -0.4716, -0.6640], [0.7461, 1.2570, -0.9063]]]
+        expected_slice = torch.tensor([[
+            [-0.0218, -0.6641, -0.3665],
+            [-0.3907, -0.4716, -0.6640],
+            [0.7461, 1.2570, -0.9063],
+        ]])
+        self.assertTrue(
+            torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4),
+            f"{output[:, :3, :3]}",
         )
-        self.assertTrue(torch.allclose(output[:, :3, :3], expected_slice, atol=1e-4), f"{output[:, :3, :3]}")

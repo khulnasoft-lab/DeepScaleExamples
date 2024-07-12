@@ -27,10 +27,10 @@ def get_lazy_path(path):
     """
     Gets directory path where lazy files are stored.
     """
-    return os.path.splitext(path)[0] + '.lazy'
+    return os.path.splitext(path)[0] + ".lazy"
 
 
-def exists_lazy(path, data_type='data'):
+def exists_lazy(path, data_type="data"):
     """
     Check if we've already made a lazy version of this file for the `data_type` field.
     """
@@ -39,12 +39,12 @@ def exists_lazy(path, data_type='data'):
     contents = os.listdir(get_lazy_path(path))
     if data_type not in contents:
         return False
-    if data_type + '.len.pkl' not in contents:
+    if data_type + ".len.pkl" not in contents:
         return False
     return True
 
 
-def make_lazy(path, strs, data_type='data'):
+def make_lazy(path, strs, data_type="data"):
     """
     Make lazy version of `data_type` field of the file. Byte offsets
     corresponding to data indices are stored in a `.len.pkl` data file.
@@ -53,19 +53,20 @@ def make_lazy(path, strs, data_type='data'):
     if not os.path.exists(lazypath):
         os.makedirs(lazypath)
     datapath = os.path.join(lazypath, data_type)
-    lenpath = os.path.join(lazypath, data_type + '.len.pkl')
-    if not torch.distributed.is_initialized() or torch.distributed.get_rank() == 0:
-        with open(datapath, 'wb') as f:
+    lenpath = os.path.join(lazypath, data_type + ".len.pkl")
+    if not torch.distributed.is_initialized() or torch.distributed.get_rank(
+    ) == 0:
+        with open(datapath, "wb") as f:
             str_lens = []
             str_cnt = 0
             for s in strs:
                 if isinstance(s, dict):
-                    s = s['text']
-                encoded = s.encode('utf-8')
+                    s = s["text"]
+                encoded = s.encode("utf-8")
                 f.write(encoded)
                 str_cnt = len(encoded)
                 str_lens.append(str_cnt)
-        pkl.dump(str_lens, open(lenpath, 'wb'))
+        pkl.dump(str_lens, open(lenpath, "wb"))
     else:
         while not os.path.exists(lenpath):
             time.sleep(1)
@@ -75,7 +76,10 @@ def split_strings(strings, start, chr_lens):
     """
     Split strings based on string lengths and given start.
     """
-    return [strings[i - start:j - start] for i, j in zip([start] + chr_lens[:-1], chr_lens)]
+    return [
+        strings[i - start:j - start]
+        for i, j in zip([start] + chr_lens[:-1], chr_lens)
+    ]
 
 
 class ProcessorTokenizer:
@@ -83,7 +87,6 @@ class ProcessorTokenizer:
     callable class that runs a preprocessing, as well as tokenization step,
     on input text.
     """
-
     def __init__(self, tokenizer, process_fn=None):
         self.tokenizer = tokenizer
         self.process_fn = process_fn
@@ -114,19 +117,18 @@ class lazy_array_loader(object):
         data_type2
         data_type2.len.pkl
     """
-
-    def __init__(self, path, data_type='data', mem_map=False, map_fn=None):
+    def __init__(self, path, data_type="data", mem_map=False, map_fn=None):
         lazypath = get_lazy_path(path)
         datapath = os.path.join(lazypath, data_type)
         # get file where array entries are concatenated into one big string
-        self._file = open(datapath, 'rb', buffering=0)
+        self._file = open(datapath, "rb", buffering=0)
         self.file = self._file
         # memory map file if necessary
         self.mem_map = mem_map
         if self.mem_map:
             self.file = mmap.mmap(self.file.fileno(), 0, prot=mmap.PROT_READ)
-        lenpath = os.path.join(lazypath, data_type + '.len.pkl')
-        self.lens = pkl.load(open(lenpath, 'rb'))
+        lenpath = os.path.join(lazypath, data_type + ".len.pkl")
+        self.lens = pkl.load(open(lenpath, "rb"))
         self.ends = list(accumulate(self.lens))
         self.dumb_ends = list(self.ends)
         self.read_lock = Lock()
@@ -140,7 +142,7 @@ class lazy_array_loader(object):
         combines preprocessing/tokenization into one callable.
         """
         if tokenizer is None:
-            if not hasattr(self, '_tokenizer'):
+            if not hasattr(self, "_tokenizer"):
                 self._tokenizer = tokenizer
         else:
             self._tokenizer = tokenizer
@@ -195,8 +197,8 @@ class lazy_array_loader(object):
         self.read_lock.release()
         # TODO: @raulp figure out mem map byte string bug
         # if mem map'd need to decode byte string to string
-        rtn = rtn.decode('utf-8', 'ignore')
+        rtn = rtn.decode("utf-8", "ignore")
         # rtn = str(rtn)
         if self.mem_map:
-            rtn = rtn.decode('unicode_escape')
+            rtn = rtn.decode("unicode_escape")
         return rtn

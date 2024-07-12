@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Tokenization class for model Reformer."""
 
-
 import os
 from shutil import copyfile
 from typing import Optional, Tuple
@@ -23,23 +22,23 @@ from ...file_utils import is_sentencepiece_available
 from ...tokenization_utils_fast import PreTrainedTokenizerFast
 from ...utils import logging
 
-
 if is_sentencepiece_available():
     from .tokenization_reformer import ReformerTokenizer
 else:
     ReformerTokenizer = None
 
-
 logger = logging.get_logger(__name__)
 
 SPIECE_UNDERLINE = "▁"
-
 
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
 # to file names for serializing Tokenizer instances
 ####################################################
-VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.json"}
+VOCAB_FILES_NAMES = {
+    "vocab_file": "spiece.model",
+    "tokenizer_file": "tokenizer.json"
+}
 
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
@@ -47,10 +46,12 @@ VOCAB_FILES_NAMES = {"vocab_file": "spiece.model", "tokenizer_file": "tokenizer.
 ####################################################
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "google/reformer-crime-and-punishment": "https://huggingface.co/google/reformer-crime-and-punishment/resolve/main/spiece.model"
+        "google/reformer-crime-and-punishment":
+        "https://huggingface.co/google/reformer-crime-and-punishment/resolve/main/spiece.model"
     },
     "tokenizer_file": {
-        "google/reformer-crime-and-punishment": "https://huggingface.co/google/reformer-crime-and-punishment/resolve/main/tokenizer.json"
+        "google/reformer-crime-and-punishment":
+        "https://huggingface.co/google/reformer-crime-and-punishment/resolve/main/tokenizer.json"
     },
 }
 
@@ -96,15 +97,13 @@ class ReformerTokenizerFast(PreTrainedTokenizerFast):
     model_input_names = ["input_ids", "attention_mask"]
     slow_tokenizer_class = ReformerTokenizer
 
-    def __init__(
-        self,
-        vocab_file,
-        tokenizer_file=None,
-        eos_token="</s>",
-        unk_token="<unk>",
-        additional_special_tokens=[],
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 tokenizer_file=None,
+                 eos_token="</s>",
+                 unk_token="<unk>",
+                 additional_special_tokens=[],
+                 **kwargs):
         super().__init__(
             vocab_file,
             tokenizer_file=tokenizer_file,
@@ -116,15 +115,20 @@ class ReformerTokenizerFast(PreTrainedTokenizerFast):
 
         self.vocab_file = vocab_file
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )

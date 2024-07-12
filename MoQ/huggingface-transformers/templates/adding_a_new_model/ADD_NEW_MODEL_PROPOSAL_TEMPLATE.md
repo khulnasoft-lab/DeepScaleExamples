@@ -30,12 +30,12 @@ Estimated End: [end date]
 Adding a new model is often difficult and requires an in-depth knowledge
 of the 🤗 Transformers library and ideally also of the model's original
 repository. At Hugging Face, we are trying to empower the community more
-and more to add models independently. 
+and more to add models independently.
 
-The following sections explain in detail how to add [camelcase name of model] 
+The following sections explain in detail how to add [camelcase name of model]
 to Transformers. You will work closely with [name of mentor] to
-integrate [camelcase name of model] into Transformers. By doing so, you will both gain a 
-theoretical and deep practical understanding of [camelcase name of model]. 
+integrate [camelcase name of model] into Transformers. By doing so, you will both gain a
+theoretical and deep practical understanding of [camelcase name of model].
 But more importantly, you will have made a major
 open-source contribution to Transformers. Along the way, you will:
 
@@ -53,7 +53,7 @@ library.
 General overview of 🤗 Transformers
 ----------------------------------
 
-First, you should get a general overview of 🤗 Transformers. Transformers 
+First, you should get a general overview of 🤗 Transformers. Transformers
 is a very opinionated library, so there is a chance that
 you don't agree with some of the library's philosophies or design
 choices. From our experience, however, we found that the fundamental
@@ -98,12 +98,12 @@ keep the level of abstraction to an absolute minimum. There are never
 more than two levels of abstraction for any model in the library.
 `BrandNewBertModel` inherits from
 `BrandNewBertPreTrainedModel` which in
-turn inherits from `PreTrainedModel` and that's it. 
+turn inherits from `PreTrainedModel` and that's it.
 As a general rule, we want to make sure
 that a new model only depends on `PreTrainedModel`. The
 important functionalities that are automatically provided to every new
 model are
-`PreTrainedModel.from_pretrained` and `PreTrainedModel.save_pretrained`, which are 
+`PreTrainedModel.from_pretrained` and `PreTrainedModel.save_pretrained`, which are
 used for serialization and deserialization. All
 of the other important functionalities, such as
 `BrandNewBertModel.forward` should be
@@ -257,7 +257,7 @@ happy to help you.
 #### Additional resources
 
  Before diving into the code, here are some additional resources that might be worth taking a look at:
- 
+
  - [link 1]
  - [link 2]
  - [link 3]
@@ -314,7 +314,7 @@ work on CPU is sufficient.
     original repository:
 
 ```bash
-git clone [link to original repo].git 
+git clone [link to original repo].git
 cd [lowercase name of model]
 pip install -e .
 ```
@@ -538,7 +538,7 @@ to make your debugging environment as efficient as possible.
     `transformers.file_utils.set_seed` if the old and new
     implementations are in the same framework.
 
-#### More details on how to create a debugging environment for [camelcase name of model] 
+#### More details on how to create a debugging environment for [camelcase name of model]
 
 [TODO FILL: Here the mentor should add very specific information on what the student should do]
 [to set up an efficient environment for the special requirements of this model]
@@ -607,7 +607,7 @@ You should do the following:
 ```
 
 5.  Once you are satisfied, go to the webpage of your fork on GitHub.
-    Click on "Pull request". Make sure to add the GitHub handle of 
+    Click on "Pull request". Make sure to add the GitHub handle of
 		[name of mentor] as a reviewer, so that the Hugging
     Face team gets notified for future changes.
 
@@ -779,7 +779,7 @@ weights with the exact weights of the corresponding layer in the
 checkpoint. *E.g.*,
 
 ```python
-# retrieve matching layer weights, e.g. by 
+# retrieve matching layer weights, e.g. by
 # recursive algorithm
 layer_name = "dense"
 pretrained_weight = array_of_dense_layer
@@ -978,7 +978,7 @@ Next, we should add the tokenizer of *[camelcase name of model]*. Usually, the
 tokenizer is equivalent or very similar to an already existing tokenizer
 of 🤗 Transformers.
 
-[TODO FILL: Here the mentor should add a comment whether a new tokenizer is required or if this is not the case which existing tokenizer closest resembles 
+[TODO FILL: Here the mentor should add a comment whether a new tokenizer is required or if this is not the case which existing tokenizer closest resembles
  [camelcase name of model]'s tokenizer and how the tokenizer should be implemented]
  [...]
  [...]

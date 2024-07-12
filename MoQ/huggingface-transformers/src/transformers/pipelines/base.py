@@ -27,7 +27,6 @@ from ..modelcard import ModelCard
 from ..tokenization_utils import PreTrainedTokenizer, TruncationStrategy
 from ..utils import logging
 
-
 if is_tf_available():
     import tensorflow as tf
 
@@ -41,7 +40,6 @@ if is_torch_available():
 if TYPE_CHECKING:
     from ..modeling_tf_utils import TFPreTrainedModel
     from ..modeling_utils import PreTrainedModel
-
 
 logger = logging.get_logger(__name__)
 
@@ -76,7 +74,8 @@ def get_framework(model, revision: Optional[str] = None):
     return framework
 
 
-def get_default_model(targeted_task: Dict, framework: Optional[str], task_options: Optional[Any]) -> str:
+def get_default_model(targeted_task: Dict, framework: Optional[str],
+                      task_options: Optional[Any]) -> str:
     """
     Select a default model to use for a given task. Defaults to pytorch if ambiguous.
 
@@ -103,14 +102,18 @@ def get_default_model(targeted_task: Dict, framework: Optional[str], task_option
     defaults = targeted_task["default"]
     if task_options:
         if task_options not in defaults:
-            raise ValueError("The task does not provide any default models for options {}".format(task_options))
+            raise ValueError(
+                "The task does not provide any default models for options {}".
+                format(task_options))
         default_models = defaults[task_options]["model"]
     elif "model" in defaults:
         default_models = targeted_task["default"]["model"]
     else:
         # XXX This error message needs to be updated to be more generic if more tasks are going to become
         # parametrized
-        raise ValueError('The task defaults can\'t be correctly selected. You probably meant "translation_XX_to_YY"')
+        raise ValueError(
+            'The task defaults can\'t be correctly selected. You probably meant "translation_XX_to_YY"'
+        )
 
     if framework is None:
         framework = "pt"
@@ -127,7 +130,6 @@ class PipelineException(Exception):
         model (:obj:`str`): The model used by the pipeline.
         reason (:obj:`str`): The error message to display.
     """
-
     def __init__(self, task: str, model: str, reason: str):
         super().__init__(reason)
 
@@ -139,7 +141,6 @@ class ArgumentHandler(ABC):
     """
     Base interface for handling arguments for each :class:`~transformers.pipelines.Pipeline`.
     """
-
     @abstractmethod
     def __call__(self, *args, **kwargs):
         raise NotImplementedError()
@@ -180,15 +181,20 @@ class PipelineDataFormat:
         self.is_multi_columns = len(self.column) > 1
 
         if self.is_multi_columns:
-            self.column = [tuple(c.split("=")) if "=" in c else (c, c) for c in self.column]
+            self.column = [
+                tuple(c.split("=")) if "=" in c else (c, c)
+                for c in self.column
+            ]
 
         if output_path is not None and not overwrite:
             if exists(abspath(self.output_path)):
-                raise OSError("{} already exists on disk".format(self.output_path))
+                raise OSError("{} already exists on disk".format(
+                    self.output_path))
 
         if input_path is not None:
             if not exists(abspath(self.input_path)):
-                raise OSError("{} doesnt exist on disk".format(self.input_path))
+                raise OSError("{} doesnt exist on disk".format(
+                    self.input_path))
 
     @abstractmethod
     def __iter__(self):
@@ -251,13 +257,24 @@ class PipelineDataFormat:
             :class:`~transformers.pipelines.PipelineDataFormat`: The proper data format.
         """
         if format == "json":
-            return JsonPipelineDataFormat(output_path, input_path, column, overwrite=overwrite)
+            return JsonPipelineDataFormat(output_path,
+                                          input_path,
+                                          column,
+                                          overwrite=overwrite)
         elif format == "csv":
-            return CsvPipelineDataFormat(output_path, input_path, column, overwrite=overwrite)
+            return CsvPipelineDataFormat(output_path,
+                                         input_path,
+                                         column,
+                                         overwrite=overwrite)
         elif format == "pipe":
-            return PipedPipelineDataFormat(output_path, input_path, column, overwrite=overwrite)
+            return PipedPipelineDataFormat(output_path,
+                                           input_path,
+                                           column,
+                                           overwrite=overwrite)
         else:
-            raise KeyError("Unknown reader {} (Available reader are json/csv/pipe)".format(format))
+            raise KeyError(
+                "Unknown reader {} (Available reader are json/csv/pipe)".
+                format(format))
 
 
 class CsvPipelineDataFormat(PipelineDataFormat):
@@ -271,7 +288,6 @@ class CsvPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __init__(
         self,
         output_path: Optional[str],
@@ -316,7 +332,6 @@ class JsonPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __init__(
         self,
         output_path: Optional[str],
@@ -360,7 +375,6 @@ class PipedPipelineDataFormat(PipelineDataFormat):
         overwrite (:obj:`bool`, `optional`, defaults to :obj:`False`):
             Whether or not to overwrite the :obj:`output_path`.
     """
-
     def __iter__(self):
         for line in sys.stdin:
             # Split for multi-columns
@@ -369,7 +383,10 @@ class PipedPipelineDataFormat(PipelineDataFormat):
                 line = line.split("\t")
                 if self.column:
                     # Dictionary to map arguments
-                    yield {kwargs: l for (kwargs, _), l in zip(self.column, line)}
+                    yield {
+                        kwargs: l
+                        for (kwargs, _), l in zip(self.column, line)
+                    }
                 else:
                     yield tuple(line)
 
@@ -390,8 +407,7 @@ class PipedPipelineDataFormat(PipelineDataFormat):
         if self.output_path is None:
             raise KeyError(
                 "When using piped input on pipeline outputting large object requires an output file path. "
-                "Please provide such output path through --output argument."
-            )
+                "Please provide such output path through --output argument.")
 
         return super().save_binary(data)
 
@@ -400,7 +416,6 @@ class _ScikitCompat(ABC):
     """
     Interface layer for the Scikit and Keras compatibility.
     """
-
     @abstractmethod
     def transform(self, X):
         raise NotImplementedError()
@@ -481,7 +496,9 @@ class Pipeline(_ScikitCompat):
         self.tokenizer = tokenizer
         self.modelcard = modelcard
         self.framework = framework
-        self.device = device if framework == "tf" else torch.device("cpu" if device < 0 else "cuda:{}".format(device))
+        self.device = (
+            device if framework == "tf" else
+            torch.device("cpu" if device < 0 else "cuda:{}".format(device)))
         self.binary_output = binary_output
 
         # Special handling
@@ -502,7 +519,9 @@ class Pipeline(_ScikitCompat):
                 A path to the directory where to saved. It will be created if it doesn't exist.
         """
         if os.path.isfile(save_directory):
-            logger.error("Provided path ({}) should be a directory, not a file".format(save_directory))
+            logger.error(
+                "Provided path ({}) should be a directory, not a file".format(
+                    save_directory))
             return
         os.makedirs(save_directory, exist_ok=True)
 
@@ -540,7 +559,8 @@ class Pipeline(_ScikitCompat):
                 output = pipe(...)
         """
         if self.framework == "tf":
-            with tf.device("/CPU:0" if self.device == -1 else "/device:GPU:{}".format(self.device)):
+            with tf.device("/CPU:0" if self.device ==
+                           -1 else "/device:GPU:{}".format(self.device)):
                 yield
         else:
             if self.device.type == "cuda":
@@ -558,7 +578,10 @@ class Pipeline(_ScikitCompat):
         Return:
             :obj:`Dict[str, torch.Tensor]`: The same as :obj:`inputs` but on the proper device.
         """
-        return {name: tensor.to(self.device) for name, tensor in inputs.items()}
+        return {
+            name: tensor.to(self.device)
+            for name, tensor in inputs.items()
+        }
 
     def check_model_type(self, supported_models: Union[List[str], dict]):
         """
@@ -568,8 +591,11 @@ class Pipeline(_ScikitCompat):
             supported_models (:obj:`List[str]` or :obj:`dict`):
                 The list of models supported by the pipeline, or a dictionary with model class values.
         """
-        if not isinstance(supported_models, list):  # Create from a model mapping
-            supported_models = [item[1].__name__ for item in supported_models.items()]
+        if not isinstance(supported_models,
+                          list):  # Create from a model mapping
+            supported_models = [
+                item[1].__name__ for item in supported_models.items()
+            ]
         if self.model.__class__.__name__ not in supported_models:
             raise PipelineException(
                 self.task,
@@ -578,7 +604,12 @@ class Pipeline(_ScikitCompat):
             )
 
     def _parse_and_tokenize(
-        self, inputs, padding=True, add_special_tokens=True, truncation=TruncationStrategy.DO_NOT_TRUNCATE, **kwargs
+        self,
+        inputs,
+        padding=True,
+        add_special_tokens=True,
+        truncation=TruncationStrategy.DO_NOT_TRUNCATE,
+        **kwargs,
     ):
         """
         Parse arguments and tokenize

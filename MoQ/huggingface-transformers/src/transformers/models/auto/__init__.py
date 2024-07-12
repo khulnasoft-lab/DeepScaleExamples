@@ -18,11 +18,20 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_flax_available, is_tf_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_flax_available,
+    is_tf_available,
+    is_torch_available,
+)
 
 _import_structure = {
-    "configuration_auto": ["ALL_PRETRAINED_CONFIG_ARCHIVE_MAP", "CONFIG_MAPPING", "MODEL_NAMES_MAPPING", "AutoConfig"],
+    "configuration_auto": [
+        "ALL_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "CONFIG_MAPPING",
+        "MODEL_NAMES_MAPPING",
+        "AutoConfig",
+    ],
     "tokenization_auto": ["TOKENIZER_MAPPING", "AutoTokenizer"],
 }
 
@@ -80,11 +89,17 @@ if is_tf_available():
     ]
 
 if is_flax_available():
-    _import_structure["modeling_flax_auto"] = ["FLAX_MODEL_MAPPING", "FlaxAutoModel"]
-
+    _import_structure["modeling_flax_auto"] = [
+        "FLAX_MODEL_MAPPING", "FlaxAutoModel"
+    ]
 
 if TYPE_CHECKING:
-    from .configuration_auto import ALL_PRETRAINED_CONFIG_ARCHIVE_MAP, CONFIG_MAPPING, MODEL_NAMES_MAPPING, AutoConfig
+    from .configuration_auto import (
+        ALL_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        CONFIG_MAPPING,
+        MODEL_NAMES_MAPPING,
+        AutoConfig,
+    )
     from .tokenization_auto import TOKENIZER_MAPPING, AutoTokenizer
 
     if is_torch_available():

@@ -30,7 +30,6 @@ from transformers.optimization import (
 )
 from transformers.utils.versions import require_version_examples
 
-
 logger = logging.getLogger(__name__)
 
 require_version_examples("pytorch_lightning>=1.0.4")
@@ -45,7 +44,6 @@ MODEL_MODES = {
     "summarization": AutoModelForSeq2SeqLM,
     "translation": AutoModelForSeq2SeqLM,
 }
-
 
 # update this and the import above to support new schedulers from transformers.optimization
 arg_to_scheduler = {
@@ -69,7 +67,7 @@ class BaseTransformer(pl.LightningModule):
         config=None,
         tokenizer=None,
         model=None,
-        **config_kwargs
+        **config_kwargs,
     ):
         """Initialize a model, tokenizer and config."""
         super().__init__()
@@ -83,23 +81,34 @@ class BaseTransformer(pl.LightningModule):
         cache_dir = self.hparams.cache_dir if self.hparams.cache_dir else None
         if config is None:
             self.config = AutoConfig.from_pretrained(
-                self.hparams.config_name if self.hparams.config_name else self.hparams.model_name_or_path,
-                **({"num_labels": num_labels} if num_labels is not None else {}),
+                (self.hparams.config_name if self.hparams.config_name else
+                 self.hparams.model_name_or_path),
+                **({
+                    "num_labels": num_labels
+                } if num_labels is not None else {}),
                 cache_dir=cache_dir,
                 **config_kwargs,
             )
         else:
             self.config: PretrainedConfig = config
 
-        extra_model_params = ("encoder_layerdrop", "decoder_layerdrop", "dropout", "attention_dropout")
+        extra_model_params = (
+            "encoder_layerdrop",
+            "decoder_layerdrop",
+            "dropout",
+            "attention_dropout",
+        )
         for p in extra_model_params:
             if getattr(self.hparams, p, None):
-                assert hasattr(self.config, p), f"model config doesn't have a `{p}` attribute"
+                assert hasattr(
+                    self.config,
+                    p), f"model config doesn't have a `{p}` attribute"
                 setattr(self.config, p, getattr(self.hparams, p))
 
         if tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained(
-                self.hparams.tokenizer_name if self.hparams.tokenizer_name else self.hparams.model_name_or_path,
+                (self.hparams.tokenizer_name if self.hparams.tokenizer_name
+                 else self.hparams.model_name_or_path),
                 cache_dir=cache_dir,
             )
         else:
@@ -121,9 +130,15 @@ class BaseTransformer(pl.LightningModule):
     def get_lr_scheduler(self):
         get_schedule_func = arg_to_scheduler[self.hparams.lr_scheduler]
         scheduler = get_schedule_func(
-            self.opt, num_warmup_steps=self.hparams.warmup_steps, num_training_steps=self.total_steps()
+            self.opt,
+            num_warmup_steps=self.hparams.warmup_steps,
+            num_training_steps=self.total_steps(),
         )
-        scheduler = {"scheduler": scheduler, "interval": "step", "frequency": 1}
+        scheduler = {
+            "scheduler": scheduler,
+            "interval": "step",
+            "frequency": 1
+        }
         return scheduler
 
     def configure_optimizers(self):
@@ -132,22 +147,35 @@ class BaseTransformer(pl.LightningModule):
         no_decay = ["bias", "LayerNorm.weight"]
         optimizer_grouped_parameters = [
             {
-                "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-                "weight_decay": self.hparams.weight_decay,
+                "params": [
+                    p for n, p in model.named_parameters()
+                    if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay":
+                self.hparams.weight_decay,
             },
             {
-                "params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)],
-                "weight_decay": 0.0,
+                "params": [
+                    p for n, p in model.named_parameters()
+                    if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay":
+                0.0,
             },
         ]
         if self.hparams.adafactor:
             optimizer = Adafactor(
-                optimizer_grouped_parameters, lr=self.hparams.learning_rate, scale_parameter=False, relative_step=False
+                optimizer_grouped_parameters,
+                lr=self.hparams.learning_rate,
+                scale_parameter=False,
+                relative_step=False,
             )
 
         else:
             optimizer = AdamW(
-                optimizer_grouped_parameters, lr=self.hparams.learning_rate, eps=self.hparams.adam_epsilon
+                optimizer_grouped_parameters,
+                lr=self.hparams.learning_rate,
+                eps=self.hparams.adam_epsilon,
             )
         self.opt = optimizer
 
@@ -164,34 +192,46 @@ class BaseTransformer(pl.LightningModule):
     def total_steps(self) -> int:
         """The number of total training steps that will be run. Used for lr scheduler purposes."""
         num_devices = max(1, self.hparams.gpus)  # TODO: consider num_tpu_cores
-        effective_batch_size = self.hparams.train_batch_size * self.hparams.accumulate_grad_batches * num_devices
-        return (self.dataset_size / effective_batch_size) * self.hparams.max_epochs
+        effective_batch_size = (self.hparams.train_batch_size *
+                                self.hparams.accumulate_grad_batches *
+                                num_devices)
+        return (self.dataset_size /
+                effective_batch_size) * self.hparams.max_epochs
 
     def setup(self, mode):
         if mode == "test":
             self.dataset_size = len(self.test_dataloader().dataset)
         else:
-            self.train_loader = self.get_dataloader("train", self.hparams.train_batch_size, shuffle=True)
+            self.train_loader = self.get_dataloader(
+                "train", self.hparams.train_batch_size, shuffle=True)
             self.dataset_size = len(self.train_dataloader().dataset)
 
-    def get_dataloader(self, type_path: str, batch_size: int, shuffle: bool = False):
+    def get_dataloader(self,
+                       type_path: str,
+                       batch_size: int,
+                       shuffle: bool = False):
         raise NotImplementedError("You must implement this for your task")
 
     def train_dataloader(self):
         return self.train_loader
 
     def val_dataloader(self):
-        return self.get_dataloader("dev", self.hparams.eval_batch_size, shuffle=False)
+        return self.get_dataloader("dev",
+                                   self.hparams.eval_batch_size,
+                                   shuffle=False)
 
     def test_dataloader(self):
-        return self.get_dataloader("test", self.hparams.eval_batch_size, shuffle=False)
+        return self.get_dataloader("test",
+                                   self.hparams.eval_batch_size,
+                                   shuffle=False)
 
     def _feature_file(self, mode):
         return os.path.join(
             self.hparams.data_dir,
             "cached_{}_{}_{}".format(
                 mode,
-                list(filter(None, self.hparams.model_name_or_path.split("/"))).pop(),
+                list(filter(None,
+                            self.hparams.model_name_or_path.split("/"))).pop(),
                 str(self.hparams.max_seq_length),
             ),
         )
@@ -210,32 +250,40 @@ class BaseTransformer(pl.LightningModule):
             default=None,
             type=str,
             required=True,
-            help="Path to pretrained model or model identifier from huggingface.co/models",
+            help=
+            "Path to pretrained model or model identifier from huggingface.co/models",
         )
         parser.add_argument(
-            "--config_name", default="", type=str, help="Pretrained config name or path if not the same as model_name"
+            "--config_name",
+            default="",
+            type=str,
+            help="Pretrained config name or path if not the same as model_name",
         )
         parser.add_argument(
             "--tokenizer_name",
             default=None,
             type=str,
-            help="Pretrained tokenizer name or path if not the same as model_name",
+            help=
+            "Pretrained tokenizer name or path if not the same as model_name",
         )
         parser.add_argument(
             "--cache_dir",
             default="",
             type=str,
-            help="Where do you want to store the pre-trained models downloaded from huggingface.co",
+            help=
+            "Where do you want to store the pre-trained models downloaded from huggingface.co",
         )
         parser.add_argument(
             "--encoder_layerdrop",
             type=float,
-            help="Encoder layer dropout probability (Optional). Goes into model.config",
+            help=
+            "Encoder layer dropout probability (Optional). Goes into model.config",
         )
         parser.add_argument(
             "--decoder_layerdrop",
             type=float,
-            help="Decoder layer dropout probability (Optional). Goes into model.config",
+            help=
+            "Decoder layer dropout probability (Optional). Goes into model.config",
         )
         parser.add_argument(
             "--dropout",
@@ -245,9 +293,15 @@ class BaseTransformer(pl.LightningModule):
         parser.add_argument(
             "--attention_dropout",
             type=float,
-            help="Attention dropout probability (Optional). Goes into model.config",
+            help=
+            "Attention dropout probability (Optional). Goes into model.config",
         )
-        parser.add_argument("--learning_rate", default=5e-5, type=float, help="The initial learning rate for Adam.")
+        parser.add_argument(
+            "--learning_rate",
+            default=5e-5,
+            type=float,
+            help="The initial learning rate for Adam.",
+        )
         parser.add_argument(
             "--lr_scheduler",
             default="linear",
@@ -256,11 +310,32 @@ class BaseTransformer(pl.LightningModule):
             type=str,
             help="Learning rate scheduler",
         )
-        parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
-        parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
-        parser.add_argument("--warmup_steps", default=0, type=int, help="Linear warmup over warmup_steps.")
-        parser.add_argument("--num_workers", default=4, type=int, help="kwarg passed to DataLoader")
-        parser.add_argument("--num_train_epochs", dest="max_epochs", default=3, type=int)
+        parser.add_argument(
+            "--weight_decay",
+            default=0.0,
+            type=float,
+            help="Weight decay if we apply some.",
+        )
+        parser.add_argument(
+            "--adam_epsilon",
+            default=1e-8,
+            type=float,
+            help="Epsilon for Adam optimizer.",
+        )
+        parser.add_argument(
+            "--warmup_steps",
+            default=0,
+            type=int,
+            help="Linear warmup over warmup_steps.",
+        )
+        parser.add_argument("--num_workers",
+                            default=4,
+                            type=int,
+                            help="kwarg passed to DataLoader")
+        parser.add_argument("--num_train_epochs",
+                            dest="max_epochs",
+                            default=3,
+                            type=int)
         parser.add_argument("--train_batch_size", default=32, type=int)
         parser.add_argument("--eval_batch_size", default=32, type=int)
         parser.add_argument("--adafactor", action="store_true")
@@ -269,10 +344,14 @@ class BaseTransformer(pl.LightningModule):
 class LoggingCallback(pl.Callback):
     def on_batch_end(self, trainer, pl_module):
         lr_scheduler = trainer.lr_schedulers[0]["scheduler"]
-        lrs = {f"lr_group_{i}": lr for i, lr in enumerate(lr_scheduler.get_lr())}
+        lrs = {
+            f"lr_group_{i}": lr
+            for i, lr in enumerate(lr_scheduler.get_lr())
+        }
         pl_module.logger.log_metrics(lrs)
 
-    def on_validation_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule):
+    def on_validation_end(self, trainer: pl.Trainer,
+                          pl_module: pl.LightningModule):
         rank_zero_info("***** Validation results *****")
         metrics = trainer.callback_metrics
         # Log results
@@ -284,7 +363,8 @@ class LoggingCallback(pl.Callback):
         rank_zero_info("***** Test results *****")
         metrics = trainer.callback_metrics
         # Log and save results to file
-        output_test_results_file = os.path.join(pl_module.hparams.output_dir, "test_results.txt")
+        output_test_results_file = os.path.join(pl_module.hparams.output_dir,
+                                                "test_results.txt")
         with open(output_test_results_file, "w") as writer:
             for key in sorted(metrics):
                 if key not in ["log", "progress_bar"]:
@@ -300,39 +380,59 @@ def add_generic_args(parser, root_dir) -> None:
         default=None,
         type=str,
         required=True,
-        help="The output directory where the model predictions and checkpoints will be written.",
+        help=
+        "The output directory where the model predictions and checkpoints will be written.",
     )
     parser.add_argument(
         "--fp16",
         action="store_true",
-        help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
+        help=
+        "Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
     )
 
     parser.add_argument(
         "--fp16_opt_level",
         type=str,
         default="O2",
-        help="For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
+        help=
+        "For fp16: Apex AMP optimization level selected in ['O0', 'O1', 'O2', and 'O3']."
         "See details at https://nvidia.github.io/apex/amp.html",
     )
     parser.add_argument("--n_tpu_cores", dest="tpu_cores", type=int)
-    parser.add_argument("--max_grad_norm", dest="gradient_clip_val", default=1.0, type=float, help="Max gradient norm")
-    parser.add_argument("--do_train", action="store_true", help="Whether to run training.")
-    parser.add_argument("--do_predict", action="store_true", help="Whether to run predictions on the test set.")
+    parser.add_argument(
+        "--max_grad_norm",
+        dest="gradient_clip_val",
+        default=1.0,
+        type=float,
+        help="Max gradient norm",
+    )
+    parser.add_argument("--do_train",
+                        action="store_true",
+                        help="Whether to run training.")
+    parser.add_argument(
+        "--do_predict",
+        action="store_true",
+        help="Whether to run predictions on the test set.",
+    )
     parser.add_argument(
         "--gradient_accumulation_steps",
         dest="accumulate_grad_batches",
         type=int,
         default=1,
-        help="Number of updates steps to accumulate before performing a backward/update pass.",
+        help=
+        "Number of updates steps to accumulate before performing a backward/update pass.",
     )
-    parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
+    parser.add_argument("--seed",
+                        type=int,
+                        default=42,
+                        help="random seed for initialization")
     parser.add_argument(
         "--data_dir",
         default=None,
         type=str,
         required=True,
-        help="The input data dir. Should contain the training files for the CoNLL-2003 NER task.",
+        help=
+        "The input data dir. Should contain the training files for the CoNLL-2003 NER task.",
     )
 
 
@@ -344,7 +444,7 @@ def generic_train(
     extra_callbacks=[],
     checkpoint_callback=None,
     logging_callback=None,
-    **extra_train_kwargs
+    **extra_train_kwargs,
 ):
     pl.seed_everything(args.seed)
 
@@ -355,7 +455,11 @@ def generic_train(
     # add custom checkpoints
     if checkpoint_callback is None:
         checkpoint_callback = pl.callbacks.ModelCheckpoint(
-            filepath=args.output_dir, prefix="checkpoint", monitor="val_loss", mode="min", save_top_k=1
+            filepath=args.output_dir,
+            prefix="checkpoint",
+            monitor="val_loss",
+            mode="min",
+            save_top_k=1,
         )
     if early_stopping_callback:
         extra_callbacks.append(early_stopping_callback)

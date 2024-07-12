@@ -15,11 +15,11 @@ def get_ict_dataset(use_titles=True, query_in_block_prob=1):
     rather than for training, since it is only built with a single epoch sample mapping.
     """
     args = get_args()
-    block_dataset = get_indexed_dataset_(args.data_path, 'mmap', True)
-    titles_dataset = get_indexed_dataset_(args.titles_data_path, 'mmap', True)
+    block_dataset = get_indexed_dataset_(args.data_path, "mmap", True)
+    titles_dataset = get_indexed_dataset_(args.titles_data_path, "mmap", True)
 
     kwargs = dict(
-        name='full',
+        name="full",
         block_dataset=block_dataset,
         title_dataset=titles_dataset,
         data_prefix=args.data_path,
@@ -29,7 +29,7 @@ def get_ict_dataset(use_titles=True, query_in_block_prob=1):
         seed=1,
         query_in_block_prob=query_in_block_prob,
         use_titles=use_titles,
-        use_one_sent_docs=args.use_one_sent_docs
+        use_one_sent_docs=args.use_one_sent_docs,
     )
     dataset = ICTDataset(**kwargs)
     return dataset
@@ -37,9 +37,20 @@ def get_ict_dataset(use_titles=True, query_in_block_prob=1):
 
 class ICTDataset(Dataset):
     """Dataset containing sentences and their blocks for an inverse cloze task."""
-    def __init__(self, name, block_dataset, title_dataset, data_prefix,
-                 num_epochs, max_num_samples, max_seq_length, query_in_block_prob,
-                 seed, use_titles=True, use_one_sent_docs=False):
+    def __init__(
+        self,
+        name,
+        block_dataset,
+        title_dataset,
+        data_prefix,
+        num_epochs,
+        max_num_samples,
+        max_seq_length,
+        query_in_block_prob,
+        seed,
+        use_titles=True,
+        use_one_sent_docs=False,
+    ):
         self.name = name
         self.seed = seed
         self.max_seq_length = max_seq_length
@@ -51,8 +62,16 @@ class ICTDataset(Dataset):
         self.use_one_sent_docs = use_one_sent_docs
 
         self.samples_mapping = get_block_samples_mapping(
-            block_dataset, title_dataset, data_prefix, num_epochs,
-            max_num_samples, max_seq_length, seed, name, use_one_sent_docs)
+            block_dataset,
+            title_dataset,
+            data_prefix,
+            num_epochs,
+            max_num_samples,
+            max_seq_length,
+            seed,
+            name,
+            use_one_sent_docs,
+        )
         self.tokenizer = get_tokenizer()
         self.vocab_id_list = list(self.tokenizer.inv_vocab.keys())
         self.vocab_id_to_token_list = self.tokenizer.inv_vocab
@@ -76,7 +95,9 @@ class ICTDataset(Dataset):
             title = None
             title_pad_offset = 2
         block = [self.block_dataset[i] for i in range(start_idx, end_idx)]
-        assert len(block) > 1 or self.use_one_sent_docs or self.query_in_block_prob == 1
+        assert len(
+            block
+        ) > 1 or self.use_one_sent_docs or self.query_in_block_prob == 1
 
         # randint() is inclusive for Python rng
         rand_sent_idx = self.rng.randint(0, len(block) - 1)
@@ -90,18 +111,19 @@ class ICTDataset(Dataset):
         # still need to truncate because blocks are concluded when
         # the sentence lengths have exceeded max_seq_length.
         query = query[:self.max_seq_length - 2]
-        block = list(itertools.chain(*block))[:self.max_seq_length - title_pad_offset]
+        block = list(itertools.chain(*block))[:self.max_seq_length -
+                                              title_pad_offset]
 
         query_tokens, query_pad_mask = self.concat_and_pad_tokens(query)
         block_tokens, block_pad_mask = self.concat_and_pad_tokens(block, title)
         block_data = sample_data.as_array()
 
         sample = {
-            'query_tokens': query_tokens,
-            'query_pad_mask': query_pad_mask,
-            'block_tokens': block_tokens,
-            'block_pad_mask': block_pad_mask,
-            'block_data': block_data,
+            "query_tokens": query_tokens,
+            "query_pad_mask": query_pad_mask,
+            "block_tokens": block_tokens,
+            "block_pad_mask": block_pad_mask,
+            "block_data": block_data,
         }
 
         return sample
@@ -111,7 +133,8 @@ class ICTDataset(Dataset):
         block = [self.block_dataset[i] for i in range(start_idx, end_idx)]
         title = self.title_dataset[int(doc_idx)]
 
-        block = list(itertools.chain(*block))[:self.max_seq_length - (3 + len(title))]
+        block = list(itertools.chain(*block))[:self.max_seq_length -
+                                              (3 + len(title))]
         block_tokens, block_pad_mask = self.concat_and_pad_tokens(block, title)
 
         return block_tokens, block_pad_mask
@@ -130,7 +153,8 @@ class ICTDataset(Dataset):
             tokens = [self.cls_id] + tokens + [self.sep_id]
         else:
             title = list(title)
-            tokens = [self.cls_id] + title + [self.sep_id] + tokens + [self.sep_id]
+            tokens = [self.cls_id] + title + [self.sep_id
+                                              ] + tokens + [self.sep_id]
         assert len(tokens) <= self.max_seq_length
 
         num_pad = self.max_seq_length - len(tokens)

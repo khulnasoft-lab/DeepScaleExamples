@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 import warnings
 from collections import OrderedDict
 
@@ -50,8 +49,15 @@ from ..bert.modeling_bert import (
     BertLMHeadModel,
     BertModel,
 )
-from ..bert_generation.modeling_bert_generation import BertGenerationDecoder, BertGenerationEncoder
-from ..blenderbot.modeling_blenderbot import BlenderbotForCausalLM, BlenderbotForConditionalGeneration, BlenderbotModel
+from ..bert_generation.modeling_bert_generation import (
+    BertGenerationDecoder,
+    BertGenerationEncoder,
+)
+from ..blenderbot.modeling_blenderbot import (
+    BlenderbotForCausalLM,
+    BlenderbotForConditionalGeneration,
+    BlenderbotModel,
+)
 from ..blenderbot_small.modeling_blenderbot_small import (
     BlenderbotSmallForCausalLM,
     BlenderbotSmallForConditionalGeneration,
@@ -76,7 +82,11 @@ from ..convbert.modeling_convbert import (
     ConvBertForTokenClassification,
     ConvBertModel,
 )
-from ..ctrl.modeling_ctrl import CTRLForSequenceClassification, CTRLLMHeadModel, CTRLModel
+from ..ctrl.modeling_ctrl import (
+    CTRLForSequenceClassification,
+    CTRLLMHeadModel,
+    CTRLModel,
+)
 from ..deberta.modeling_deberta import (
     DebertaForMaskedLM,
     DebertaForQuestionAnswering,
@@ -121,7 +131,11 @@ from ..funnel.modeling_funnel import (
     FunnelForTokenClassification,
     FunnelModel,
 )
-from ..gpt2.modeling_gpt2 import GPT2ForSequenceClassification, GPT2LMHeadModel, GPT2Model
+from ..gpt2.modeling_gpt2 import (
+    GPT2ForSequenceClassification,
+    GPT2LMHeadModel,
+    GPT2Model,
+)
 from ..layoutlm.modeling_layoutlm import (
     LayoutLMForMaskedLM,
     LayoutLMForSequenceClassification,
@@ -142,7 +156,11 @@ from ..longformer.modeling_longformer import (
     LongformerForTokenClassification,
     LongformerModel,
 )
-from ..lxmert.modeling_lxmert import LxmertForPreTraining, LxmertForQuestionAnswering, LxmertModel
+from ..lxmert.modeling_lxmert import (
+    LxmertForPreTraining,
+    LxmertForQuestionAnswering,
+    LxmertModel,
+)
 from ..marian.modeling_marian import MarianForCausalLM, MarianModel, MarianMTModel
 from ..mbart.modeling_mbart import (
     MBartForCausalLM,
@@ -170,13 +188,23 @@ from ..mpnet.modeling_mpnet import (
     MPNetModel,
 )
 from ..mt5.modeling_mt5 import MT5ForConditionalGeneration, MT5Model
-from ..openai.modeling_openai import OpenAIGPTForSequenceClassification, OpenAIGPTLMHeadModel, OpenAIGPTModel
-from ..pegasus.modeling_pegasus import PegasusForCausalLM, PegasusForConditionalGeneration, PegasusModel
-from ..prophetnet.modeling_prophetnet import ProphetNetForCausalLM, ProphetNetForConditionalGeneration, ProphetNetModel
+from ..openai.modeling_openai import (
+    OpenAIGPTForSequenceClassification,
+    OpenAIGPTLMHeadModel,
+    OpenAIGPTModel,
+)
+from ..pegasus.modeling_pegasus import (
+    PegasusForCausalLM,
+    PegasusForConditionalGeneration,
+    PegasusModel,
+)
+from ..prophetnet.modeling_prophetnet import (
+    ProphetNetForCausalLM,
+    ProphetNetForConditionalGeneration,
+    ProphetNetModel,
+)
 from ..rag.modeling_rag import (  # noqa: F401 - need to import all RagModels to be in globals() function
-    RagModel,
-    RagSequenceForGeneration,
-    RagTokenForGeneration,
+    RagModel, RagSequenceForGeneration, RagTokenForGeneration,
 )
 from ..reformer.modeling_reformer import (
     ReformerForMaskedLM,
@@ -210,7 +238,11 @@ from ..tapas.modeling_tapas import (
     TapasForSequenceClassification,
     TapasModel,
 )
-from ..transfo_xl.modeling_transfo_xl import TransfoXLForSequenceClassification, TransfoXLLMHeadModel, TransfoXLModel
+from ..transfo_xl.modeling_transfo_xl import (
+    TransfoXLForSequenceClassification,
+    TransfoXLLMHeadModel,
+    TransfoXLModel,
+)
 from ..wav2vec2.modeling_wav2vec2 import Wav2Vec2ForMaskedLM, Wav2Vec2Model
 from ..xlm.modeling_xlm import (
     XLMForMultipleChoice,
@@ -289,325 +321,299 @@ from .configuration_auto import (
     replace_list_option_in_docstrings,
 )
 
-
 logger = logging.get_logger(__name__)
 
+MODEL_MAPPING = OrderedDict([
+    # Base model mapping
+    (Wav2Vec2Config, Wav2Vec2Model),
+    (ConvBertConfig, ConvBertModel),
+    (LEDConfig, LEDModel),
+    (BlenderbotSmallConfig, BlenderbotSmallModel),
+    (RetriBertConfig, RetriBertModel),
+    (MT5Config, MT5Model),
+    (T5Config, T5Model),
+    (PegasusConfig, PegasusModel),
+    (MarianConfig, MarianMTModel),
+    (MBartConfig, MBartModel),
+    (BlenderbotConfig, BlenderbotModel),
+    (DistilBertConfig, DistilBertModel),
+    (AlbertConfig, AlbertModel),
+    (CamembertConfig, CamembertModel),
+    (XLMRobertaConfig, XLMRobertaModel),
+    (BartConfig, BartModel),
+    (LongformerConfig, LongformerModel),
+    (RobertaConfig, RobertaModel),
+    (LayoutLMConfig, LayoutLMModel),
+    (SqueezeBertConfig, SqueezeBertModel),
+    (BertConfig, BertModel),
+    (OpenAIGPTConfig, OpenAIGPTModel),
+    (GPT2Config, GPT2Model),
+    (MobileBertConfig, MobileBertModel),
+    (TransfoXLConfig, TransfoXLModel),
+    (XLNetConfig, XLNetModel),
+    (FlaubertConfig, FlaubertModel),
+    (FSMTConfig, FSMTModel),
+    (XLMConfig, XLMModel),
+    (CTRLConfig, CTRLModel),
+    (ElectraConfig, ElectraModel),
+    (ReformerConfig, ReformerModel),
+    (FunnelConfig, FunnelModel),
+    (LxmertConfig, LxmertModel),
+    (BertGenerationConfig, BertGenerationEncoder),
+    (DebertaConfig, DebertaModel),
+    (DPRConfig, DPRQuestionEncoder),
+    (XLMProphetNetConfig, XLMProphetNetModel),
+    (ProphetNetConfig, ProphetNetModel),
+    (MPNetConfig, MPNetModel),
+    (TapasConfig, TapasModel),
+    (MarianConfig, MarianModel),
+])
 
-MODEL_MAPPING = OrderedDict(
-    [
-        # Base model mapping
-        (Wav2Vec2Config, Wav2Vec2Model),
-        (ConvBertConfig, ConvBertModel),
-        (LEDConfig, LEDModel),
-        (BlenderbotSmallConfig, BlenderbotSmallModel),
-        (RetriBertConfig, RetriBertModel),
-        (MT5Config, MT5Model),
-        (T5Config, T5Model),
-        (PegasusConfig, PegasusModel),
-        (MarianConfig, MarianMTModel),
-        (MBartConfig, MBartModel),
-        (BlenderbotConfig, BlenderbotModel),
-        (DistilBertConfig, DistilBertModel),
-        (AlbertConfig, AlbertModel),
-        (CamembertConfig, CamembertModel),
-        (XLMRobertaConfig, XLMRobertaModel),
-        (BartConfig, BartModel),
-        (LongformerConfig, LongformerModel),
-        (RobertaConfig, RobertaModel),
-        (LayoutLMConfig, LayoutLMModel),
-        (SqueezeBertConfig, SqueezeBertModel),
-        (BertConfig, BertModel),
-        (OpenAIGPTConfig, OpenAIGPTModel),
-        (GPT2Config, GPT2Model),
-        (MobileBertConfig, MobileBertModel),
-        (TransfoXLConfig, TransfoXLModel),
-        (XLNetConfig, XLNetModel),
-        (FlaubertConfig, FlaubertModel),
-        (FSMTConfig, FSMTModel),
-        (XLMConfig, XLMModel),
-        (CTRLConfig, CTRLModel),
-        (ElectraConfig, ElectraModel),
-        (ReformerConfig, ReformerModel),
-        (FunnelConfig, FunnelModel),
-        (LxmertConfig, LxmertModel),
-        (BertGenerationConfig, BertGenerationEncoder),
-        (DebertaConfig, DebertaModel),
-        (DPRConfig, DPRQuestionEncoder),
-        (XLMProphetNetConfig, XLMProphetNetModel),
-        (ProphetNetConfig, ProphetNetModel),
-        (MPNetConfig, MPNetModel),
-        (TapasConfig, TapasModel),
-        (MarianConfig, MarianModel),
-    ]
-)
+MODEL_FOR_PRETRAINING_MAPPING = OrderedDict([
+    # Model for pre-training mapping
+    (LayoutLMConfig, LayoutLMForMaskedLM),
+    (RetriBertConfig, RetriBertModel),
+    (T5Config, T5ForConditionalGeneration),
+    (DistilBertConfig, DistilBertForMaskedLM),
+    (AlbertConfig, AlbertForPreTraining),
+    (CamembertConfig, CamembertForMaskedLM),
+    (XLMRobertaConfig, XLMRobertaForMaskedLM),
+    (BartConfig, BartForConditionalGeneration),
+    (FSMTConfig, FSMTForConditionalGeneration),
+    (LongformerConfig, LongformerForMaskedLM),
+    (RobertaConfig, RobertaForMaskedLM),
+    (SqueezeBertConfig, SqueezeBertForMaskedLM),
+    (BertConfig, BertForPreTraining),
+    (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
+    (GPT2Config, GPT2LMHeadModel),
+    (MobileBertConfig, MobileBertForPreTraining),
+    (TransfoXLConfig, TransfoXLLMHeadModel),
+    (XLNetConfig, XLNetLMHeadModel),
+    (FlaubertConfig, FlaubertWithLMHeadModel),
+    (XLMConfig, XLMWithLMHeadModel),
+    (CTRLConfig, CTRLLMHeadModel),
+    (ElectraConfig, ElectraForPreTraining),
+    (LxmertConfig, LxmertForPreTraining),
+    (FunnelConfig, FunnelForPreTraining),
+    (MPNetConfig, MPNetForMaskedLM),
+    (TapasConfig, TapasForMaskedLM),
+])
 
-MODEL_FOR_PRETRAINING_MAPPING = OrderedDict(
-    [
-        # Model for pre-training mapping
-        (LayoutLMConfig, LayoutLMForMaskedLM),
-        (RetriBertConfig, RetriBertModel),
-        (T5Config, T5ForConditionalGeneration),
-        (DistilBertConfig, DistilBertForMaskedLM),
-        (AlbertConfig, AlbertForPreTraining),
-        (CamembertConfig, CamembertForMaskedLM),
-        (XLMRobertaConfig, XLMRobertaForMaskedLM),
-        (BartConfig, BartForConditionalGeneration),
-        (FSMTConfig, FSMTForConditionalGeneration),
-        (LongformerConfig, LongformerForMaskedLM),
-        (RobertaConfig, RobertaForMaskedLM),
-        (SqueezeBertConfig, SqueezeBertForMaskedLM),
-        (BertConfig, BertForPreTraining),
-        (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
-        (GPT2Config, GPT2LMHeadModel),
-        (MobileBertConfig, MobileBertForPreTraining),
-        (TransfoXLConfig, TransfoXLLMHeadModel),
-        (XLNetConfig, XLNetLMHeadModel),
-        (FlaubertConfig, FlaubertWithLMHeadModel),
-        (XLMConfig, XLMWithLMHeadModel),
-        (CTRLConfig, CTRLLMHeadModel),
-        (ElectraConfig, ElectraForPreTraining),
-        (LxmertConfig, LxmertForPreTraining),
-        (FunnelConfig, FunnelForPreTraining),
-        (MPNetConfig, MPNetForMaskedLM),
-        (TapasConfig, TapasForMaskedLM),
-    ]
-)
+MODEL_WITH_LM_HEAD_MAPPING = OrderedDict([
+    # Model with LM heads mapping
+    (Wav2Vec2Config, Wav2Vec2ForMaskedLM),
+    (ConvBertConfig, ConvBertForMaskedLM),
+    (LEDConfig, LEDForConditionalGeneration),
+    (BlenderbotSmallConfig, BlenderbotSmallForConditionalGeneration),
+    (LayoutLMConfig, LayoutLMForMaskedLM),
+    (T5Config, T5ForConditionalGeneration),
+    (DistilBertConfig, DistilBertForMaskedLM),
+    (AlbertConfig, AlbertForMaskedLM),
+    (CamembertConfig, CamembertForMaskedLM),
+    (XLMRobertaConfig, XLMRobertaForMaskedLM),
+    (MarianConfig, MarianMTModel),
+    (FSMTConfig, FSMTForConditionalGeneration),
+    (BartConfig, BartForConditionalGeneration),
+    (LongformerConfig, LongformerForMaskedLM),
+    (RobertaConfig, RobertaForMaskedLM),
+    (SqueezeBertConfig, SqueezeBertForMaskedLM),
+    (BertConfig, BertForMaskedLM),
+    (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
+    (GPT2Config, GPT2LMHeadModel),
+    (MobileBertConfig, MobileBertForMaskedLM),
+    (TransfoXLConfig, TransfoXLLMHeadModel),
+    (XLNetConfig, XLNetLMHeadModel),
+    (FlaubertConfig, FlaubertWithLMHeadModel),
+    (XLMConfig, XLMWithLMHeadModel),
+    (CTRLConfig, CTRLLMHeadModel),
+    (ElectraConfig, ElectraForMaskedLM),
+    (EncoderDecoderConfig, EncoderDecoderModel),
+    (ReformerConfig, ReformerModelWithLMHead),
+    (FunnelConfig, FunnelForMaskedLM),
+    (MPNetConfig, MPNetForMaskedLM),
+    (TapasConfig, TapasForMaskedLM),
+    (DebertaConfig, DebertaForMaskedLM),
+])
 
-MODEL_WITH_LM_HEAD_MAPPING = OrderedDict(
-    [
-        # Model with LM heads mapping
-        (Wav2Vec2Config, Wav2Vec2ForMaskedLM),
-        (ConvBertConfig, ConvBertForMaskedLM),
-        (LEDConfig, LEDForConditionalGeneration),
-        (BlenderbotSmallConfig, BlenderbotSmallForConditionalGeneration),
-        (LayoutLMConfig, LayoutLMForMaskedLM),
-        (T5Config, T5ForConditionalGeneration),
-        (DistilBertConfig, DistilBertForMaskedLM),
-        (AlbertConfig, AlbertForMaskedLM),
-        (CamembertConfig, CamembertForMaskedLM),
-        (XLMRobertaConfig, XLMRobertaForMaskedLM),
-        (MarianConfig, MarianMTModel),
-        (FSMTConfig, FSMTForConditionalGeneration),
-        (BartConfig, BartForConditionalGeneration),
-        (LongformerConfig, LongformerForMaskedLM),
-        (RobertaConfig, RobertaForMaskedLM),
-        (SqueezeBertConfig, SqueezeBertForMaskedLM),
-        (BertConfig, BertForMaskedLM),
-        (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
-        (GPT2Config, GPT2LMHeadModel),
-        (MobileBertConfig, MobileBertForMaskedLM),
-        (TransfoXLConfig, TransfoXLLMHeadModel),
-        (XLNetConfig, XLNetLMHeadModel),
-        (FlaubertConfig, FlaubertWithLMHeadModel),
-        (XLMConfig, XLMWithLMHeadModel),
-        (CTRLConfig, CTRLLMHeadModel),
-        (ElectraConfig, ElectraForMaskedLM),
-        (EncoderDecoderConfig, EncoderDecoderModel),
-        (ReformerConfig, ReformerModelWithLMHead),
-        (FunnelConfig, FunnelForMaskedLM),
-        (MPNetConfig, MPNetForMaskedLM),
-        (TapasConfig, TapasForMaskedLM),
-        (DebertaConfig, DebertaForMaskedLM),
-    ]
-)
+MODEL_FOR_CAUSAL_LM_MAPPING = OrderedDict([
+    # Model for Causal LM mapping
+    (CamembertConfig, CamembertForCausalLM),
+    (XLMRobertaConfig, XLMRobertaForCausalLM),
+    (RobertaConfig, RobertaForCausalLM),
+    (BertConfig, BertLMHeadModel),
+    (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
+    (GPT2Config, GPT2LMHeadModel),
+    (TransfoXLConfig, TransfoXLLMHeadModel),
+    (XLNetConfig, XLNetLMHeadModel),
+    (
+        XLMConfig,
+        XLMWithLMHeadModel,
+    ),  # XLM can be MLM and CLM => model should be split similar to BERT; leave here for now
+    (CTRLConfig, CTRLLMHeadModel),
+    (ReformerConfig, ReformerModelWithLMHead),
+    (BertGenerationConfig, BertGenerationDecoder),
+    (XLMProphetNetConfig, XLMProphetNetForCausalLM),
+    (ProphetNetConfig, ProphetNetForCausalLM),
+    (BartConfig, BartForCausalLM),
+    (MBartConfig, MBartForCausalLM),
+    (PegasusConfig, PegasusForCausalLM),
+    (MarianConfig, MarianForCausalLM),
+    (BlenderbotConfig, BlenderbotForCausalLM),
+    (BlenderbotSmallConfig, BlenderbotSmallForCausalLM),
+])
 
-MODEL_FOR_CAUSAL_LM_MAPPING = OrderedDict(
-    [
-        # Model for Causal LM mapping
-        (CamembertConfig, CamembertForCausalLM),
-        (XLMRobertaConfig, XLMRobertaForCausalLM),
-        (RobertaConfig, RobertaForCausalLM),
-        (BertConfig, BertLMHeadModel),
-        (OpenAIGPTConfig, OpenAIGPTLMHeadModel),
-        (GPT2Config, GPT2LMHeadModel),
-        (TransfoXLConfig, TransfoXLLMHeadModel),
-        (XLNetConfig, XLNetLMHeadModel),
-        (
-            XLMConfig,
-            XLMWithLMHeadModel,
-        ),  # XLM can be MLM and CLM => model should be split similar to BERT; leave here for now
-        (CTRLConfig, CTRLLMHeadModel),
-        (ReformerConfig, ReformerModelWithLMHead),
-        (BertGenerationConfig, BertGenerationDecoder),
-        (XLMProphetNetConfig, XLMProphetNetForCausalLM),
-        (ProphetNetConfig, ProphetNetForCausalLM),
-        (BartConfig, BartForCausalLM),
-        (MBartConfig, MBartForCausalLM),
-        (PegasusConfig, PegasusForCausalLM),
-        (MarianConfig, MarianForCausalLM),
-        (BlenderbotConfig, BlenderbotForCausalLM),
-        (BlenderbotSmallConfig, BlenderbotSmallForCausalLM),
-    ]
-)
+MODEL_FOR_MASKED_LM_MAPPING = OrderedDict([
+    # Model for Masked LM mapping
+    (Wav2Vec2Config, Wav2Vec2ForMaskedLM),
+    (ConvBertConfig, ConvBertForMaskedLM),
+    (LayoutLMConfig, LayoutLMForMaskedLM),
+    (DistilBertConfig, DistilBertForMaskedLM),
+    (AlbertConfig, AlbertForMaskedLM),
+    (BartConfig, BartForConditionalGeneration),
+    (MBartConfig, MBartForConditionalGeneration),
+    (CamembertConfig, CamembertForMaskedLM),
+    (XLMRobertaConfig, XLMRobertaForMaskedLM),
+    (LongformerConfig, LongformerForMaskedLM),
+    (RobertaConfig, RobertaForMaskedLM),
+    (SqueezeBertConfig, SqueezeBertForMaskedLM),
+    (BertConfig, BertForMaskedLM),
+    (MobileBertConfig, MobileBertForMaskedLM),
+    (FlaubertConfig, FlaubertWithLMHeadModel),
+    (XLMConfig, XLMWithLMHeadModel),
+    (ElectraConfig, ElectraForMaskedLM),
+    (ReformerConfig, ReformerForMaskedLM),
+    (FunnelConfig, FunnelForMaskedLM),
+    (MPNetConfig, MPNetForMaskedLM),
+    (TapasConfig, TapasForMaskedLM),
+    (DebertaConfig, DebertaForMaskedLM),
+])
 
-MODEL_FOR_MASKED_LM_MAPPING = OrderedDict(
-    [
-        # Model for Masked LM mapping
-        (Wav2Vec2Config, Wav2Vec2ForMaskedLM),
-        (ConvBertConfig, ConvBertForMaskedLM),
-        (LayoutLMConfig, LayoutLMForMaskedLM),
-        (DistilBertConfig, DistilBertForMaskedLM),
-        (AlbertConfig, AlbertForMaskedLM),
-        (BartConfig, BartForConditionalGeneration),
-        (MBartConfig, MBartForConditionalGeneration),
-        (CamembertConfig, CamembertForMaskedLM),
-        (XLMRobertaConfig, XLMRobertaForMaskedLM),
-        (LongformerConfig, LongformerForMaskedLM),
-        (RobertaConfig, RobertaForMaskedLM),
-        (SqueezeBertConfig, SqueezeBertForMaskedLM),
-        (BertConfig, BertForMaskedLM),
-        (MobileBertConfig, MobileBertForMaskedLM),
-        (FlaubertConfig, FlaubertWithLMHeadModel),
-        (XLMConfig, XLMWithLMHeadModel),
-        (ElectraConfig, ElectraForMaskedLM),
-        (ReformerConfig, ReformerForMaskedLM),
-        (FunnelConfig, FunnelForMaskedLM),
-        (MPNetConfig, MPNetForMaskedLM),
-        (TapasConfig, TapasForMaskedLM),
-        (DebertaConfig, DebertaForMaskedLM),
-    ]
-)
+MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING = OrderedDict([
+    # Model for Seq2Seq Causal LM mapping
+    (LEDConfig, LEDForConditionalGeneration),
+    (BlenderbotSmallConfig, BlenderbotSmallForConditionalGeneration),
+    (MT5Config, MT5ForConditionalGeneration),
+    (T5Config, T5ForConditionalGeneration),
+    (PegasusConfig, PegasusForConditionalGeneration),
+    (MarianConfig, MarianMTModel),
+    (MBartConfig, MBartForConditionalGeneration),
+    (BlenderbotConfig, BlenderbotForConditionalGeneration),
+    (BartConfig, BartForConditionalGeneration),
+    (FSMTConfig, FSMTForConditionalGeneration),
+    (EncoderDecoderConfig, EncoderDecoderModel),
+    (XLMProphetNetConfig, XLMProphetNetForConditionalGeneration),
+    (ProphetNetConfig, ProphetNetForConditionalGeneration),
+])
 
-MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING = OrderedDict(
-    [
-        # Model for Seq2Seq Causal LM mapping
-        (LEDConfig, LEDForConditionalGeneration),
-        (BlenderbotSmallConfig, BlenderbotSmallForConditionalGeneration),
-        (MT5Config, MT5ForConditionalGeneration),
-        (T5Config, T5ForConditionalGeneration),
-        (PegasusConfig, PegasusForConditionalGeneration),
-        (MarianConfig, MarianMTModel),
-        (MBartConfig, MBartForConditionalGeneration),
-        (BlenderbotConfig, BlenderbotForConditionalGeneration),
-        (BartConfig, BartForConditionalGeneration),
-        (FSMTConfig, FSMTForConditionalGeneration),
-        (EncoderDecoderConfig, EncoderDecoderModel),
-        (XLMProphetNetConfig, XLMProphetNetForConditionalGeneration),
-        (ProphetNetConfig, ProphetNetForConditionalGeneration),
-    ]
-)
+MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING = OrderedDict([
+    # Model for Sequence Classification mapping
+    (ConvBertConfig, ConvBertForSequenceClassification),
+    (LEDConfig, LEDForSequenceClassification),
+    (DistilBertConfig, DistilBertForSequenceClassification),
+    (AlbertConfig, AlbertForSequenceClassification),
+    (CamembertConfig, CamembertForSequenceClassification),
+    (XLMRobertaConfig, XLMRobertaForSequenceClassification),
+    (MBartConfig, MBartForSequenceClassification),
+    (BartConfig, BartForSequenceClassification),
+    (LongformerConfig, LongformerForSequenceClassification),
+    (RobertaConfig, RobertaForSequenceClassification),
+    (SqueezeBertConfig, SqueezeBertForSequenceClassification),
+    (LayoutLMConfig, LayoutLMForSequenceClassification),
+    (BertConfig, BertForSequenceClassification),
+    (XLNetConfig, XLNetForSequenceClassification),
+    (MobileBertConfig, MobileBertForSequenceClassification),
+    (FlaubertConfig, FlaubertForSequenceClassification),
+    (XLMConfig, XLMForSequenceClassification),
+    (ElectraConfig, ElectraForSequenceClassification),
+    (FunnelConfig, FunnelForSequenceClassification),
+    (DebertaConfig, DebertaForSequenceClassification),
+    (GPT2Config, GPT2ForSequenceClassification),
+    (OpenAIGPTConfig, OpenAIGPTForSequenceClassification),
+    (ReformerConfig, ReformerForSequenceClassification),
+    (CTRLConfig, CTRLForSequenceClassification),
+    (TransfoXLConfig, TransfoXLForSequenceClassification),
+    (MPNetConfig, MPNetForSequenceClassification),
+    (TapasConfig, TapasForSequenceClassification),
+])
 
-MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING = OrderedDict(
-    [
-        # Model for Sequence Classification mapping
-        (ConvBertConfig, ConvBertForSequenceClassification),
-        (LEDConfig, LEDForSequenceClassification),
-        (DistilBertConfig, DistilBertForSequenceClassification),
-        (AlbertConfig, AlbertForSequenceClassification),
-        (CamembertConfig, CamembertForSequenceClassification),
-        (XLMRobertaConfig, XLMRobertaForSequenceClassification),
-        (MBartConfig, MBartForSequenceClassification),
-        (BartConfig, BartForSequenceClassification),
-        (LongformerConfig, LongformerForSequenceClassification),
-        (RobertaConfig, RobertaForSequenceClassification),
-        (SqueezeBertConfig, SqueezeBertForSequenceClassification),
-        (LayoutLMConfig, LayoutLMForSequenceClassification),
-        (BertConfig, BertForSequenceClassification),
-        (XLNetConfig, XLNetForSequenceClassification),
-        (MobileBertConfig, MobileBertForSequenceClassification),
-        (FlaubertConfig, FlaubertForSequenceClassification),
-        (XLMConfig, XLMForSequenceClassification),
-        (ElectraConfig, ElectraForSequenceClassification),
-        (FunnelConfig, FunnelForSequenceClassification),
-        (DebertaConfig, DebertaForSequenceClassification),
-        (GPT2Config, GPT2ForSequenceClassification),
-        (OpenAIGPTConfig, OpenAIGPTForSequenceClassification),
-        (ReformerConfig, ReformerForSequenceClassification),
-        (CTRLConfig, CTRLForSequenceClassification),
-        (TransfoXLConfig, TransfoXLForSequenceClassification),
-        (MPNetConfig, MPNetForSequenceClassification),
-        (TapasConfig, TapasForSequenceClassification),
-    ]
-)
+MODEL_FOR_QUESTION_ANSWERING_MAPPING = OrderedDict([
+    # Model for Question Answering mapping
+    (ConvBertConfig, ConvBertForQuestionAnswering),
+    (LEDConfig, LEDForQuestionAnswering),
+    (DistilBertConfig, DistilBertForQuestionAnswering),
+    (AlbertConfig, AlbertForQuestionAnswering),
+    (CamembertConfig, CamembertForQuestionAnswering),
+    (BartConfig, BartForQuestionAnswering),
+    (MBartConfig, MBartForQuestionAnswering),
+    (LongformerConfig, LongformerForQuestionAnswering),
+    (XLMRobertaConfig, XLMRobertaForQuestionAnswering),
+    (RobertaConfig, RobertaForQuestionAnswering),
+    (SqueezeBertConfig, SqueezeBertForQuestionAnswering),
+    (BertConfig, BertForQuestionAnswering),
+    (XLNetConfig, XLNetForQuestionAnsweringSimple),
+    (FlaubertConfig, FlaubertForQuestionAnsweringSimple),
+    (MobileBertConfig, MobileBertForQuestionAnswering),
+    (XLMConfig, XLMForQuestionAnsweringSimple),
+    (ElectraConfig, ElectraForQuestionAnswering),
+    (ReformerConfig, ReformerForQuestionAnswering),
+    (FunnelConfig, FunnelForQuestionAnswering),
+    (LxmertConfig, LxmertForQuestionAnswering),
+    (MPNetConfig, MPNetForQuestionAnswering),
+    (DebertaConfig, DebertaForQuestionAnswering),
+])
 
-MODEL_FOR_QUESTION_ANSWERING_MAPPING = OrderedDict(
-    [
-        # Model for Question Answering mapping
-        (ConvBertConfig, ConvBertForQuestionAnswering),
-        (LEDConfig, LEDForQuestionAnswering),
-        (DistilBertConfig, DistilBertForQuestionAnswering),
-        (AlbertConfig, AlbertForQuestionAnswering),
-        (CamembertConfig, CamembertForQuestionAnswering),
-        (BartConfig, BartForQuestionAnswering),
-        (MBartConfig, MBartForQuestionAnswering),
-        (LongformerConfig, LongformerForQuestionAnswering),
-        (XLMRobertaConfig, XLMRobertaForQuestionAnswering),
-        (RobertaConfig, RobertaForQuestionAnswering),
-        (SqueezeBertConfig, SqueezeBertForQuestionAnswering),
-        (BertConfig, BertForQuestionAnswering),
-        (XLNetConfig, XLNetForQuestionAnsweringSimple),
-        (FlaubertConfig, FlaubertForQuestionAnsweringSimple),
-        (MobileBertConfig, MobileBertForQuestionAnswering),
-        (XLMConfig, XLMForQuestionAnsweringSimple),
-        (ElectraConfig, ElectraForQuestionAnswering),
-        (ReformerConfig, ReformerForQuestionAnswering),
-        (FunnelConfig, FunnelForQuestionAnswering),
-        (LxmertConfig, LxmertForQuestionAnswering),
-        (MPNetConfig, MPNetForQuestionAnswering),
-        (DebertaConfig, DebertaForQuestionAnswering),
-    ]
-)
+MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING = OrderedDict([
+    # Model for Table Question Answering mapping
+    (TapasConfig, TapasForQuestionAnswering),
+])
 
-MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING = OrderedDict(
-    [
-        # Model for Table Question Answering mapping
-        (TapasConfig, TapasForQuestionAnswering),
-    ]
-)
+MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING = OrderedDict([
+    # Model for Token Classification mapping
+    (ConvBertConfig, ConvBertForTokenClassification),
+    (LayoutLMConfig, LayoutLMForTokenClassification),
+    (DistilBertConfig, DistilBertForTokenClassification),
+    (CamembertConfig, CamembertForTokenClassification),
+    (FlaubertConfig, FlaubertForTokenClassification),
+    (XLMConfig, XLMForTokenClassification),
+    (XLMRobertaConfig, XLMRobertaForTokenClassification),
+    (LongformerConfig, LongformerForTokenClassification),
+    (RobertaConfig, RobertaForTokenClassification),
+    (SqueezeBertConfig, SqueezeBertForTokenClassification),
+    (BertConfig, BertForTokenClassification),
+    (MobileBertConfig, MobileBertForTokenClassification),
+    (XLNetConfig, XLNetForTokenClassification),
+    (AlbertConfig, AlbertForTokenClassification),
+    (ElectraConfig, ElectraForTokenClassification),
+    (FlaubertConfig, FlaubertForTokenClassification),
+    (FunnelConfig, FunnelForTokenClassification),
+    (MPNetConfig, MPNetForTokenClassification),
+    (DebertaConfig, DebertaForTokenClassification),
+])
 
-MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING = OrderedDict(
-    [
-        # Model for Token Classification mapping
-        (ConvBertConfig, ConvBertForTokenClassification),
-        (LayoutLMConfig, LayoutLMForTokenClassification),
-        (DistilBertConfig, DistilBertForTokenClassification),
-        (CamembertConfig, CamembertForTokenClassification),
-        (FlaubertConfig, FlaubertForTokenClassification),
-        (XLMConfig, XLMForTokenClassification),
-        (XLMRobertaConfig, XLMRobertaForTokenClassification),
-        (LongformerConfig, LongformerForTokenClassification),
-        (RobertaConfig, RobertaForTokenClassification),
-        (SqueezeBertConfig, SqueezeBertForTokenClassification),
-        (BertConfig, BertForTokenClassification),
-        (MobileBertConfig, MobileBertForTokenClassification),
-        (XLNetConfig, XLNetForTokenClassification),
-        (AlbertConfig, AlbertForTokenClassification),
-        (ElectraConfig, ElectraForTokenClassification),
-        (FlaubertConfig, FlaubertForTokenClassification),
-        (FunnelConfig, FunnelForTokenClassification),
-        (MPNetConfig, MPNetForTokenClassification),
-        (DebertaConfig, DebertaForTokenClassification),
-    ]
-)
+MODEL_FOR_MULTIPLE_CHOICE_MAPPING = OrderedDict([
+    # Model for Multiple Choice mapping
+    (ConvBertConfig, ConvBertForMultipleChoice),
+    (CamembertConfig, CamembertForMultipleChoice),
+    (ElectraConfig, ElectraForMultipleChoice),
+    (XLMRobertaConfig, XLMRobertaForMultipleChoice),
+    (LongformerConfig, LongformerForMultipleChoice),
+    (RobertaConfig, RobertaForMultipleChoice),
+    (SqueezeBertConfig, SqueezeBertForMultipleChoice),
+    (BertConfig, BertForMultipleChoice),
+    (DistilBertConfig, DistilBertForMultipleChoice),
+    (MobileBertConfig, MobileBertForMultipleChoice),
+    (XLNetConfig, XLNetForMultipleChoice),
+    (AlbertConfig, AlbertForMultipleChoice),
+    (XLMConfig, XLMForMultipleChoice),
+    (FlaubertConfig, FlaubertForMultipleChoice),
+    (FunnelConfig, FunnelForMultipleChoice),
+    (MPNetConfig, MPNetForMultipleChoice),
+])
 
-MODEL_FOR_MULTIPLE_CHOICE_MAPPING = OrderedDict(
-    [
-        # Model for Multiple Choice mapping
-        (ConvBertConfig, ConvBertForMultipleChoice),
-        (CamembertConfig, CamembertForMultipleChoice),
-        (ElectraConfig, ElectraForMultipleChoice),
-        (XLMRobertaConfig, XLMRobertaForMultipleChoice),
-        (LongformerConfig, LongformerForMultipleChoice),
-        (RobertaConfig, RobertaForMultipleChoice),
-        (SqueezeBertConfig, SqueezeBertForMultipleChoice),
-        (BertConfig, BertForMultipleChoice),
-        (DistilBertConfig, DistilBertForMultipleChoice),
-        (MobileBertConfig, MobileBertForMultipleChoice),
-        (XLNetConfig, XLNetForMultipleChoice),
-        (AlbertConfig, AlbertForMultipleChoice),
-        (XLMConfig, XLMForMultipleChoice),
-        (FlaubertConfig, FlaubertForMultipleChoice),
-        (FunnelConfig, FunnelForMultipleChoice),
-        (MPNetConfig, MPNetForMultipleChoice),
-    ]
-)
-
-MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING = OrderedDict(
-    [
-        (BertConfig, BertForNextSentencePrediction),
-        (MobileBertConfig, MobileBertForNextSentencePrediction),
-    ]
-)
+MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING = OrderedDict([
+    (BertConfig, BertForNextSentencePrediction),
+    (MobileBertConfig, MobileBertForNextSentencePrediction),
+])
 
 AUTO_MODEL_PRETRAINED_DOCSTRING = r"""
 
@@ -699,13 +705,11 @@ class AutoModel:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModel is designed to be instantiated "
             "using the `AutoModel.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModel.from_config(config)` methods."
-        )
+            "`AutoModel.from_config(config)` methods.")
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_MAPPING, use_model_types=False)
@@ -735,9 +739,10 @@ class AutoModel:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_MAPPING)
@@ -745,7 +750,8 @@ class AutoModel:
         "Instantiate one of the base model classes of the library from a pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
 
         Examples::
@@ -767,19 +773,23 @@ class AutoModel:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_MAPPING.keys():
             return MODEL_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__ for c in MODEL_MAPPING.keys()),
+            ))
 
 
 class AutoModelForPreTraining:
@@ -791,16 +801,15 @@ class AutoModelForPreTraining:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForPreTraining is designed to be instantiated "
             "using the `AutoModelForPreTraining.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForPreTraining.from_config(config)` methods."
-        )
+            "`AutoModelForPreTraining.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_PRETRAINING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_PRETRAINING_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with the architecture used for pretraining this
@@ -829,9 +838,11 @@ class AutoModelForPreTraining:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_PRETRAINING_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_PRETRAINING_MAPPING)
@@ -840,7 +851,8 @@ class AutoModelForPreTraining:
         "model---from a pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -861,19 +873,24 @@ class AutoModelForPreTraining:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_PRETRAINING_MAPPING.keys():
             return MODEL_FOR_PRETRAINING_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_PRETRAINING_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_PRETRAINING_MAPPING.keys()),
+            ))
 
 
 class AutoModelWithLMHead:
@@ -891,16 +908,15 @@ class AutoModelWithLMHead:
         :class:`~transformers.AutoModelForMaskedLM` for masked language models and
         :class:`~transformers.AutoModelForSeq2SeqLM` for encoder-decoder models.
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelWithLMHead is designed to be instantiated "
             "using the `AutoModelWithLMHead.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelWithLMHead.from_config(config)` methods."
-        )
+            "`AutoModelWithLMHead.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_WITH_LM_HEAD_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_WITH_LM_HEAD_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a language modeling head---from a configuration.
@@ -934,9 +950,11 @@ class AutoModelWithLMHead:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_WITH_LM_HEAD_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_WITH_LM_HEAD_MAPPING)
@@ -945,7 +963,8 @@ class AutoModelWithLMHead:
         "model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -972,19 +991,24 @@ class AutoModelWithLMHead:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_WITH_LM_HEAD_MAPPING.keys():
             return MODEL_WITH_LM_HEAD_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_WITH_LM_HEAD_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_WITH_LM_HEAD_MAPPING.keys()),
+            ))
 
 
 class AutoModelForCausalLM:
@@ -995,16 +1019,15 @@ class AutoModelForCausalLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForCausalLM is designed to be instantiated "
             "using the `AutoModelForCausalLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForCausalLM.from_config(config)` methods."
-        )
+            "`AutoModelForCausalLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_CAUSAL_LM_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a causal language modeling head---from a
@@ -1033,9 +1056,11 @@ class AutoModelForCausalLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_CAUSAL_LM_MAPPING)
@@ -1044,7 +1069,8 @@ class AutoModelForCausalLM:
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1065,19 +1091,24 @@ class AutoModelForCausalLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_CAUSAL_LM_MAPPING.keys():
             return MODEL_FOR_CAUSAL_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_CAUSAL_LM_MAPPING.keys()),
+            ))
 
 
 class AutoModelForMaskedLM:
@@ -1088,16 +1119,15 @@ class AutoModelForMaskedLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMaskedLM is designed to be instantiated "
             "using the `AutoModelForMaskedLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForMaskedLM.from_config(config)` methods."
-        )
+            "`AutoModelForMaskedLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_MASKED_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_MASKED_LM_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a masked language modeling head---from a
@@ -1126,9 +1156,11 @@ class AutoModelForMaskedLM:
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_MASKED_LM_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_MASKED_LM_MAPPING)
@@ -1137,7 +1169,8 @@ class AutoModelForMaskedLM:
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1158,19 +1191,24 @@ class AutoModelForMaskedLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_MASKED_LM_MAPPING.keys():
             return MODEL_FOR_MASKED_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+                pretrained_model_name_or_path,
+                *model_args,
+                config=config,
+                **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
-                config.__class__, cls.__name__, ", ".join(c.__name__ for c in MODEL_FOR_MASKED_LM_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                cls.__name__,
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_MASKED_LM_MAPPING.keys()),
+            ))
 
 
 class AutoModelForSeq2SeqLM:
@@ -1182,16 +1220,15 @@ class AutoModelForSeq2SeqLM:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSeq2SeqLM is designed to be instantiated "
             "using the `AutoModelForSeq2SeqLM.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForSeq2SeqLM.from_config(config)` methods."
-        )
+            "`AutoModelForSeq2SeqLM.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence-to-sequence language modeling
@@ -1222,9 +1259,10 @@ class AutoModelForSeq2SeqLM:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING)
@@ -1233,7 +1271,8 @@ class AutoModelForSeq2SeqLM:
         "head---from a pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1254,21 +1293,25 @@ class AutoModelForSeq2SeqLM:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys():
-            return MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING.keys()),
+            ))
 
 
 class AutoModelForSequenceClassification:
@@ -1280,7 +1323,6 @@ class AutoModelForSequenceClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForSequenceClassification is designed to be instantiated "
@@ -1289,7 +1331,8 @@ class AutoModelForSequenceClassification:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a sequence classification head---from a
@@ -1314,24 +1357,28 @@ class AutoModelForSequenceClassification:
             >>> model = AutoModelForSequenceClassification.from_config(config)
         """
         if type(config) in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)](config)
+            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)](
+                config)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a sequence classification head---from a "
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1352,21 +1399,25 @@ class AutoModelForSequenceClassification:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys():
-            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_SEQUENCE_CLASSIFICATION_MAPPING.keys()),
+            ))
 
 
 class AutoModelForQuestionAnswering:
@@ -1377,16 +1428,15 @@ class AutoModelForQuestionAnswering:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForQuestionAnswering is designed to be instantiated "
             "using the `AutoModelForQuestionAnswering.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForQuestionAnswering.from_config(config)` methods."
-        )
+            "`AutoModelForQuestionAnswering.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_QUESTION_ANSWERING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_QUESTION_ANSWERING_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a question answering head---from a configuration.
@@ -1417,9 +1467,10 @@ class AutoModelForQuestionAnswering:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_QUESTION_ANSWERING_MAPPING)
@@ -1428,7 +1479,8 @@ class AutoModelForQuestionAnswering:
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1449,22 +1501,26 @@ class AutoModelForQuestionAnswering:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys():
-            return MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_QUESTION_ANSWERING_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
 
 class AutoModelForTableQuestionAnswering:
@@ -1476,7 +1532,6 @@ class AutoModelForTableQuestionAnswering:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForQuestionAnswering is designed to be instantiated "
@@ -1485,7 +1540,8 @@ class AutoModelForTableQuestionAnswering:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a table question answering head---from a
@@ -1510,25 +1566,28 @@ class AutoModelForTableQuestionAnswering:
             >>> model = AutoModelForTableQuestionAnswering.from_config(config)
         """
         if type(config) in MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys():
-            return MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING[type(config)](config)
+            return MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING[type(config)](
+                config)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a table question answering head---from a "
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1549,22 +1608,25 @@ class AutoModelForTableQuestionAnswering:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys():
-            return MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          MODEL_FOR_TABLE_QUESTION_ANSWERING_MAPPING.keys()),
+            ))
 
 
 class AutoModelForTokenClassification:
@@ -1575,16 +1637,15 @@ class AutoModelForTokenClassification:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForTokenClassification is designed to be instantiated "
             "using the `AutoModelForTokenClassification.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForTokenClassification.from_config(config)` methods."
-        )
+            "`AutoModelForTokenClassification.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a token classification head---from a configuration.
@@ -1615,9 +1676,10 @@ class AutoModelForTokenClassification:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING)
@@ -1626,7 +1688,8 @@ class AutoModelForTokenClassification:
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1647,22 +1710,26 @@ class AutoModelForTokenClassification:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys():
-            return MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
-            )
-        )
+                ", ".join(
+                    c.__name__
+                    for c in MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING.keys()),
+            ))
 
 
 class AutoModelForMultipleChoice:
@@ -1674,16 +1741,15 @@ class AutoModelForMultipleChoice:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForMultipleChoice is designed to be instantiated "
             "using the `AutoModelForMultipleChoice.from_pretrained(pretrained_model_name_or_path)` or "
-            "`AutoModelForMultipleChoice.from_config(config)` methods."
-        )
+            "`AutoModelForMultipleChoice.from_config(config)` methods.")
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_MULTIPLE_CHOICE_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(MODEL_FOR_MULTIPLE_CHOICE_MAPPING,
+                                       use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1715,9 +1781,9 @@ class AutoModelForMultipleChoice:
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+            ))
 
     @classmethod
     @replace_list_option_in_docstrings(MODEL_FOR_MULTIPLE_CHOICE_MAPPING)
@@ -1726,7 +1792,8 @@ class AutoModelForMultipleChoice:
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1747,22 +1814,25 @@ class AutoModelForMultipleChoice:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys():
-            return MODEL_FOR_MULTIPLE_CHOICE_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_MULTIPLE_CHOICE_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__
+                          for c in MODEL_FOR_MULTIPLE_CHOICE_MAPPING.keys()),
+            ))
 
 
 class AutoModelForNextSentencePrediction:
@@ -1774,7 +1844,6 @@ class AutoModelForNextSentencePrediction:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoModelForNextSentencePrediction is designed to be instantiated "
@@ -1783,7 +1852,8 @@ class AutoModelForNextSentencePrediction:
         )
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING, use_model_types=False)
     def from_config(cls, config):
         r"""
         Instantiates one of the model classes of the library---with a multiple choice classification head---from a
@@ -1808,25 +1878,28 @@ class AutoModelForNextSentencePrediction:
             >>> model = AutoModelForNextSentencePrediction.from_config(config)
         """
         if type(config) in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys():
-            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)](config)
+            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)](
+                config)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+            ))
 
     @classmethod
-    @replace_list_option_in_docstrings(MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING)
+    @replace_list_option_in_docstrings(
+        MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING)
     @add_start_docstrings(
         "Instantiate one of the model classes of the library---with a multiple choice classification head---from a "
         "pretrained model.",
         AUTO_MODEL_PRETRAINED_DOCSTRING,
     )
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Examples::
 
@@ -1847,19 +1920,22 @@ class AutoModelForNextSentencePrediction:
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
             config, kwargs = AutoConfig.from_pretrained(
-                pretrained_model_name_or_path, return_unused_kwargs=True, **kwargs
-            )
+                pretrained_model_name_or_path,
+                return_unused_kwargs=True,
+                **kwargs)
 
         if type(config) in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys():
-            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(config)].from_pretrained(
-                pretrained_model_name_or_path, *model_args, config=config, **kwargs
-            )
+            return MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING[type(
+                config)].from_pretrained(pretrained_model_name_or_path,
+                                         *model_args,
+                                         config=config,
+                                         **kwargs)
 
         raise ValueError(
             "Unrecognized configuration class {} for this kind of AutoModel: {}.\n"
             "Model type should be one of {}.".format(
                 config.__class__,
                 cls.__name__,
-                ", ".join(c.__name__ for c in MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
-            )
-        )
+                ", ".join(c.__name__ for c in
+                          MODEL_FOR_NEXT_SENTENCE_PREDICTION_MAPPING.keys()),
+            ))

@@ -19,7 +19,6 @@ import importlib.util
 import os
 import re
 
-
 # All paths are set with the intent you should run this script from the root of the repo with the command
 # python utils/check_table.py
 TRANSFORMERS_PATH = "src/transformers"
@@ -56,16 +55,20 @@ def _find_text_in_file(filename, start_prompt, end_prompt):
 # Add here suffixes that are used to identify models, seperated by |
 ALLOWED_MODEL_SUFFIXES = "Model|Encoder|Decoder|ForConditionalGeneration"
 # Regexes that match TF/Flax/PT model names.
-_re_tf_models = re.compile(r"TF(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
-_re_flax_models = re.compile(r"Flax(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
+_re_tf_models = re.compile(
+    r"TF(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
+_re_flax_models = re.compile(
+    r"Flax(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
 # Will match any TF or Flax model too so need to be in an else branch afterthe two previous regexes.
-_re_pt_models = re.compile(r"(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
+_re_pt_models = re.compile(
+    r"(.*)(?:Model|Encoder|Decoder|ForConditionalGeneration)")
 
 
 # Thanks to https://stackoverflow.com/questions/29916065/how-to-do-camelcase-split-in-python
 def camel_case_split(identifier):
     "Split a camelcased `identifier` into words."
-    matches = re.finditer(".+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)", identifier)
+    matches = re.finditer(
+        ".+?(?:(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])|$)", identifier)
     return [m.group(0) for m in matches]
 
 
@@ -88,10 +91,12 @@ def get_model_table_from_auto_modules():
 
     # Dictionary model names to config.
     model_name_to_config = {
-        name: transformers.CONFIG_MAPPING[code] for code, name in transformers.MODEL_NAMES_MAPPING.items()
+        name: transformers.CONFIG_MAPPING[code]
+        for code, name in transformers.MODEL_NAMES_MAPPING.items()
     }
     model_name_to_prefix = {
-        name: config.__name__.replace("Config", "") for name, config in model_name_to_config.items()
+        name: config.__name__.replace("Config", "")
+        for name, config in model_name_to_config.items()
     }
 
     # Dictionaries flagging if each model prefix has a slow/fast tokenizer, backend in PT/TF/Flax.
@@ -131,7 +136,14 @@ def get_model_table_from_auto_modules():
     # Let's build that table!
     model_names = list(model_name_to_config.keys())
     model_names.sort()
-    columns = ["Model", "Tokenizer slow", "Tokenizer fast", "PyTorch support", "TensorFlow support", "Flax Support"]
+    columns = [
+        "Model",
+        "Tokenizer slow",
+        "Tokenizer fast",
+        "PyTorch support",
+        "TensorFlow support",
+        "Flax Support",
+    ]
     # We'll need widths to properly display everything in the center (+2 is to leave one extra space on each side).
     widths = [len(c) + 2 for c in columns]
     widths[0] = max([len(name) for name in model_names]) + 2
@@ -139,7 +151,9 @@ def get_model_table_from_auto_modules():
     # Rst table per se
     table = ".. rst-class:: center-aligned-table\n\n"
     table += "+" + "+".join(["-" * w for w in widths]) + "+\n"
-    table += "|" + "|".join([_center_text(c, w) for c, w in zip(columns, widths)]) + "|\n"
+    table += ("|" +
+              "|".join([_center_text(c, w)
+                        for c, w in zip(columns, widths)]) + "|\n")
     table += "+" + "+".join(["=" * w for w in widths]) + "+\n"
 
     check = {True: "✅", False: "❌"}
@@ -153,24 +167,33 @@ def get_model_table_from_auto_modules():
             check[tf_models[prefix]],
             check[flax_models[prefix]],
         ]
-        table += "|" + "|".join([_center_text(l, w) for l, w in zip(line, widths)]) + "|\n"
+        table += ("|" +
+                  "|".join([_center_text(l, w)
+                            for l, w in zip(line, widths)]) + "|\n")
         table += "+" + "+".join(["-" * w for w in widths]) + "+\n"
     return table
 
 
 def check_model_table(overwrite=False):
-    """ Check the model table in the index.rst is consistent with the state of the lib and maybe `overwrite`. """
+    """Check the model table in the index.rst is consistent with the state of the lib and maybe `overwrite`."""
     current_table, start_index, end_index, lines = _find_text_in_file(
         filename=os.path.join(PATH_TO_DOCS, "index.rst"),
-        start_prompt="    This table is updated automatically from the auto module",
+        start_prompt=
+        "    This table is updated automatically from the auto module",
         end_prompt=".. toctree::",
     )
     new_table = get_model_table_from_auto_modules()
 
     if current_table != new_table:
         if overwrite:
-            with open(os.path.join(PATH_TO_DOCS, "index.rst"), "w", encoding="utf-8", newline="\n") as f:
-                f.writelines(lines[:start_index] + [new_table] + lines[end_index:])
+            with open(
+                    os.path.join(PATH_TO_DOCS, "index.rst"),
+                    "w",
+                    encoding="utf-8",
+                    newline="\n",
+            ) as f:
+                f.writelines(lines[:start_index] + [new_table] +
+                             lines[end_index:])
         else:
             raise ValueError(
                 "The model table in the `index.rst` has not been updated. Run `make fix-copies` to fix this."
@@ -179,7 +202,11 @@ def check_model_table(overwrite=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--fix_and_overwrite", action="store_true", help="Whether to fix inconsistencies.")
+    parser.add_argument(
+        "--fix_and_overwrite",
+        action="store_true",
+        help="Whether to fix inconsistencies.",
+    )
     args = parser.parse_args()
 
     check_model_table(args.fix_and_overwrite)

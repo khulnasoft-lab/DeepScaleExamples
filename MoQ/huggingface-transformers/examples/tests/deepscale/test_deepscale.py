@@ -30,7 +30,6 @@ from transformers.testing_utils import (
 )
 from transformers.trainer_utils import set_seed
 
-
 set_seed(42)
 MBART_TINY = "sshleifer/tiny-mbart"
 
@@ -57,7 +56,13 @@ def require_deepscale(test_case):
 class TestDeepScale(TestCasePlus):
 
     # this setup emulates a notebook where a launcher needs to be emulated by hand
-    @mockenv(MASTER_ADDR="localhost", MASTER_PORT="10999", RANK="0", LOCAL_RANK="0", WORLD_SIZE="1")
+    @mockenv(
+        MASTER_ADDR="localhost",
+        MASTER_PORT="10999",
+        RANK="0",
+        LOCAL_RANK="0",
+        WORLD_SIZE="1",
+    )
     def test_fake_notebook_no_launcher(self):
         sys.path.append(self.tests_dir_str)
         from test_trainer import get_regression_trainer
@@ -65,9 +70,11 @@ class TestDeepScale(TestCasePlus):
         del sys.path[-1]  # restore
         ds_config_file = f"{self.test_file_dir_str}/ds_config.json"
         with CaptureStd() as cs:
-            trainer = get_regression_trainer(local_rank=0, deepscale=ds_config_file)
+            trainer = get_regression_trainer(local_rank=0,
+                                             deepscale=ds_config_file)
             trainer.train()
-        assert "DeepScale info" in cs.out, "expected DeepScale logger output but got none"
+        assert ("DeepScale info"
+                in cs.out), "expected DeepScale logger output but got none"
 
     @require_torch_multi_gpu
     def test_basic_distributed(self):
@@ -75,7 +82,8 @@ class TestDeepScale(TestCasePlus):
 
     @require_torch_multi_gpu
     def test_grad_acum(self):
-        self.run_quick(distributed=True, extra_args_str="--gradient_accumulation_steps 2")
+        self.run_quick(distributed=True,
+                       extra_args_str="--gradient_accumulation_steps 2")
 
     def test_do_eval_no_train(self):
         # we should not fail if train is skipped
@@ -92,7 +100,10 @@ class TestDeepScale(TestCasePlus):
         assert "eval_bleu" in val_metrics
 
     # XXX: need to do better validation beyond just that the run was successful
-    def run_quick(self, distributed=True, extra_args_str=None, remove_args_str=None):
+    def run_quick(self,
+                  distributed=True,
+                  extra_args_str=None,
+                  remove_args_str=None):
         output_dir = self.run_trainer(
             eval_steps=1,
             max_len=12,
@@ -102,7 +113,8 @@ class TestDeepScale(TestCasePlus):
             extra_args_str=extra_args_str,
             remove_args_str=remove_args_str,
         )
-        train_metrics = load_json(os.path.join(output_dir, "train_results.json"))
+        train_metrics = load_json(
+            os.path.join(output_dir, "train_results.json"))
         assert "train_runtime" in train_metrics
 
     def run_trainer(
@@ -151,7 +163,8 @@ class TestDeepScale(TestCasePlus):
             remove_args = remove_args_str.split()
             args = [x for x in args if x not in remove_args]
 
-        ds_args = f"--deepscale {self.test_file_dir_str}/ds_config.json".split()
+        ds_args = f"--deepscale {self.test_file_dir_str}/ds_config.json".split(
+        )
         script = [f"{self.examples_dir_str}/seq2seq/run_seq2seq.py"]
         num_gpus = get_gpu_count() if distributed else 1
         launcher = f"deepscale --num_gpus {num_gpus}".split()

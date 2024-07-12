@@ -14,21 +14,22 @@
 # limitations under the License.
 
 import sys
-sys.path.append('..')
+
+sys.path.append("..")
 
 from data_utils.tokenization_gpt2 import GPT2Tokenizer
 
 
 class Tokenizer:
-
     def __init__(self, cache_dir=None):
-        self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2',
+        self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2",
                                                        cache_dir=cache_dir)
         self.tokenizer.max_len = int(1e12)
-        self.eod_token = self.tokenizer.encoder['<|endoftext|>']
-        assert self.eod_token < 65535, 'vocab size will not fit in uint16'
-        print('> GPT2 tokenizer with {} vocab size and eod token {} ...'.format(
-            len(self.tokenizer.encoder), self.eod_token))
+        self.eod_token = self.tokenizer.encoder["<|endoftext|>"]
+        assert self.eod_token < 65535, "vocab size will not fit in uint16"
+        print(
+            "> GPT2 tokenizer with {} vocab size and eod token {} ...".format(
+                len(self.tokenizer.encoder), self.eod_token))
 
     def tokenize_document(self, document):
         tokens = self.tokenizer.encode(document)

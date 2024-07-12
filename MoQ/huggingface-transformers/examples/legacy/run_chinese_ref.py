@@ -17,16 +17,14 @@ def _is_chinese_char(cp):
     # as is Japanese Hiragana and Katakana. Those alphabets are used to write
     # space-separated words, so they are not treated specially and handled
     # like the all of the other languages.
-    if (
-        (cp >= 0x4E00 and cp <= 0x9FFF)
-        or (cp >= 0x3400 and cp <= 0x4DBF)  #
-        or (cp >= 0x20000 and cp <= 0x2A6DF)  #
-        or (cp >= 0x2A700 and cp <= 0x2B73F)  #
-        or (cp >= 0x2B740 and cp <= 0x2B81F)  #
-        or (cp >= 0x2B820 and cp <= 0x2CEAF)  #
-        or (cp >= 0xF900 and cp <= 0xFAFF)
-        or (cp >= 0x2F800 and cp <= 0x2FA1F)  #
-    ):  #
+    if ((cp >= 0x4E00 and cp <= 0x9FFF) or (cp >= 0x3400 and cp <= 0x4DBF)  #
+            or (cp >= 0x20000 and cp <= 0x2A6DF)  #
+            or (cp >= 0x2A700 and cp <= 0x2B73F)  #
+            or (cp >= 0x2B740 and cp <= 0x2B81F)  #
+            or (cp >= 0x2B820 and cp <= 0x2CEAF)  #
+            or (cp >= 0xF900 and cp <= 0xFAFF)
+            or (cp >= 0x2F800 and cp <= 0x2FA1F)  #
+        ):  #
         return True
 
     return False
@@ -64,7 +62,7 @@ def add_sub_symbol(bert_tokens: List[str], chinese_word_set: set()):
         if is_chinese(bert_word[start]):
             l = min(end - start, max_word_len)
             for i in range(l, 1, -1):
-                whole_word = "".join(bert_word[start : start + i])
+                whole_word = "".join(bert_word[start:start + i])
                 if whole_word in chinese_word_set:
                     for j in range(start + 1, start + i):
                         bert_word[j] = "##" + bert_word[j]
@@ -76,18 +74,22 @@ def add_sub_symbol(bert_tokens: List[str], chinese_word_set: set()):
     return bert_word
 
 
-def prepare_ref(lines: List[str], ltp_tokenizer: LTP, bert_tokenizer: BertTokenizer):
+def prepare_ref(lines: List[str], ltp_tokenizer: LTP,
+                bert_tokenizer: BertTokenizer):
     ltp_res = []
 
     for i in range(0, len(lines), 100):
-        res = ltp_tokenizer.seg(lines[i : i + 100])[0]
+        res = ltp_tokenizer.seg(lines[i:i + 100])[0]
         res = [get_chinese_word(r) for r in res]
         ltp_res.extend(res)
     assert len(ltp_res) == len(lines)
 
     bert_res = []
     for i in range(0, len(lines), 100):
-        res = bert_tokenizer(lines[i : i + 100], add_special_tokens=True, truncation=True, max_length=512)
+        res = bert_tokenizer(lines[i:i + 100],
+                             add_special_tokens=True,
+                             truncation=True,
+                             max_length=512)
         bert_res.extend(res["input_ids"])
     assert len(bert_res) == len(lines)
 
@@ -105,7 +107,8 @@ def prepare_ref(lines: List[str], ltp_tokenizer: LTP, bert_tokenizer: BertTokeni
             if token[:2] == "##":
                 clean_token = token[2:]
                 # save chinese tokens' pos
-                if len(clean_token) == 1 and _is_chinese_char(ord(clean_token)):
+                if len(clean_token) == 1 and _is_chinese_char(
+                        ord(clean_token)):
                     ref_id.append(i)
         ref_ids.append(ref_id)
 
@@ -119,7 +122,9 @@ def main(args):
     # If we want to fine-tune these model, we have to use same tokenizer : LTP (https://github.com/HIT-SCIR/ltp)
     with open(args.file_name, "r", encoding="utf-8") as f:
         data = f.readlines()
-    data = [line.strip() for line in data if len(line) > 0 and not line.isspace()]  # avoid delimiter like '\u2029'
+    data = [
+        line.strip() for line in data if len(line) > 0 and not line.isspace()
+    ]  # avoid delimiter like '\u2029'
     ltp_tokenizer = LTP(args.ltp)  # faster in GPU device
     bert_tokenizer = BertTokenizer.from_pretrained(args.bert)
 
@@ -139,10 +144,21 @@ if __name__ == "__main__":
         help="file need process, same as training data in lm",
     )
     parser.add_argument(
-        "--ltp", type=str, default="./resources/ltp", help="resources for LTP tokenizer, usually a path"
+        "--ltp",
+        type=str,
+        default="./resources/ltp",
+        help="resources for LTP tokenizer, usually a path",
     )
-    parser.add_argument("--bert", type=str, default="./resources/robert", help="resources for Bert tokenizer")
-    parser.add_argument("--save_path", type=str, default="./resources/ref.txt", help="path to save res")
+    parser.add_argument(
+        "--bert",
+        type=str,
+        default="./resources/robert",
+        help="resources for Bert tokenizer",
+    )
+    parser.add_argument("--save_path",
+                        type=str,
+                        default="./resources/ref.txt",
+                        help="path to save res")
 
     args = parser.parse_args()
     main(args)

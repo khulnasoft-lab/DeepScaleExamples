@@ -26,15 +26,12 @@ from ...tokenization_utils import PreTrainedTokenizer
 from ...tokenization_utils_base import BatchEncoding, PaddingStrategy, TensorType
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
-
 
 VOCAB_FILES_NAMES = {
     "vocab_file": "vocab.json",
     "tokenizer_config_file": "tokenizer_config.json",
 }
-
 
 WAV2VEC2_KWARGS_DOCSTRING = r"""
             padding (:obj:`bool`, :obj:`str` or :class:`~transformers.tokenization_utils_base.PaddingStrategy`, `optional`, defaults to :obj:`False`):
@@ -114,27 +111,27 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
     vocab_files_names = VOCAB_FILES_NAMES
     pretrained_vocab_files_map = {
         "vocab_file": {
-            "facebook/wav2vec2-base-960h": "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/vocab.json"
+            "facebook/wav2vec2-base-960h":
+            "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/vocab.json"
         },
         "tokenizer_config_file": {
-            "facebook/wav2vec2-base-960h": "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/tokenizer.json",
+            "facebook/wav2vec2-base-960h":
+            "https://huggingface.co/facebook/wav2vec2-base-960h/resolve/main/tokenizer.json",
         },
     }
     model_input_names = ["input_values", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        bos_token="<s>",
-        eos_token="</s>",
-        unk_token="<unk>",
-        pad_token="<pad>",
-        word_delimiter_token="|",
-        do_lower_case=False,
-        do_normalize=False,
-        return_attention_mask=False,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 bos_token="<s>",
+                 eos_token="</s>",
+                 unk_token="<unk>",
+                 pad_token="<pad>",
+                 word_delimiter_token="|",
+                 do_lower_case=False,
+                 do_normalize=False,
+                 return_attention_mask=False,
+                 **kwargs):
         super().__init__(
             unk_token=unk_token,
             bos_token=bos_token,
@@ -185,16 +182,15 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
         self._word_delimiter_token = self.convert_tokens_to_ids(value)
 
     @add_end_docstrings(WAV2VEC2_KWARGS_DOCSTRING)
-    def __call__(
-        self,
-        raw_speech: Union[np.ndarray, List[float], List[np.ndarray], List[List[float]]],
-        padding: Union[bool, str, PaddingStrategy] = False,
-        max_length: Optional[int] = None,
-        pad_to_multiple_of: Optional[int] = None,
-        return_tensors: Optional[Union[str, TensorType]] = None,
-        verbose: bool = True,
-        **kwargs
-    ) -> BatchEncoding:
+    def __call__(self,
+                 raw_speech: Union[np.ndarray, List[float], List[np.ndarray],
+                                   List[List[float]]],
+                 padding: Union[bool, str, PaddingStrategy] = False,
+                 max_length: Optional[int] = None,
+                 pad_to_multiple_of: Optional[int] = None,
+                 return_tensors: Optional[Union[str, TensorType]] = None,
+                 verbose: bool = True,
+                 **kwargs) -> BatchEncoding:
         """
         Main method to tokenize and prepare for the model one or several sequence(s) or one or several pair(s) of
         sequences.
@@ -207,8 +203,8 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
 
         is_batched = bool(
             isinstance(raw_speech, (list, tuple))
-            and (isinstance(raw_speech[0], np.ndarray) or isinstance(raw_speech[0], (tuple, list)))
-        )
+            and (isinstance(raw_speech[0], np.ndarray)
+                 or isinstance(raw_speech[0], (tuple, list))))
 
         # make sure input is in list format
         if is_batched and not isinstance(raw_speech[0], np.ndarray):
@@ -222,7 +218,8 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
 
         # zero-mean and unit-variance normalization
         if self.do_normalize:
-            raw_speech = [(x - np.mean(x)) / np.sqrt(np.var(x) + 1e-5) for x in raw_speech]
+            raw_speech = [(x - np.mean(x)) / np.sqrt(np.var(x) + 1e-5)
+                          for x in raw_speech]
 
         # convert into correct format for padding
         encoded_inputs = BatchEncoding({"input_values": raw_speech})
@@ -263,10 +260,14 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
         grouped_tokens = [token_group[0] for token_group in groupby(tokens)]
 
         # filter self.pad_token which is used as CTC-blank token
-        filtered_tokens = list(filter(lambda token: token != self.pad_token, grouped_tokens))
+        filtered_tokens = list(
+            filter(lambda token: token != self.pad_token, grouped_tokens))
 
         # replace delimiter token
-        string = "".join([" " if token == self.word_delimiter_token else token for token in filtered_tokens]).strip()
+        string = "".join([
+            " " if token == self.word_delimiter_token else token
+            for token in filtered_tokens
+        ]).strip()
 
         if self.do_lower_case:
             string = string.lower()
@@ -283,7 +284,8 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
         same as tokens of the base vocabulary and therefore the function `convert_tokens_to_string` has to be called on
         the whole token list and not individually on added tokens
         """
-        filtered_tokens = self.convert_ids_to_tokens(token_ids, skip_special_tokens=skip_special_tokens)
+        filtered_tokens = self.convert_ids_to_tokens(
+            token_ids, skip_special_tokens=skip_special_tokens)
 
         result = []
         for token in filtered_tokens:
@@ -299,15 +301,20 @@ class Wav2Vec2Tokenizer(PreTrainedTokenizer):
         else:
             return text
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         with open(vocab_file, "w", encoding="utf-8") as f:
             f.write(json.dumps(self.encoder, ensure_ascii=False))
 
-        return (vocab_file,)
+        return (vocab_file, )

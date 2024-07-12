@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -216,7 +216,7 @@ and return to the parent directory
 
 .. code:: bash
 
-   git clone https://github.com/org_that_created_brand_new_bert_org/brand_new_bert.git 
+   git clone https://github.com/org_that_created_brand_new_bert_org/brand_new_bert.git
    cd brand_new_bert
    pip install -e .
 
@@ -583,7 +583,7 @@ corresponding layer in the checkpoint. *E.g.*
 
 .. code:: python
 
-   # retrieve matching layer weights, e.g. by 
+   # retrieve matching layer weights, e.g. by
    # recursive algorithm
    layer_name = "dense"
    pretrained_weight = array_of_dense_layer
@@ -693,11 +693,11 @@ the same ``tests/test_modeling_brand_new_bert.py``. Run this test file to verify
 
 Having fixed all common tests, it is now crucial to ensure that all the nice work you have done is well tested, so that
 
--  
+-
 
    a) The community can easily understand your work by looking at specific tests of *brand_new_bert*
 
--  
+-
 
    b) Future changes to your model will not break any important feature of the model.
 

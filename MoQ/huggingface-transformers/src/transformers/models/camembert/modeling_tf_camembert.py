@@ -27,13 +27,11 @@ from ..roberta.modeling_tf_roberta import (
 )
 from .configuration_camembert import CamembertConfig
 
-
 logger = logging.get_logger(__name__)
 
 TF_CAMEMBERT_PRETRAINED_MODEL_ARCHIVE_LIST = [
     # See all CamemBERT models at https://huggingface.co/models?filter=camembert
 ]
-
 
 CAMEMBERT_START_DOCSTRING = r"""
 

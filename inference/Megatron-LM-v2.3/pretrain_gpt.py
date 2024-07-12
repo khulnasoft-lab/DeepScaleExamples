@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pretrain GPT"""
 
 import torch
@@ -28,15 +27,16 @@ from megatron.training import pretrain
 from megatron.utils import get_ltor_masks_and_position_ids
 from megatron.utils import average_losses_across_data_parallel_group
 
+
 def model_provider(pre_process=True, post_process=True):
     """Build the model."""
 
-    print_rank_0('building GPT model ...')
+    print_rank_0("building GPT model ...")
     model = GPTModel(
         num_tokentypes=0,
         parallel_output=True,
         pre_process=pre_process,
-        post_process=post_process
+        post_process=post_process,
     )
     return model
 
@@ -47,7 +47,7 @@ def get_batch(data_iterator):
     tokenizer = get_tokenizer()
 
     # Items and their type.
-    keys = ['text']
+    keys = ["text"]
     datatype = torch.int64
 
     # Broadcast data.
@@ -58,7 +58,7 @@ def get_batch(data_iterator):
     data_b = mpu.broadcast_data(keys, data, datatype)
 
     # Unpack.
-    tokens_ = data_b['text'].long()
+    tokens_ = data_b["text"].long()
     labels = tokens_[:, 1:].contiguous()
     tokens = tokens_[:, :-1].contiguous()
 
@@ -68,9 +68,11 @@ def get_batch(data_iterator):
         tokenizer.eod,
         args.reset_position_ids,
         args.reset_attention_mask,
-        args.eod_mask_loss)
+        args.eod_mask_loss,
+    )
 
     return tokens, labels, loss_mask, attention_mask, position_ids
+
 
 def loss_func(loss_mask, output_tensor):
     losses = output_tensor.float()
@@ -80,7 +82,7 @@ def loss_func(loss_mask, output_tensor):
     # Reduce loss for logging.
     averaged_loss = average_losses_across_data_parallel_group([loss])
 
-    return loss, {'lm loss': averaged_loss[0]}
+    return loss, {"lm loss": averaged_loss[0]}
 
 
 def forward_step(data_iterator, model):
@@ -89,13 +91,12 @@ def forward_step(data_iterator, model):
     timers = get_timers()
 
     # Get the batch.
-    timers('batch-generator').start()
+    timers("batch-generator").start()
     tokens, labels, loss_mask, attention_mask, position_ids = get_batch(
         data_iterator)
-    timers('batch-generator').stop()
+    timers("batch-generator").stop()
 
-    output_tensor = model(tokens, position_ids, attention_mask,
-                          labels=labels)
+    output_tensor = model(tokens, position_ids, attention_mask, labels=labels)
 
     return output_tensor, partial(loss_func, loss_mask)
 
@@ -104,8 +105,8 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid, and test datasets."""
     args = get_args()
 
-    print_rank_0('> building train, validation, and test datasets '
-                 'for GPT ...')
+    print_rank_0("> building train, validation, and test datasets "
+                 "for GPT ...")
     train_ds, valid_ds, test_ds = build_train_valid_test_datasets(
         data_prefix=args.data_path,
         data_impl=args.data_impl,
@@ -113,7 +114,8 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
         train_valid_test_num_samples=train_val_test_num_samples,
         seq_length=args.seq_length,
         seed=args.seed,
-        skip_warmup=(not args.mmap_warmup))
+        skip_warmup=(not args.mmap_warmup),
+    )
     print_rank_0("> finished creating GPT datasets ...")
 
     return train_ds, valid_ds, test_ds
@@ -121,5 +123,9 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
 if __name__ == "__main__":
 
-    pretrain(train_valid_test_datasets_provider, model_provider, forward_step,
-             args_defaults={'tokenizer_type': 'GPT2BPETokenizer'})
+    pretrain(
+        train_valid_test_datasets_provider,
+        model_provider,
+        forward_step,
+        args_defaults={"tokenizer_type": "GPT2BPETokenizer"},
+    )

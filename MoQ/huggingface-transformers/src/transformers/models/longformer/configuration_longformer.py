@@ -19,15 +19,19 @@ from typing import List, Union
 from ...utils import logging
 from ..roberta.configuration_roberta import RobertaConfig
 
-
 logger = logging.get_logger(__name__)
 
 LONGFORMER_PRETRAINED_CONFIG_ARCHIVE_MAP = {
-    "allenai/longformer-base-4096": "https://huggingface.co/allenai/longformer-base-4096/resolve/main/config.json",
-    "allenai/longformer-large-4096": "https://huggingface.co/allenai/longformer-large-4096/resolve/main/config.json",
-    "allenai/longformer-large-4096-finetuned-triviaqa": "https://huggingface.co/allenai/longformer-large-4096-finetuned-triviaqa/resolve/main/config.json",
-    "allenai/longformer-base-4096-extra.pos.embd.only": "https://huggingface.co/allenai/longformer-base-4096-extra.pos.embd.only/resolve/main/config.json",
-    "allenai/longformer-large-4096-extra.pos.embd.only": "https://huggingface.co/allenai/longformer-large-4096-extra.pos.embd.only/resolve/main/config.json",
+    "allenai/longformer-base-4096":
+    "https://huggingface.co/allenai/longformer-base-4096/resolve/main/config.json",
+    "allenai/longformer-large-4096":
+    "https://huggingface.co/allenai/longformer-large-4096/resolve/main/config.json",
+    "allenai/longformer-large-4096-finetuned-triviaqa":
+    "https://huggingface.co/allenai/longformer-large-4096-finetuned-triviaqa/resolve/main/config.json",
+    "allenai/longformer-base-4096-extra.pos.embd.only":
+    "https://huggingface.co/allenai/longformer-base-4096-extra.pos.embd.only/resolve/main/config.json",
+    "allenai/longformer-large-4096-extra.pos.embd.only":
+    "https://huggingface.co/allenai/longformer-large-4096-extra.pos.embd.only/resolve/main/config.json",
 }
 
 
@@ -64,8 +68,12 @@ class LongformerConfig(RobertaConfig):
         >>> # Accessing the model configuration
         >>> configuration = model.config
     """
+
     model_type = "longformer"
 
-    def __init__(self, attention_window: Union[List[int], int] = 512, sep_token_id: int = 2, **kwargs):
+    def __init__(self,
+                 attention_window: Union[List[int], int] = 512,
+                 sep_token_id: int = 2,
+                 **kwargs):
         super().__init__(sep_token_id=sep_token_id, **kwargs)
         self.attention_window = attention_window

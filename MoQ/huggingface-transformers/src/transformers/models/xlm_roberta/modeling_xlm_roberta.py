@@ -28,7 +28,6 @@ from ..roberta.modeling_roberta import (
 )
 from .configuration_xlm_roberta import XLMRobertaConfig
 
-
 logger = logging.get_logger(__name__)
 
 XLM_ROBERTA_PRETRAINED_MODEL_ARCHIVE_LIST = [
@@ -40,7 +39,6 @@ XLM_ROBERTA_PRETRAINED_MODEL_ARCHIVE_LIST = [
     "xlm-roberta-large-finetuned-conll03-german",
     # See all XLM-RoBERTa models at https://huggingface.co/models?filter=xlm-roberta
 ]
-
 
 XLM_ROBERTA_START_DOCSTRING = r"""
 

@@ -40,7 +40,6 @@ from .file_utils import (
 )
 from .integrations import is_optuna_available, is_ray_available
 
-
 SMALL_MODEL_IDENTIFIER = "julien-c/bert-xsmall-dummy"
 DUMMY_UNKWOWN_IDENTIFIER = "julien-c/dummy-unknown"
 DUMMY_DIFF_TOKENIZER_IDENTIFIER = "julien-c/dummy-diff-tokenizer"
@@ -77,8 +76,10 @@ def parse_int_from_env(key, default=None):
 
 
 _run_slow_tests = parse_flag_from_env("RUN_SLOW", default=False)
-_run_pt_tf_cross_tests = parse_flag_from_env("RUN_PT_TF_CROSS_TESTS", default=False)
-_run_custom_tokenizers = parse_flag_from_env("RUN_CUSTOM_TOKENIZERS", default=False)
+_run_pt_tf_cross_tests = parse_flag_from_env("RUN_PT_TF_CROSS_TESTS",
+                                             default=False)
+_run_custom_tokenizers = parse_flag_from_env("RUN_CUSTOM_TOKENIZERS",
+                                             default=False)
 _run_pipeline_tests = parse_flag_from_env("RUN_PIPELINE_TESTS", default=False)
 _run_git_lfs_tests = parse_flag_from_env("RUN_GIT_LFS_TESTS", default=False)
 _tf_gpu_memory_limit = parse_int_from_env("TF_GPU_MEMORY_LIMIT", default=None)
@@ -92,7 +93,8 @@ def is_pt_tf_cross_test(test_case):
     to a truthy value and selecting the is_pt_tf_cross_test pytest mark.
 
     """
-    if not _run_pt_tf_cross_tests or not is_torch_available() or not is_tf_available():
+    if not _run_pt_tf_cross_tests or not is_torch_available(
+    ) or not is_tf_available():
         return unittest.skip("test is PT+TF test")(test_case)
     else:
         try:
@@ -326,7 +328,7 @@ else:
 
 
 def require_torch_gpu(test_case):
-    """Decorator marking a test that requires CUDA and PyTorch. """
+    """Decorator marking a test that requires CUDA and PyTorch."""
     if torch_device != "cuda":
         return unittest.skip("test requires CUDA")(test_case)
     else:
@@ -429,6 +431,7 @@ def get_tests_dir(append_path=None):
 # The original code came from:
 # https://github.com/fastai/fastai/blob/master/tests/utils/text.py
 
+
 # When any function contains print() calls that get overwritten, like progress bars,
 # a special care needs to be applied, since under pytest -s captured output (capsys
 # or contextlib.redirect_stdout) contains any temporary printed strings, followed by
@@ -474,7 +477,6 @@ class CaptureStd:
             # but best use the stream-specific subclasses
 
     """
-
     def __init__(self, out=True, err=True):
         if out:
             self.out_buf = StringIO()
@@ -526,15 +528,13 @@ class CaptureStd:
 
 
 class CaptureStdout(CaptureStd):
-    """ Same as CaptureStd but captures only stdout """
-
+    """Same as CaptureStd but captures only stdout"""
     def __init__(self):
         super().__init__(err=False)
 
 
 class CaptureStderr(CaptureStd):
-    """ Same as CaptureStd but captures only stderr """
-
+    """Same as CaptureStd but captures only stderr"""
     def __init__(self):
         super().__init__(out=False)
 
@@ -562,7 +562,6 @@ class CaptureLogger:
         ...     logger.info(msg)
         >>> assert cl.out, msg+"\n"
     """
-
     def __init__(self, logger):
         self.logger = logger
         self.io = StringIO()
@@ -660,7 +659,6 @@ class TestCasePlus(unittest.TestCase):
             env = self.get_env()
 
     """
-
     def setUp(self):
         # get_auto_remove_tmp_dir feature:
         self.teardown_tmp_dirs = []
@@ -676,7 +674,9 @@ class TestCasePlus(unittest.TestCase):
         if tmp_dir:
             self._repo_root_dir = tmp_dir
         else:
-            raise ValueError(f"can't figure out the root of the repo from {self._test_file_path}")
+            raise ValueError(
+                f"can't figure out the root of the repo from {self._test_file_path}"
+            )
         self._tests_dir = self._repo_root_dir / "tests"
         self._examples_dir = self._repo_root_dir / "examples"
         self._src_dir = self._repo_root_dir / "src"
@@ -858,7 +858,8 @@ def pytest_addoption_shared(parser):
             option,
             action="store",
             default=False,
-            help="generate report files. The value of this option is used as a prefix to report names",
+            help=
+            "generate report files. The value of this option is used as a prefix to report names",
         )
         pytest_opt_registered[option] = 1
 
@@ -926,7 +927,9 @@ def pytest_terminal_summary_main(tr, id):
             f.write("slowest durations\n")
             for i, rep in enumerate(dlist):
                 if rep.duration < durations_min:
-                    f.write(f"{len(dlist)-i} durations < {durations_min} secs were omitted")
+                    f.write(
+                        f"{len(dlist)-i} durations < {durations_min} secs were omitted"
+                    )
                     break
                 f.write(f"{rep.duration:02.2f}s {rep.when:<8} {rep.nodeid}\n")
 
@@ -940,7 +943,8 @@ def pytest_terminal_summary_main(tr, id):
             msg = tr._getfailureheadline(rep)
             tr.write_sep("_", msg, red=True, bold=True)
             # chop off the optional leading extra frames, leaving only the last one
-            longrepr = re.sub(r".*_ _ _ (_ ){10,}_ _ ", "", rep.longreprtext, 0, re.M | re.S)
+            longrepr = re.sub(r".*_ _ _ (_ ){10,}_ _ ", "", rep.longreprtext,
+                              0, re.M | re.S)
             tr._tw.line(longrepr)
             # note: not printing out any rep.sections to keep the report short
 
@@ -974,7 +978,9 @@ def pytest_terminal_summary_main(tr, id):
         tr.summary_warnings()  # normal warnings
         tr.summary_warnings()  # final warnings
 
-    tr.reportchars = "wPpsxXEf"  # emulate -rA (used in summary_passes() and short_test_summary())
+    tr.reportchars = (
+        "wPpsxXEf"  # emulate -rA (used in summary_passes() and short_test_summary())
+    )
     with open(report_files["passes"], "w") as f:
         tr._tw = create_terminal_writer(config, f)
         tr.summary_passes()
@@ -1015,7 +1021,12 @@ async def _read_stream(stream, callback):
             break
 
 
-async def _stream_subprocess(cmd, env=None, stdin=None, timeout=None, quiet=False, echo=False) -> _RunOutput:
+async def _stream_subprocess(cmd,
+                             env=None,
+                             stdin=None,
+                             timeout=None,
+                             quiet=False,
+                             echo=False) -> _RunOutput:
     if echo:
         print("\nRunning: ", " ".join(cmd))
 
@@ -1048,28 +1059,38 @@ async def _stream_subprocess(cmd, env=None, stdin=None, timeout=None, quiet=Fals
     # XXX: the timeout doesn't seem to make any difference here
     await asyncio.wait(
         [
-            _read_stream(p.stdout, lambda l: tee(l, out, sys.stdout, label="stdout:")),
-            _read_stream(p.stderr, lambda l: tee(l, err, sys.stderr, label="stderr:")),
+            _read_stream(p.stdout,
+                         lambda l: tee(l, out, sys.stdout, label="stdout:")),
+            _read_stream(p.stderr,
+                         lambda l: tee(l, err, sys.stderr, label="stderr:")),
         ],
         timeout=timeout,
     )
     return _RunOutput(await p.wait(), out, err)
 
 
-def execute_subprocess_async(cmd, env=None, stdin=None, timeout=180, quiet=False, echo=True) -> _RunOutput:
+def execute_subprocess_async(cmd,
+                             env=None,
+                             stdin=None,
+                             timeout=180,
+                             quiet=False,
+                             echo=True) -> _RunOutput:
 
     loop = asyncio.get_event_loop()
     result = loop.run_until_complete(
-        _stream_subprocess(cmd, env=env, stdin=stdin, timeout=timeout, quiet=quiet, echo=echo)
-    )
+        _stream_subprocess(cmd,
+                           env=env,
+                           stdin=stdin,
+                           timeout=timeout,
+                           quiet=quiet,
+                           echo=echo))
 
     cmd_str = " ".join(cmd)
     if result.returncode > 0:
         stderr = "\n".join(result.stderr)
         raise RuntimeError(
             f"'{cmd_str}' failed with returncode {result.returncode}\n\n"
-            f"The combined stderr from workers follows:\n{stderr}"
-        )
+            f"The combined stderr from workers follows:\n{stderr}")
 
     # check that the subprocess actually did run and produced some output, should the test rely on
     # the remote side to do the testing

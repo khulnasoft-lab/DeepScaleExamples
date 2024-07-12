@@ -21,8 +21,8 @@ from torch.autograd import Variable
 
 import mpu
 
-class DistributedDataParallel(Module):
 
+class DistributedDataParallel(Module):
     def __init__(self, module):
         super(DistributedDataParallel, self).__init__()
         self.warn_on_half = True if dist._backend == dist.dist_backend.GLOO else False
@@ -34,20 +34,25 @@ class DistributedDataParallel(Module):
             if torch.is_tensor(p):
                 dist.broadcast(p, src_rank, group=self.data_parallel_group)
 
-        def allreduce_params(reduce_after=True, no_scale=False, fp32_allreduce=False):
-            if(self.needs_reduction):
+        def allreduce_params(reduce_after=True,
+                             no_scale=False,
+                             fp32_allreduce=False):
+            if self.needs_reduction:
                 self.needs_reduction = False
                 buckets = {}
                 for name, param in self.module.named_parameters():
                     if param.requires_grad and param.grad is not None:
-                        tp = (param.data.type())
+                        tp = param.data.type()
                         if tp not in buckets:
                             buckets[tp] = []
                         buckets[tp].append(param)
                 if self.warn_on_half:
                     if torch.cuda.HalfTensor in buckets:
-                        print("WARNING: gloo dist backend for half parameters may be extremely slow." +
-                              " It is recommended to use the NCCL backend in this case.")
+                        print(
+                            "WARNING: gloo dist backend for half parameters may be extremely slow."
+                            +
+                            " It is recommended to use the NCCL backend in this case."
+                        )
                         self.warn_on_half = False
                 for tp in buckets:
                     bucket = buckets[tp]
@@ -56,40 +61,46 @@ class DistributedDataParallel(Module):
                     if fp32_allreduce:
                         coalesced = coalesced.float()
                     if not no_scale and not reduce_after:
-                        coalesced /= dist.get_world_size(group=self.data_parallel_group)
+                        coalesced /= dist.get_world_size(
+                            group=self.data_parallel_group)
                     dist.all_reduce(coalesced, group=self.data_parallel_group)
                     torch.cuda.synchronize()
                     if not no_scale and reduce_after:
-                        coalesced /= dist.get_world_size(group=self.data_parallel_group)
-                    for buf, synced in zip(grads, _unflatten_dense_tensors(coalesced, grads)):
+                        coalesced /= dist.get_world_size(
+                            group=self.data_parallel_group)
+                    for buf, synced in zip(
+                            grads, _unflatten_dense_tensors(coalesced, grads)):
                         buf.copy_(synced)
+
         self.hook_handles = []
         self.hooks = []
         for param in list(self.module.parameters()):
+
             def allreduce_hook(*unused):
                 Variable._execution_engine.queue_callback(allreduce_params)
+
         #    handle = param.register_hook(allreduce_hook)
-            #self.hooks.append(allreduce_hook)
-            #self.hook_handles.append(handle)
+        # self.hooks.append(allreduce_hook)
+        # self.hook_handles.append(handle)
         self.allreduce_params = allreduce_params
 
     def forward(self, *inputs, **kwargs):
         self.needs_reduction = True
         return self.module(*inputs, **kwargs)
 
-    def state_dict(self, destination=None, prefix='', keep_vars=False):
-        #[h.remove() for h in self.hook_handles]
+    def state_dict(self, destination=None, prefix="", keep_vars=False):
+        # [h.remove() for h in self.hook_handles]
         sd = self.module.state_dict(destination, prefix, keep_vars)
-       # for handle, hook in zip(self.hook_handles, self.hooks):
-       #     d = handle.hooks_dict_ref()
-       #     d[handle.id] = hook
+        # for handle, hook in zip(self.hook_handles, self.hooks):
+        #     d = handle.hooks_dict_ref()
+        #     d[handle.id] = hook
 
         return sd
 
     def load_state_dict(self, state_dict, strict=True):
         self.module.load_state_dict(state_dict, strict=strict)
 
-    '''
+    """
     def _sync_buffers(self):
         buffers = list(self.module._all_buffers())
         if len(buffers) > 0:
@@ -106,5 +117,4 @@ class DistributedDataParallel(Module):
             dist._clear_group_cache()
         super(DistributedDataParallel, self).train(mode)
         self.module.train(mode)
-    '''
-
+    """

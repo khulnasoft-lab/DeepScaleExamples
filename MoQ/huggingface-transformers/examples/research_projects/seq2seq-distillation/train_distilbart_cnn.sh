@@ -21,4 +21,3 @@ python finetune.py \
     --warmup_steps 500 \
     --output_dir distilbart-cnn-12-6 \
     "$@"
-

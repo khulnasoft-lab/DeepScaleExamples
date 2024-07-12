@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Main tasks functionality."""
 
 import os
@@ -20,6 +19,7 @@ import sys
 
 from megatron import get_args
 from tasks.orqa.evaluate_utils import ORQAEvaluator
+
 
 def main():
     """
@@ -37,4 +37,3 @@ def main():
 
     if args.qa_data_test is not None:
         evaluator.evaluate(args.qa_data_test, "TEST")
-

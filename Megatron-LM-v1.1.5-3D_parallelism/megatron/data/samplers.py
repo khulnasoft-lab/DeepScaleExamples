@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Batch samplers that work with either random or sequential data samplers."""
 
 import torch
@@ -31,7 +30,6 @@ class RandomSampler(data.sampler.Sampler):
         replacement (bool): samples are drawn with replacement if ``True``,
         default=False
     """
-
     def __init__(self, data_source, replacement=False, num_samples=None):
         self.data_source = data_source
         self.replacement = replacement
@@ -64,8 +62,11 @@ class RandomSampler(data.sampler.Sampler):
         if self.epoch >= 0:
             g.manual_seed(self.epoch)
         if self.replacement:
-            return iter(torch.randint(high=n, size=(self.num_samples,),
-                                      dtype=torch.int64, generator=g).tolist())
+            return iter(
+                torch.randint(high=n,
+                              size=(self.num_samples, ),
+                              dtype=torch.int64,
+                              generator=g).tolist())
         return iter(torch.randperm(n, generator=g).tolist())
 
     def __len__(self):
@@ -81,23 +82,30 @@ class DistributedBatchSampler(data.sampler.BatchSampler):
     sampler level. This allows wrapping of arbitrary data samplers
     (sequential, random, WeightedRandomSampler, etc.) with this batch
     sampler.
-    
+
     The `interleave` argument specifies how to distribute a batch. A value
     of True combined with the above random sampler is equivalent to pytorch's
     torch.utils.data.distributed.DistributedSampler.
 
-    For the following batch [0,1,2,3,4,5,6,7] and data parallelism of 2 
+    For the following batch [0,1,2,3,4,5,6,7] and data parallelism of 2
     specifying True will result in the following samples for each gpu:
         GPU0: [0,2,4,6] GPU1: [1,3,5,7]
     specifying False will result in the following samples:
         GPU0: [0,1,2,3] GPU1: [4,5,6,7]"""
-
-    def __init__(self, sampler, batch_size, drop_last, rank=-1,
-                 world_size=2, wrap_last=False, interleave=False):
+    def __init__(
+        self,
+        sampler,
+        batch_size,
+        drop_last,
+        rank=-1,
+        world_size=2,
+        wrap_last=False,
+        interleave=False,
+    ):
         super(DistributedBatchSampler, self).__init__(sampler, batch_size,
                                                       drop_last)
         if rank == -1:
-            assert False, 'should not be here'
+            assert False, "should not be here"
             rank = torch.distributed.get_rank()
         self.rank = rank
         self.world_size = world_size
@@ -122,8 +130,8 @@ class DistributedBatchSampler(data.sampler.BatchSampler):
         batch_len = len(batch)
         if batch_len > 0 and not self.drop_last:
             if self.wrap_last:
-                self.sampler.wrap_around -= (self.batch_size)
-                self.wrap_around += (len(batch))
+                self.sampler.wrap_around -= self.batch_size
+                self.wrap_around += len(batch)
                 self.wrap_around %= self.batch_size
             yield self._batch(batch)
         if self.wrap_last:

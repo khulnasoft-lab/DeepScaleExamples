@@ -8,7 +8,6 @@ from ..tokenization_utils import PreTrainedTokenizer
 from ..utils import logging
 from .base import PIPELINE_INIT_ARGS, ArgumentHandler, Pipeline, PipelineException
 
-
 if TYPE_CHECKING:
     from ..modeling_tf_utils import TFPreTrainedModel
     from ..modeling_utils import PreTrainedModel
@@ -22,7 +21,6 @@ if is_torch_available():
     import torch
 
     from ..models.auto.modeling_auto import MODEL_FOR_MASKED_LM_MAPPING
-
 
 logger = logging.get_logger(__name__)
 
@@ -49,7 +47,6 @@ class FillMaskPipeline(Pipeline):
 
         This pipeline only works for inputs with exactly one token masked.
     """
-
     def __init__(
         self,
         model: Union["PreTrainedModel", "TFPreTrainedModel"],
@@ -72,7 +69,8 @@ class FillMaskPipeline(Pipeline):
             task=task,
         )
 
-        self.check_model_type(TF_MODEL_WITH_LM_HEAD_MAPPING if self.framework == "tf" else MODEL_FOR_MASKED_LM_MAPPING)
+        self.check_model_type(TF_MODEL_WITH_LM_HEAD_MAPPING if self.framework
+                              == "tf" else MODEL_FOR_MASKED_LM_MAPPING)
         self.top_k = top_k
 
     def ensure_exactly_one_mask_token(self, masked_index: np.ndarray):
@@ -90,7 +88,11 @@ class FillMaskPipeline(Pipeline):
                 f"No mask_token ({self.tokenizer.mask_token}) found on the input",
             )
 
-    def __call__(self, *args, targets=None, top_k: Optional[int] = None, **kwargs):
+    def __call__(self,
+                 *args,
+                 targets=None,
+                 top_k: Optional[int] = None,
+                 **kwargs):
         """
         Fill the masked token in the text(s) given as inputs.
 
@@ -116,32 +118,35 @@ class FillMaskPipeline(Pipeline):
         outputs = self._forward(inputs, return_tensors=True)
 
         results = []
-        batch_size = outputs.shape[0] if self.framework == "tf" else outputs.size(0)
+        batch_size = outputs.shape[
+            0] if self.framework == "tf" else outputs.size(0)
 
         if targets is not None:
             if len(targets) == 0 or len(targets[0]) == 0:
-                raise ValueError("At least one target must be provided when passed.")
+                raise ValueError(
+                    "At least one target must be provided when passed.")
             if isinstance(targets, str):
                 targets = [targets]
 
             targets_proc = []
             for target in targets:
                 target_enc = self.tokenizer.tokenize(target)
-                if len(target_enc) > 1 or target_enc[0] == self.tokenizer.unk_token:
+                if len(target_enc
+                       ) > 1 or target_enc[0] == self.tokenizer.unk_token:
                     logger.warning(
-                        "The specified target token `{}` does not exist in the model vocabulary. Replacing with `{}`.".format(
-                            target, target_enc[0]
-                        )
-                    )
+                        "The specified target token `{}` does not exist in the model vocabulary. Replacing with `{}`."
+                        .format(target, target_enc[0]))
                 targets_proc.append(target_enc[0])
-            target_inds = np.array(self.tokenizer.convert_tokens_to_ids(targets_proc))
+            target_inds = np.array(
+                self.tokenizer.convert_tokens_to_ids(targets_proc))
 
         for i in range(batch_size):
             input_ids = inputs["input_ids"][i]
             result = []
 
             if self.framework == "tf":
-                masked_index = tf.where(input_ids == self.tokenizer.mask_token_id).numpy()
+                masked_index = tf.where(
+                    input_ids == self.tokenizer.mask_token_id).numpy()
 
                 # Fill mask pipeline supports only one ${mask_token} per sample
                 self.ensure_exactly_one_mask_token(masked_index)
@@ -149,15 +154,21 @@ class FillMaskPipeline(Pipeline):
                 logits = outputs[i, masked_index.item(), :]
                 probs = tf.nn.softmax(logits)
                 if targets is None:
-                    topk = tf.math.top_k(probs, k=top_k if top_k is not None else self.top_k)
-                    values, predictions = topk.values.numpy(), topk.indices.numpy()
+                    topk = tf.math.top_k(
+                        probs, k=top_k if top_k is not None else self.top_k)
+                    values, predictions = topk.values.numpy(
+                    ), topk.indices.numpy()
                 else:
-                    values = tf.gather_nd(probs, tf.reshape(target_inds, (-1, 1)))
+                    values = tf.gather_nd(probs,
+                                          tf.reshape(target_inds, (-1, 1)))
                     sort_inds = tf.reverse(tf.argsort(values), [0])
-                    values = tf.gather_nd(values, tf.reshape(sort_inds, (-1, 1))).numpy()
+                    values = tf.gather_nd(values,
+                                          tf.reshape(sort_inds,
+                                                     (-1, 1))).numpy()
                     predictions = target_inds[sort_inds.numpy()]
             else:
-                masked_index = torch.nonzero(input_ids == self.tokenizer.mask_token_id, as_tuple=False)
+                masked_index = torch.nonzero(
+                    input_ids == self.tokenizer.mask_token_id, as_tuple=False)
 
                 # Fill mask pipeline supports only one ${mask_token} per sample
                 self.ensure_exactly_one_mask_token(masked_index.numpy())
@@ -165,7 +176,8 @@ class FillMaskPipeline(Pipeline):
                 logits = outputs[i, masked_index.item(), :]
                 probs = logits.softmax(dim=0)
                 if targets is None:
-                    values, predictions = probs.topk(top_k if top_k is not None else self.top_k)
+                    values, predictions = probs.topk(
+                        top_k if top_k is not None else self.top_k)
                 else:
                     values = probs[..., target_inds]
                     sort_inds = list(reversed(values.argsort(dim=-1)))
@@ -176,15 +188,18 @@ class FillMaskPipeline(Pipeline):
                 tokens = input_ids.numpy()
                 tokens[masked_index] = p
                 # Filter padding out:
-                tokens = tokens[np.where(tokens != self.tokenizer.pad_token_id)]
-                result.append(
-                    {
-                        "sequence": self.tokenizer.decode(tokens, skip_special_tokens=True),
-                        "score": v,
-                        "token": p,
-                        "token_str": self.tokenizer.decode(p),
-                    }
-                )
+                tokens = tokens[np.where(
+                    tokens != self.tokenizer.pad_token_id)]
+                result.append({
+                    "sequence":
+                    self.tokenizer.decode(tokens, skip_special_tokens=True),
+                    "score":
+                    v,
+                    "token":
+                    p,
+                    "token_str":
+                    self.tokenizer.decode(p),
+                })
 
             # Append
             results += [result]

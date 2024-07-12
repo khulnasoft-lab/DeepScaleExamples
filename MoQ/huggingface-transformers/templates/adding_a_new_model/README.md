@@ -22,7 +22,7 @@ documentation.
 
 ## Usage
 
-Using the `cookiecutter` utility requires to have all the `dev` dependencies installed. Let's first clone the 
+Using the `cookiecutter` utility requires to have all the `dev` dependencies installed. Let's first clone the
 repository and install it in our environment:
 
 ```shell script
@@ -42,20 +42,20 @@ This should launch the `cookiecutter` package which should prompt you to fill in
 The `modelname` should be cased according to the plain text casing, i.e., BERT, RoBERTa, DeBERTa.
 ```
 modelname [<ModelNAME>]:
-uppercase_modelname [<MODEL_NAME>]: 
-lowercase_modelname [<model_name>]: 
-camelcase_modelname [<ModelName>]: 
+uppercase_modelname [<MODEL_NAME>]:
+lowercase_modelname [<model_name>]:
+camelcase_modelname [<ModelName>]:
 ```
 
 Fill in the `authors` with your team members:
 ```
-authors [The HuggingFace Team]: 
+authors [The HuggingFace Team]:
 ```
 
 The checkpoint identifier is the checkpoint that will be used in the examples across the files. Put the name you wish,
 as it will appear on the modelhub. Do not forget to include the organisation.
 ```
-checkpoint_identifier [organisation/<model_name>-base-cased]: 
+checkpoint_identifier [organisation/<model_name>-base-cased]:
 ```
 
 The tokenizer should either be based on BERT if it behaves exactly like the BERT tokenizer, or a standalone otherwise.
@@ -63,19 +63,19 @@ The tokenizer should either be based on BERT if it behaves exactly like the BERT
 Select tokenizer_type:
 1 - Based on BERT
 2 - Standalone
-Choose from 1, 2 [1]: 
+Choose from 1, 2 [1]:
 ```
 <!---
 Choose if your model is an encoder-decoder, or an encoder-only architecture.
 
-If your model is an encoder-only architecture, the generated architecture will be based on the BERT model. 
+If your model is an encoder-only architecture, the generated architecture will be based on the BERT model.
 If your model is an encoder-decoder architecture, the generated architecture will be based on the BART model. You can,
 of course, edit the files once the generation is complete.
 ```
 Select is_encoder_decoder_model:
 1 - True
 2 - False
-Choose from 1, 2 [1]: 
+Choose from 1, 2 [1]:
 ```
 -->
 
@@ -96,9 +96,9 @@ You can run the tests to ensure that they all pass:
 python -m pytest ./tests/test_*<model_name>*.py
 ```
 
-Feel free to modify each file to mimic the behavior of your model. 
+Feel free to modify each file to mimic the behavior of your model.
 
-⚠ You should be careful about the classes preceded by the following line:️ 
+⚠ You should be careful about the classes preceded by the following line:️
 
 ```python
 # Copied from transformers.[...]
@@ -108,8 +108,8 @@ This line ensures that the copy does not diverge from the source. If it *should*
 is different, this line needs to be deleted. If you don't delete this line and run `make fix-copies`,
 your changes will be overwritten.
 
-Once you have edited the files to fit your architecture, simply re-run the tests (and edit them if a change 
-is needed!) afterwards to make sure everything works as expected. 
+Once you have edited the files to fit your architecture, simply re-run the tests (and edit them if a change
+is needed!) afterwards to make sure everything works as expected.
 
 Once the files are generated and you are happy with your changes, here's a checklist to ensure that your contribution
 will be merged quickly:

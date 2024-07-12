@@ -15,7 +15,7 @@ table.center-aligned-table th {
     position: relative;
     display: inline-block;
 }
-  
+
 .colab-dropdown-content {
     display: none;
     position: absolute;
@@ -24,7 +24,7 @@ table.center-aligned-table th {
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
 }
-  
+
 .colab-dropdown-content button {
     color: #6670FF;
     background-color: #f9f9f9;
@@ -35,9 +35,9 @@ table.center-aligned-table th {
     text-decoration: none;
     display: block;
 }
-  
+
 .colab-dropdown-content button:hover {background-color: #eee;}
-  
+
 .colab-dropdown:hover .colab-dropdown-content {display: block;}
 
 /* Version control */
@@ -54,7 +54,7 @@ table.center-aligned-table th {
 .version-button:hover, .version-button:focus {
     background-color: #A6B0FF;
 }
- 
+
 .version-dropdown {
     display: none;
     background-color: #6670FF;
@@ -62,18 +62,18 @@ table.center-aligned-table th {
     overflow: auto;
     font-size: 15px;
 }
-  
+
 .version-dropdown a {
     color: white;
     padding: 3px 4px;
     text-decoration: none;
     display: block;
 }
-  
+
 .version-dropdown a:hover {
     background-color: #A6B0FF;
 }
-  
+
 .version-show {
     display: block;
 }

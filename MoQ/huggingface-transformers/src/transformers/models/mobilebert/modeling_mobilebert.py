@@ -49,10 +49,13 @@ from ...modeling_outputs import (
     SequenceClassifierOutput,
     TokenClassifierOutput,
 )
-from ...modeling_utils import PreTrainedModel, find_pruneable_heads_and_indices, prune_linear_layer
+from ...modeling_utils import (
+    PreTrainedModel,
+    find_pruneable_heads_and_indices,
+    prune_linear_layer,
+)
 from ...utils import logging
 from .configuration_mobilebert import MobileBertConfig
-
 
 logger = logging.get_logger(__name__)
 
@@ -95,10 +98,13 @@ def load_tf_weights_in_mobilebert(model, config, tf_checkpoint_path):
         name = name.split("/")
         # adam_v and adam_m are variables used in AdamWeightDecayOptimizer to calculated m and v
         # which are not required for using pretrained model
-        if any(
-            n in ["adam_v", "adam_m", "AdamWeightDecayOptimizer", "AdamWeightDecayOptimizer_1", "global_step"]
-            for n in name
-        ):
+        if any(n in [
+                "adam_v",
+                "adam_m",
+                "AdamWeightDecayOptimizer",
+                "AdamWeightDecayOptimizer_1",
+                "global_step",
+        ] for n in name):
             logger.info("Skipping {}".format("/".join(name)))
             continue
         pointer = model
@@ -159,28 +165,38 @@ NORM2FN = {"layer_norm": torch.nn.LayerNorm, "no_norm": NoNorm}
 
 class MobileBertEmbeddings(nn.Module):
     """Construct the embeddings from word, position and token_type embeddings."""
-
     def __init__(self, config):
         super().__init__()
         self.trigram_input = config.trigram_input
         self.embedding_size = config.embedding_size
         self.hidden_size = config.hidden_size
 
-        self.word_embeddings = nn.Embedding(config.vocab_size, config.embedding_size, padding_idx=config.pad_token_id)
-        self.position_embeddings = nn.Embedding(config.max_position_embeddings, config.hidden_size)
-        self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
+        self.word_embeddings = nn.Embedding(config.vocab_size,
+                                            config.embedding_size,
+                                            padding_idx=config.pad_token_id)
+        self.position_embeddings = nn.Embedding(config.max_position_embeddings,
+                                                config.hidden_size)
+        self.token_type_embeddings = nn.Embedding(config.type_vocab_size,
+                                                  config.hidden_size)
 
         embed_dim_multiplier = 3 if self.trigram_input else 1
         embedded_input_size = self.embedding_size * embed_dim_multiplier
-        self.embedding_transformation = nn.Linear(embedded_input_size, config.hidden_size)
+        self.embedding_transformation = nn.Linear(embedded_input_size,
+                                                  config.hidden_size)
 
         self.LayerNorm = NORM2FN[config.normalization_type](config.hidden_size)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
         # position_ids (1, len position emb) is contiguous in memory and exported when serialized
-        self.register_buffer("position_ids", torch.arange(config.max_position_embeddings).expand((1, -1)))
+        self.register_buffer(
+            "position_ids",
+            torch.arange(config.max_position_embeddings).expand((1, -1)))
 
-    def forward(self, input_ids=None, token_type_ids=None, position_ids=None, inputs_embeds=None):
+    def forward(self,
+                input_ids=None,
+                token_type_ids=None,
+                position_ids=None,
+                inputs_embeds=None):
         if input_ids is not None:
             input_shape = input_ids.size()
         else:
@@ -192,7 +208,9 @@ class MobileBertEmbeddings(nn.Module):
             position_ids = self.position_ids[:, :seq_length]
 
         if token_type_ids is None:
-            token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=self.position_ids.device)
+            token_type_ids = torch.zeros(input_shape,
+                                         dtype=torch.long,
+                                         device=self.position_ids.device)
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
 
@@ -229,18 +247,24 @@ class MobileBertSelfAttention(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.num_attention_heads = config.num_attention_heads
-        self.attention_head_size = int(config.true_hidden_size / config.num_attention_heads)
+        self.attention_head_size = int(config.true_hidden_size /
+                                       config.num_attention_heads)
         self.all_head_size = self.num_attention_heads * self.attention_head_size
 
         self.query = nn.Linear(config.true_hidden_size, self.all_head_size)
         self.key = nn.Linear(config.true_hidden_size, self.all_head_size)
         self.value = nn.Linear(
-            config.true_hidden_size if config.use_bottleneck_attention else config.hidden_size, self.all_head_size
+            (config.true_hidden_size
+             if config.use_bottleneck_attention else config.hidden_size),
+            self.all_head_size,
         )
         self.dropout = nn.Dropout(config.attention_probs_dropout_prob)
 
     def transpose_for_scores(self, x):
-        new_x_shape = x.size()[:-1] + (self.num_attention_heads, self.attention_head_size)
+        new_x_shape = x.size()[:-1] + (
+            self.num_attention_heads,
+            self.attention_head_size,
+        )
         x = x.view(*new_x_shape)
         return x.permute(0, 2, 1, 3)
 
@@ -262,8 +286,10 @@ class MobileBertSelfAttention(nn.Module):
         value_layer = self.transpose_for_scores(mixed_value_layer)
 
         # Take the dot product between "query" and "key" to get the raw attention scores.
-        attention_scores = torch.matmul(query_layer, key_layer.transpose(-1, -2))
-        attention_scores = attention_scores / math.sqrt(self.attention_head_size)
+        attention_scores = torch.matmul(query_layer,
+                                        key_layer.transpose(-1, -2))
+        attention_scores = attention_scores / math.sqrt(
+            self.attention_head_size)
         if attention_mask is not None:
             # Apply the attention mask is (precomputed for all layers in BertModel forward() function)
             attention_scores = attention_scores + attention_mask
@@ -277,9 +303,11 @@ class MobileBertSelfAttention(nn.Module):
             attention_probs = attention_probs * head_mask
         context_layer = torch.matmul(attention_probs, value_layer)
         context_layer = context_layer.permute(0, 2, 1, 3).contiguous()
-        new_context_layer_shape = context_layer.size()[:-2] + (self.all_head_size,)
+        new_context_layer_shape = context_layer.size()[:-2] + (
+            self.all_head_size, )
         context_layer = context_layer.view(*new_context_layer_shape)
-        outputs = (context_layer, attention_probs) if output_attentions else (context_layer,)
+        outputs = ((context_layer, attention_probs) if output_attentions else
+                   (context_layer, ))
         return outputs
 
 
@@ -287,8 +315,10 @@ class MobileBertSelfOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.use_bottleneck = config.use_bottleneck
-        self.dense = nn.Linear(config.true_hidden_size, config.true_hidden_size)
-        self.LayerNorm = NORM2FN[config.normalization_type](config.true_hidden_size, eps=config.layer_norm_eps)
+        self.dense = nn.Linear(config.true_hidden_size,
+                               config.true_hidden_size)
+        self.LayerNorm = NORM2FN[config.normalization_type](
+            config.true_hidden_size, eps=config.layer_norm_eps)
         if not self.use_bottleneck:
             self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
@@ -311,7 +341,10 @@ class MobileBertAttention(nn.Module):
         if len(heads) == 0:
             return
         heads, index = find_pruneable_heads_and_indices(
-            heads, self.self.num_attention_heads, self.self.attention_head_size, self.pruned_heads
+            heads,
+            self.self.num_attention_heads,
+            self.self.attention_head_size,
+            self.pruned_heads,
         )
 
         # Prune linear layers
@@ -321,8 +354,10 @@ class MobileBertAttention(nn.Module):
         self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
 
         # Update hyper params and store pruned heads
-        self.self.num_attention_heads = self.self.num_attention_heads - len(heads)
-        self.self.all_head_size = self.self.attention_head_size * self.self.num_attention_heads
+        self.self.num_attention_heads = self.self.num_attention_heads - len(
+            heads)
+        self.self.all_head_size = (self.self.attention_head_size *
+                                   self.self.num_attention_heads)
         self.pruned_heads = self.pruned_heads.union(heads)
 
     def forward(
@@ -346,14 +381,16 @@ class MobileBertAttention(nn.Module):
         # Run a linear projection of `hidden_size` then add a residual
         # with `layer_input`.
         attention_output = self.output(self_outputs[0], layer_input)
-        outputs = (attention_output,) + self_outputs[1:]  # add attentions if we output them
+        outputs = (attention_output,
+                   ) + self_outputs[1:]  # add attentions if we output them
         return outputs
 
 
 class MobileBertIntermediate(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.true_hidden_size, config.intermediate_size)
+        self.dense = nn.Linear(config.true_hidden_size,
+                               config.intermediate_size)
         if isinstance(config.hidden_act, str):
             self.intermediate_act_fn = ACT2FN[config.hidden_act]
         else:
@@ -369,7 +406,8 @@ class OutputBottleneck(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.dense = nn.Linear(config.true_hidden_size, config.hidden_size)
-        self.LayerNorm = NORM2FN[config.normalization_type](config.hidden_size, eps=config.layer_norm_eps)
+        self.LayerNorm = NORM2FN[config.normalization_type](
+            config.hidden_size, eps=config.layer_norm_eps)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
 
     def forward(self, hidden_states, residual_tensor):
@@ -383,14 +421,17 @@ class MobileBertOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
         self.use_bottleneck = config.use_bottleneck
-        self.dense = nn.Linear(config.intermediate_size, config.true_hidden_size)
-        self.LayerNorm = NORM2FN[config.normalization_type](config.true_hidden_size)
+        self.dense = nn.Linear(config.intermediate_size,
+                               config.true_hidden_size)
+        self.LayerNorm = NORM2FN[config.normalization_type](
+            config.true_hidden_size)
         if not self.use_bottleneck:
             self.dropout = nn.Dropout(config.hidden_dropout_prob)
         else:
             self.bottleneck = OutputBottleneck(config)
 
-    def forward(self, intermediate_states, residual_tensor_1, residual_tensor_2):
+    def forward(self, intermediate_states, residual_tensor_1,
+                residual_tensor_2):
         layer_output = self.dense(intermediate_states)
         if not self.use_bottleneck:
             layer_output = self.dropout(layer_output)
@@ -404,8 +445,10 @@ class MobileBertOutput(nn.Module):
 class BottleneckLayer(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.hidden_size, config.intra_bottleneck_size)
-        self.LayerNorm = NORM2FN[config.normalization_type](config.intra_bottleneck_size, eps=config.layer_norm_eps)
+        self.dense = nn.Linear(config.hidden_size,
+                               config.intra_bottleneck_size)
+        self.LayerNorm = NORM2FN[config.normalization_type](
+            config.intra_bottleneck_size, eps=config.layer_norm_eps)
 
     def forward(self, hidden_states):
         layer_input = self.dense(hidden_states)
@@ -441,19 +484,31 @@ class Bottleneck(nn.Module):
 
         bottlenecked_hidden_states = self.input(hidden_states)
         if self.use_bottleneck_attention:
-            return (bottlenecked_hidden_states,) * 4
+            return (bottlenecked_hidden_states, ) * 4
         elif self.key_query_shared_bottleneck:
             shared_attention_input = self.attention(hidden_states)
-            return (shared_attention_input, shared_attention_input, hidden_states, bottlenecked_hidden_states)
+            return (
+                shared_attention_input,
+                shared_attention_input,
+                hidden_states,
+                bottlenecked_hidden_states,
+            )
         else:
-            return (hidden_states, hidden_states, hidden_states, bottlenecked_hidden_states)
+            return (
+                hidden_states,
+                hidden_states,
+                hidden_states,
+                bottlenecked_hidden_states,
+            )
 
 
 class FFNOutput(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.dense = nn.Linear(config.intermediate_size, config.true_hidden_size)
-        self.LayerNorm = NORM2FN[config.normalization_type](config.true_hidden_size, eps=config.layer_norm_eps)
+        self.dense = nn.Linear(config.intermediate_size,
+                               config.true_hidden_size)
+        self.LayerNorm = NORM2FN[config.normalization_type](
+            config.true_hidden_size, eps=config.layer_norm_eps)
 
     def forward(self, hidden_states, residual_tensor):
         layer_outputs = self.dense(hidden_states)
@@ -485,7 +540,10 @@ class MobileBertLayer(nn.Module):
         if self.use_bottleneck:
             self.bottleneck = Bottleneck(config)
         if config.num_feedforward_networks > 1:
-            self.ffn = nn.ModuleList([FFNLayer(config) for _ in range(config.num_feedforward_networks - 1)])
+            self.ffn = nn.ModuleList([
+                FFNLayer(config)
+                for _ in range(config.num_feedforward_networks - 1)
+            ])
 
     def forward(
         self,
@@ -495,9 +553,12 @@ class MobileBertLayer(nn.Module):
         output_attentions=None,
     ):
         if self.use_bottleneck:
-            query_tensor, key_tensor, value_tensor, layer_input = self.bottleneck(hidden_states)
+            query_tensor, key_tensor, value_tensor, layer_input = self.bottleneck(
+                hidden_states)
         else:
-            query_tensor, key_tensor, value_tensor, layer_input = [hidden_states] * 4
+            query_tensor, key_tensor, value_tensor, layer_input = [
+                hidden_states
+            ] * 4
 
         self_attention_outputs = self.attention(
             query_tensor,
@@ -509,37 +570,35 @@ class MobileBertLayer(nn.Module):
             output_attentions=output_attentions,
         )
         attention_output = self_attention_outputs[0]
-        s = (attention_output,)
-        outputs = self_attention_outputs[1:]  # add self attentions if we output attention weights
+        s = (attention_output, )
+        outputs = self_attention_outputs[
+            1:]  # add self attentions if we output attention weights
 
         if self.num_feedforward_networks != 1:
             for i, ffn_module in enumerate(self.ffn):
                 attention_output = ffn_module(attention_output)
-                s += (attention_output,)
+                s += (attention_output, )
 
         intermediate_output = self.intermediate(attention_output)
-        layer_output = self.output(intermediate_output, attention_output, hidden_states)
-        outputs = (
-            (layer_output,)
-            + outputs
-            + (
-                torch.tensor(1000),
-                query_tensor,
-                key_tensor,
-                value_tensor,
-                layer_input,
-                attention_output,
-                intermediate_output,
-            )
-            + s
-        )
+        layer_output = self.output(intermediate_output, attention_output,
+                                   hidden_states)
+        outputs = ((layer_output, ) + outputs + (
+            torch.tensor(1000),
+            query_tensor,
+            key_tensor,
+            value_tensor,
+            layer_input,
+            attention_output,
+            intermediate_output,
+        ) + s)
         return outputs
 
 
 class MobileBertEncoder(nn.Module):
     def __init__(self, config):
         super().__init__()
-        self.layer = nn.ModuleList([MobileBertLayer(config) for _ in range(config.num_hidden_layers)])
+        self.layer = nn.ModuleList(
+            [MobileBertLayer(config) for _ in range(config.num_hidden_layers)])
 
     def forward(
         self,
@@ -554,7 +613,7 @@ class MobileBertEncoder(nn.Module):
         all_attentions = () if output_attentions else None
         for i, layer_module in enumerate(self.layer):
             if output_hidden_states:
-                all_hidden_states = all_hidden_states + (hidden_states,)
+                all_hidden_states = all_hidden_states + (hidden_states, )
 
             layer_outputs = layer_module(
                 hidden_states,
@@ -565,16 +624,20 @@ class MobileBertEncoder(nn.Module):
             hidden_states = layer_outputs[0]
 
             if output_attentions:
-                all_attentions = all_attentions + (layer_outputs[1],)
+                all_attentions = all_attentions + (layer_outputs[1], )
 
         # Add last layer
         if output_hidden_states:
-            all_hidden_states = all_hidden_states + (hidden_states,)
+            all_hidden_states = all_hidden_states + (hidden_states, )
 
         if not return_dict:
-            return tuple(v for v in [hidden_states, all_hidden_states, all_attentions] if v is not None)
+            return tuple(
+                v for v in [hidden_states, all_hidden_states, all_attentions]
+                if v is not None)
         return BaseModelOutput(
-            last_hidden_state=hidden_states, hidden_states=all_hidden_states, attentions=all_attentions
+            last_hidden_state=hidden_states,
+            hidden_states=all_hidden_states,
+            attentions=all_attentions,
         )
 
 
@@ -605,7 +668,8 @@ class MobileBertPredictionHeadTransform(nn.Module):
             self.transform_act_fn = ACT2FN[config.hidden_act]
         else:
             self.transform_act_fn = config.hidden_act
-        self.LayerNorm = NORM2FN["layer_norm"](config.hidden_size, eps=config.layer_norm_eps)
+        self.LayerNorm = NORM2FN["layer_norm"](config.hidden_size,
+                                               eps=config.layer_norm_eps)
 
     def forward(self, hidden_states):
         hidden_states = self.dense(hidden_states)
@@ -620,15 +684,20 @@ class MobileBertLMPredictionHead(nn.Module):
         self.transform = MobileBertPredictionHeadTransform(config)
         # The output weights are the same as the input embeddings, but there is
         # an output-only bias for each token.
-        self.dense = nn.Linear(config.vocab_size, config.hidden_size - config.embedding_size, bias=False)
-        self.decoder = nn.Linear(config.embedding_size, config.vocab_size, bias=False)
+        self.dense = nn.Linear(config.vocab_size,
+                               config.hidden_size - config.embedding_size,
+                               bias=False)
+        self.decoder = nn.Linear(config.embedding_size,
+                                 config.vocab_size,
+                                 bias=False)
         self.bias = nn.Parameter(torch.zeros(config.vocab_size))
         # Need a link between the two variables so that the bias is correctly resized with `resize_token_embeddings`
         self.decoder.bias = self.bias
 
     def forward(self, hidden_states):
         hidden_states = self.transform(hidden_states)
-        hidden_states = hidden_states.matmul(torch.cat([self.decoder.weight.t(), self.dense.weight], dim=0))
+        hidden_states = hidden_states.matmul(
+            torch.cat([self.decoder.weight.t(), self.dense.weight], dim=0))
         hidden_states += self.decoder.bias
         return hidden_states
 
@@ -668,11 +737,12 @@ class MobileBertPreTrainedModel(PreTrainedModel):
     _keys_to_ignore_on_load_missing = [r"position_ids"]
 
     def _init_weights(self, module):
-        """ Initialize the weights """
+        """Initialize the weights"""
         if isinstance(module, (nn.Linear, nn.Embedding)):
             # Slightly different from the TF version which uses truncated_normal for initialization
             # cf https://github.com/pytorch/pytorch/pull/5617
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0,
+                                       std=self.config.initializer_range)
         elif isinstance(module, (nn.LayerNorm, NoNorm)):
             module.bias.data.zero_()
             module.weight.data.fill_(1.0)
@@ -790,7 +860,6 @@ class MobileBertModel(MobileBertPreTrainedModel):
     """
     https://arxiv.org/pdf/2004.02984.pdf
     """
-
     def __init__(self, config, add_pooling_layer=True):
         super().__init__(config)
         self.config = config
@@ -815,7 +884,8 @@ class MobileBertModel(MobileBertPreTrainedModel):
         for layer, heads in heads_to_prune.items():
             self.encoder.layer[layer].attention.prune_heads(heads)
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -834,43 +904,53 @@ class MobileBertModel(MobileBertPreTrainedModel):
         output_attentions=None,
         return_dict=None,
     ):
-        output_attentions = output_attentions if output_attentions is not None else self.config.output_attentions
-        output_hidden_states = (
-            output_hidden_states if output_hidden_states is not None else self.config.output_hidden_states
-        )
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        output_attentions = (output_attentions if output_attentions is not None
+                             else self.config.output_attentions)
+        output_hidden_states = (output_hidden_states
+                                if output_hidden_states is not None else
+                                self.config.output_hidden_states)
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         if input_ids is not None and inputs_embeds is not None:
-            raise ValueError("You cannot specify both input_ids and inputs_embeds at the same time")
+            raise ValueError(
+                "You cannot specify both input_ids and inputs_embeds at the same time"
+            )
         elif input_ids is not None:
             input_shape = input_ids.size()
         elif inputs_embeds is not None:
             input_shape = inputs_embeds.size()[:-1]
         else:
-            raise ValueError("You have to specify either input_ids or inputs_embeds")
+            raise ValueError(
+                "You have to specify either input_ids or inputs_embeds")
 
         device = input_ids.device if input_ids is not None else inputs_embeds.device
 
         if attention_mask is None:
             attention_mask = torch.ones(input_shape, device=device)
         if token_type_ids is None:
-            token_type_ids = torch.zeros(input_shape, dtype=torch.long, device=device)
+            token_type_ids = torch.zeros(input_shape,
+                                         dtype=torch.long,
+                                         device=device)
 
         # We can provide a self-attention mask of dimensions [batch_size, from_seq_length, to_seq_length]
         # ourselves in which case we just need to make it broadcastable to all heads.
         extended_attention_mask: torch.Tensor = self.get_extended_attention_mask(
-            attention_mask, input_shape, self.device
-        )
+            attention_mask, input_shape, self.device)
 
         # Prepare head mask if needed
         # 1.0 in head_mask indicate we keep the head
         # attention_probs has shape bsz x n_heads x N x N
         # input head_mask has shape [num_heads] or [num_hidden_layers x num_heads]
         # and head_mask is converted to shape [num_hidden_layers x batch x num_heads x seq_length x seq_length]
-        head_mask = self.get_head_mask(head_mask, self.config.num_hidden_layers)
+        head_mask = self.get_head_mask(head_mask,
+                                       self.config.num_hidden_layers)
 
         embedding_output = self.embeddings(
-            input_ids=input_ids, position_ids=position_ids, token_type_ids=token_type_ids, inputs_embeds=inputs_embeds
+            input_ids=input_ids,
+            position_ids=position_ids,
+            token_type_ids=token_type_ids,
+            inputs_embeds=inputs_embeds,
         )
         encoder_outputs = self.encoder(
             embedding_output,
@@ -881,7 +961,8 @@ class MobileBertModel(MobileBertPreTrainedModel):
             return_dict=return_dict,
         )
         sequence_output = encoder_outputs[0]
-        pooled_output = self.pooler(sequence_output) if self.pooler is not None else None
+        pooled_output = (self.pooler(sequence_output)
+                         if self.pooler is not None else None)
 
         if not return_dict:
             return (sequence_output, pooled_output) + encoder_outputs[1:]
@@ -915,16 +996,21 @@ class MobileBertForPreTraining(MobileBertPreTrainedModel):
     def set_output_embeddings(self, new_embeddigs):
         self.cls.predictions.decoder = new_embeddigs
 
-    def resize_token_embeddings(self, new_num_tokens: Optional[int] = None) -> torch.nn.Embedding:
+    def resize_token_embeddings(self,
+                                new_num_tokens: Optional[int] = None
+                                ) -> torch.nn.Embedding:
         # resize dense output embedings at first
         self.cls.predictions.dense = self._get_resized_lm_head(
-            self.cls.predictions.dense, new_num_tokens=new_num_tokens, transposed=True
-        )
+            self.cls.predictions.dense,
+            new_num_tokens=new_num_tokens,
+            transposed=True)
 
         return super().resize_token_embeddings(new_num_tokens=new_num_tokens)
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @replace_return_docstrings(output_type=MobileBertForPreTrainingOutput, config_class=_CONFIG_FOR_DOC)
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @replace_return_docstrings(output_type=MobileBertForPreTrainingOutput,
+                               config_class=_CONFIG_FOR_DOC)
     def forward(
         self,
         input_ids=None,
@@ -968,7 +1054,8 @@ class MobileBertForPreTraining(MobileBertPreTrainedModel):
             >>> seq_relationship_logits = outputs.seq_relationship_logits
 
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -982,18 +1069,23 @@ class MobileBertForPreTraining(MobileBertPreTrainedModel):
             return_dict=return_dict,
         )
         sequence_output, pooled_output = outputs[:2]
-        prediction_scores, seq_relationship_score = self.cls(sequence_output, pooled_output)
+        prediction_scores, seq_relationship_score = self.cls(
+            sequence_output, pooled_output)
 
         total_loss = None
         if labels is not None and next_sentence_label is not None:
             loss_fct = CrossEntropyLoss()
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), labels.view(-1))
-            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2), next_sentence_label.view(-1))
+            masked_lm_loss = loss_fct(
+                prediction_scores.view(-1, self.config.vocab_size),
+                labels.view(-1))
+            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2),
+                                          next_sentence_label.view(-1))
             total_loss = masked_lm_loss + next_sentence_loss
 
         if not return_dict:
             output = (prediction_scores, seq_relationship_score) + outputs[2:]
-            return ((total_loss,) + output) if total_loss is not None else output
+            return ((total_loss, ) +
+                    output) if total_loss is not None else output
 
         return MobileBertForPreTrainingOutput(
             loss=total_loss,
@@ -1004,7 +1096,10 @@ class MobileBertForPreTraining(MobileBertPreTrainedModel):
         )
 
 
-@add_start_docstrings("""MobileBert Model with a `language modeling` head on top. """, MOBILEBERT_START_DOCSTRING)
+@add_start_docstrings(
+    """MobileBert Model with a `language modeling` head on top. """,
+    MOBILEBERT_START_DOCSTRING,
+)
 class MobileBertForMaskedLM(MobileBertPreTrainedModel):
 
     _keys_to_ignore_on_load_unexpected = [r"pooler"]
@@ -1023,14 +1118,18 @@ class MobileBertForMaskedLM(MobileBertPreTrainedModel):
     def set_output_embeddings(self, new_embeddigs):
         self.cls.predictions.decoder = new_embeddigs
 
-    def resize_token_embeddings(self, new_num_tokens: Optional[int] = None) -> torch.nn.Embedding:
+    def resize_token_embeddings(self,
+                                new_num_tokens: Optional[int] = None
+                                ) -> torch.nn.Embedding:
         # resize dense output embedings at first
         self.cls.predictions.dense = self._get_resized_lm_head(
-            self.cls.predictions.dense, new_num_tokens=new_num_tokens, transposed=True
-        )
+            self.cls.predictions.dense,
+            new_num_tokens=new_num_tokens,
+            transposed=True)
         return super().resize_token_embeddings(new_num_tokens=new_num_tokens)
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1056,7 +1155,8 @@ class MobileBertForMaskedLM(MobileBertPreTrainedModel):
             config.vocab_size]`` (see ``input_ids`` docstring) Tokens with indices set to ``-100`` are ignored
             (masked), the loss is only computed for the tokens with labels in ``[0, ..., config.vocab_size]``
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1076,11 +1176,14 @@ class MobileBertForMaskedLM(MobileBertPreTrainedModel):
         masked_lm_loss = None
         if labels is not None:
             loss_fct = CrossEntropyLoss()  # -100 index = padding token
-            masked_lm_loss = loss_fct(prediction_scores.view(-1, self.config.vocab_size), labels.view(-1))
+            masked_lm_loss = loss_fct(
+                prediction_scores.view(-1, self.config.vocab_size),
+                labels.view(-1))
 
         if not return_dict:
-            output = (prediction_scores,) + outputs[2:]
-            return ((masked_lm_loss,) + output) if masked_lm_loss is not None else output
+            output = (prediction_scores, ) + outputs[2:]
+            return (((masked_lm_loss, ) +
+                     output) if masked_lm_loss is not None else output)
 
         return MaskedLMOutput(
             loss=masked_lm_loss,
@@ -1113,8 +1216,10 @@ class MobileBertForNextSentencePrediction(MobileBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
-    @replace_return_docstrings(output_type=NextSentencePredictorOutput, config_class=_CONFIG_FOR_DOC)
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @replace_return_docstrings(output_type=NextSentencePredictorOutput,
+                               config_class=_CONFIG_FOR_DOC)
     def forward(
         self,
         input_ids=None,
@@ -1163,7 +1268,8 @@ class MobileBertForNextSentencePrediction(MobileBertPreTrainedModel):
             )
             labels = kwargs.pop("next_sentence_label")
 
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1183,11 +1289,13 @@ class MobileBertForNextSentencePrediction(MobileBertPreTrainedModel):
         next_sentence_loss = None
         if labels is not None:
             loss_fct = CrossEntropyLoss()
-            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2), labels.view(-1))
+            next_sentence_loss = loss_fct(seq_relationship_score.view(-1, 2),
+                                          labels.view(-1))
 
         if not return_dict:
-            output = (seq_relationship_score,) + outputs[2:]
-            return ((next_sentence_loss,) + output) if next_sentence_loss is not None else output
+            output = (seq_relationship_score, ) + outputs[2:]
+            return (((next_sentence_loss, ) +
+                     output) if next_sentence_loss is not None else output)
 
         return NextSentencePredictorOutput(
             loss=next_sentence_loss,
@@ -1214,7 +1322,8 @@ class MobileBertForSequenceClassification(MobileBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1240,7 +1349,8 @@ class MobileBertForSequenceClassification(MobileBertPreTrainedModel):
             config.num_labels - 1]`. If :obj:`config.num_labels == 1` a regression loss is computed (Mean-Square loss),
             If :obj:`config.num_labels > 1` a classification loss is computed (Cross-Entropy).
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1265,11 +1375,12 @@ class MobileBertForSequenceClassification(MobileBertPreTrainedModel):
                 loss = loss_fct(logits.view(-1), labels.view(-1))
             else:
                 loss_fct = CrossEntropyLoss()
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits.view(-1, self.num_labels),
+                                labels.view(-1))
 
         if not return_dict:
-            output = (logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return SequenceClassifierOutput(
             loss=loss,
@@ -1299,7 +1410,8 @@ class MobileBertForQuestionAnswering(MobileBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1330,7 +1442,8 @@ class MobileBertForQuestionAnswering(MobileBertPreTrainedModel):
             Positions are clamped to the length of the sequence (:obj:`sequence_length`). Position outside of the
             sequence are not taken into account for computing the loss.
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1370,7 +1483,8 @@ class MobileBertForQuestionAnswering(MobileBertPreTrainedModel):
 
         if not return_dict:
             output = (start_logits, end_logits) + outputs[2:]
-            return ((total_loss,) + output) if total_loss is not None else output
+            return ((total_loss, ) +
+                    output) if total_loss is not None else output
 
         return QuestionAnsweringModelOutput(
             loss=total_loss,
@@ -1399,8 +1513,8 @@ class MobileBertForMultipleChoice(MobileBertPreTrainedModel):
         self.init_weights()
 
     @add_start_docstrings_to_model_forward(
-        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, num_choices, sequence_length")
-    )
+        MOBILEBERT_INPUTS_DOCSTRING.format(
+            "batch_size, num_choices, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1426,18 +1540,22 @@ class MobileBertForMultipleChoice(MobileBertPreTrainedModel):
             num_choices-1]`` where :obj:`num_choices` is the size of the second dimension of the input tensors. (See
             :obj:`input_ids` above)
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
-        num_choices = input_ids.shape[1] if input_ids is not None else inputs_embeds.shape[1]
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
+        num_choices = (input_ids.shape[1]
+                       if input_ids is not None else inputs_embeds.shape[1])
 
-        input_ids = input_ids.view(-1, input_ids.size(-1)) if input_ids is not None else None
-        attention_mask = attention_mask.view(-1, attention_mask.size(-1)) if attention_mask is not None else None
-        token_type_ids = token_type_ids.view(-1, token_type_ids.size(-1)) if token_type_ids is not None else None
-        position_ids = position_ids.view(-1, position_ids.size(-1)) if position_ids is not None else None
-        inputs_embeds = (
-            inputs_embeds.view(-1, inputs_embeds.size(-2), inputs_embeds.size(-1))
-            if inputs_embeds is not None
-            else None
-        )
+        input_ids = (input_ids.view(-1, input_ids.size(-1))
+                     if input_ids is not None else None)
+        attention_mask = (attention_mask.view(-1, attention_mask.size(-1))
+                          if attention_mask is not None else None)
+        token_type_ids = (token_type_ids.view(-1, token_type_ids.size(-1))
+                          if token_type_ids is not None else None)
+        position_ids = (position_ids.view(-1, position_ids.size(-1))
+                        if position_ids is not None else None)
+        inputs_embeds = (inputs_embeds.view(-1, inputs_embeds.size(-2),
+                                            inputs_embeds.size(-1))
+                         if inputs_embeds is not None else None)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1463,8 +1581,8 @@ class MobileBertForMultipleChoice(MobileBertPreTrainedModel):
             loss = loss_fct(reshaped_logits, labels)
 
         if not return_dict:
-            output = (reshaped_logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (reshaped_logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return MultipleChoiceModelOutput(
             loss=loss,
@@ -1495,7 +1613,8 @@ class MobileBertForTokenClassification(MobileBertPreTrainedModel):
 
         self.init_weights()
 
-    @add_start_docstrings_to_model_forward(MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
+    @add_start_docstrings_to_model_forward(
+        MOBILEBERT_INPUTS_DOCSTRING.format("batch_size, sequence_length"))
     @add_code_sample_docstrings(
         tokenizer_class=_TOKENIZER_FOR_DOC,
         checkpoint="google/mobilebert-uncased",
@@ -1520,7 +1639,8 @@ class MobileBertForTokenClassification(MobileBertPreTrainedModel):
             Labels for computing the token classification loss. Indices should be in ``[0, ..., config.num_labels -
             1]``.
         """
-        return_dict = return_dict if return_dict is not None else self.config.use_return_dict
+        return_dict = (return_dict if return_dict is not None else
+                       self.config.use_return_dict)
 
         outputs = self.mobilebert(
             input_ids,
@@ -1547,15 +1667,18 @@ class MobileBertForTokenClassification(MobileBertPreTrainedModel):
                 active_loss = attention_mask.view(-1) == 1
                 active_logits = logits.view(-1, self.num_labels)
                 active_labels = torch.where(
-                    active_loss, labels.view(-1), torch.tensor(loss_fct.ignore_index).type_as(labels)
+                    active_loss,
+                    labels.view(-1),
+                    torch.tensor(loss_fct.ignore_index).type_as(labels),
                 )
                 loss = loss_fct(active_logits, active_labels)
             else:
-                loss = loss_fct(logits.view(-1, self.num_labels), labels.view(-1))
+                loss = loss_fct(logits.view(-1, self.num_labels),
+                                labels.view(-1))
 
         if not return_dict:
-            output = (logits,) + outputs[2:]
-            return ((loss,) + output) if loss is not None else output
+            output = (logits, ) + outputs[2:]
+            return ((loss, ) + output) if loss is not None else output
 
         return TokenClassifierOutput(
             loss=loss,

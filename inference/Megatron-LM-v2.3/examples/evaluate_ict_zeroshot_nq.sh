@@ -33,4 +33,3 @@ python tasks/main.py \
     --faiss-use-gpu \
     --retriever-report-topk-accuracies 1 5 20 100 \
     --fp16
-

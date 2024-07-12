@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Tokenizer class. """
 
-
 from collections import OrderedDict
 
 from ...configuration_utils import PretrainedConfig
@@ -101,7 +100,6 @@ from .configuration_auto import (
     XLNetConfig,
     replace_list_option_in_docstrings,
 )
-
 
 if is_sentencepiece_available():
     from ..albert.tokenization_albert import AlbertTokenizer
@@ -195,54 +193,52 @@ else:
 
 logger = logging.get_logger(__name__)
 
-
-TOKENIZER_MAPPING = OrderedDict(
-    [
-        (RetriBertConfig, (RetriBertTokenizer, RetriBertTokenizerFast)),
-        (T5Config, (T5Tokenizer, T5TokenizerFast)),
-        (MT5Config, (MT5Tokenizer, MT5TokenizerFast)),
-        (MobileBertConfig, (MobileBertTokenizer, MobileBertTokenizerFast)),
-        (DistilBertConfig, (DistilBertTokenizer, DistilBertTokenizerFast)),
-        (AlbertConfig, (AlbertTokenizer, AlbertTokenizerFast)),
-        (CamembertConfig, (CamembertTokenizer, CamembertTokenizerFast)),
-        (PegasusConfig, (PegasusTokenizer, PegasusTokenizerFast)),
-        (MBartConfig, (MBartTokenizer, MBartTokenizerFast)),
-        (XLMRobertaConfig, (XLMRobertaTokenizer, XLMRobertaTokenizerFast)),
-        (MarianConfig, (MarianTokenizer, None)),
-        (BlenderbotSmallConfig, (BlenderbotSmallTokenizer, None)),
-        (BlenderbotConfig, (BlenderbotTokenizer, None)),
-        (LongformerConfig, (LongformerTokenizer, LongformerTokenizerFast)),
-        (BartConfig, (BartTokenizer, BartTokenizerFast)),
-        (LongformerConfig, (LongformerTokenizer, LongformerTokenizerFast)),
-        (RobertaConfig, (RobertaTokenizer, RobertaTokenizerFast)),
-        (ReformerConfig, (ReformerTokenizer, ReformerTokenizerFast)),
-        (ElectraConfig, (ElectraTokenizer, ElectraTokenizerFast)),
-        (FunnelConfig, (FunnelTokenizer, FunnelTokenizerFast)),
-        (LxmertConfig, (LxmertTokenizer, LxmertTokenizerFast)),
-        (LayoutLMConfig, (LayoutLMTokenizer, LayoutLMTokenizerFast)),
-        (DPRConfig, (DPRQuestionEncoderTokenizer, DPRQuestionEncoderTokenizerFast)),
-        (SqueezeBertConfig, (SqueezeBertTokenizer, SqueezeBertTokenizerFast)),
-        (BertConfig, (BertTokenizer, BertTokenizerFast)),
-        (OpenAIGPTConfig, (OpenAIGPTTokenizer, OpenAIGPTTokenizerFast)),
-        (GPT2Config, (GPT2Tokenizer, GPT2TokenizerFast)),
-        (TransfoXLConfig, (TransfoXLTokenizer, None)),
-        (XLNetConfig, (XLNetTokenizer, XLNetTokenizerFast)),
-        (FlaubertConfig, (FlaubertTokenizer, None)),
-        (XLMConfig, (XLMTokenizer, None)),
-        (CTRLConfig, (CTRLTokenizer, None)),
-        (FSMTConfig, (FSMTTokenizer, None)),
-        (BertGenerationConfig, (BertGenerationTokenizer, None)),
-        (DebertaConfig, (DebertaTokenizer, None)),
-        (RagConfig, (RagTokenizer, None)),
-        (XLMProphetNetConfig, (XLMProphetNetTokenizer, None)),
-        (ProphetNetConfig, (ProphetNetTokenizer, None)),
-        (MPNetConfig, (MPNetTokenizer, MPNetTokenizerFast)),
-        (TapasConfig, (TapasTokenizer, None)),
-        (LEDConfig, (LEDTokenizer, LEDTokenizerFast)),
-        (ConvBertConfig, (ConvBertTokenizer, ConvBertTokenizerFast)),
-        (Wav2Vec2Config, (Wav2Vec2Tokenizer, None)),
-    ]
-)
+TOKENIZER_MAPPING = OrderedDict([
+    (RetriBertConfig, (RetriBertTokenizer, RetriBertTokenizerFast)),
+    (T5Config, (T5Tokenizer, T5TokenizerFast)),
+    (MT5Config, (MT5Tokenizer, MT5TokenizerFast)),
+    (MobileBertConfig, (MobileBertTokenizer, MobileBertTokenizerFast)),
+    (DistilBertConfig, (DistilBertTokenizer, DistilBertTokenizerFast)),
+    (AlbertConfig, (AlbertTokenizer, AlbertTokenizerFast)),
+    (CamembertConfig, (CamembertTokenizer, CamembertTokenizerFast)),
+    (PegasusConfig, (PegasusTokenizer, PegasusTokenizerFast)),
+    (MBartConfig, (MBartTokenizer, MBartTokenizerFast)),
+    (XLMRobertaConfig, (XLMRobertaTokenizer, XLMRobertaTokenizerFast)),
+    (MarianConfig, (MarianTokenizer, None)),
+    (BlenderbotSmallConfig, (BlenderbotSmallTokenizer, None)),
+    (BlenderbotConfig, (BlenderbotTokenizer, None)),
+    (LongformerConfig, (LongformerTokenizer, LongformerTokenizerFast)),
+    (BartConfig, (BartTokenizer, BartTokenizerFast)),
+    (LongformerConfig, (LongformerTokenizer, LongformerTokenizerFast)),
+    (RobertaConfig, (RobertaTokenizer, RobertaTokenizerFast)),
+    (ReformerConfig, (ReformerTokenizer, ReformerTokenizerFast)),
+    (ElectraConfig, (ElectraTokenizer, ElectraTokenizerFast)),
+    (FunnelConfig, (FunnelTokenizer, FunnelTokenizerFast)),
+    (LxmertConfig, (LxmertTokenizer, LxmertTokenizerFast)),
+    (LayoutLMConfig, (LayoutLMTokenizer, LayoutLMTokenizerFast)),
+    (DPRConfig, (DPRQuestionEncoderTokenizer,
+                 DPRQuestionEncoderTokenizerFast)),
+    (SqueezeBertConfig, (SqueezeBertTokenizer, SqueezeBertTokenizerFast)),
+    (BertConfig, (BertTokenizer, BertTokenizerFast)),
+    (OpenAIGPTConfig, (OpenAIGPTTokenizer, OpenAIGPTTokenizerFast)),
+    (GPT2Config, (GPT2Tokenizer, GPT2TokenizerFast)),
+    (TransfoXLConfig, (TransfoXLTokenizer, None)),
+    (XLNetConfig, (XLNetTokenizer, XLNetTokenizerFast)),
+    (FlaubertConfig, (FlaubertTokenizer, None)),
+    (XLMConfig, (XLMTokenizer, None)),
+    (CTRLConfig, (CTRLTokenizer, None)),
+    (FSMTConfig, (FSMTTokenizer, None)),
+    (BertGenerationConfig, (BertGenerationTokenizer, None)),
+    (DebertaConfig, (DebertaTokenizer, None)),
+    (RagConfig, (RagTokenizer, None)),
+    (XLMProphetNetConfig, (XLMProphetNetTokenizer, None)),
+    (ProphetNetConfig, (ProphetNetTokenizer, None)),
+    (MPNetConfig, (MPNetTokenizer, MPNetTokenizerFast)),
+    (TapasConfig, (TapasTokenizer, None)),
+    (LEDConfig, (LEDTokenizer, LEDTokenizerFast)),
+    (ConvBertConfig, (ConvBertTokenizer, ConvBertTokenizerFast)),
+    (Wav2Vec2Config, (Wav2Vec2Tokenizer, None)),
+])
 
 # For tokenizers which are not directly mapped from a config
 NO_CONFIG_TOKENIZER = [
@@ -255,7 +251,6 @@ NO_CONFIG_TOKENIZER = [
     BarthezTokenizerFast,
 ]
 
-
 SLOW_TOKENIZER_MAPPING = {
     k: (v[0] if v[0] is not None else v[1])
     for k, v in TOKENIZER_MAPPING.items()
@@ -265,10 +260,9 @@ SLOW_TOKENIZER_MAPPING = {
 
 def tokenizer_class_from_name(class_name: str):
     all_tokenizer_classes = (
-        [v[0] for v in TOKENIZER_MAPPING.values() if v[0] is not None]
-        + [v[1] for v in TOKENIZER_MAPPING.values() if v[1] is not None]
-        + NO_CONFIG_TOKENIZER
-    )
+        [v[0] for v in TOKENIZER_MAPPING.values() if v[0] is not None] +
+        [v[1] for v in TOKENIZER_MAPPING.values() if v[1] is not None] +
+        NO_CONFIG_TOKENIZER)
     for c in all_tokenizer_classes:
         if c.__name__ == class_name:
             return c
@@ -281,7 +275,6 @@ class AutoTokenizer:
 
     This class cannot be instantiated directly using ``__init__()`` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "AutoTokenizer is designed to be instantiated "
@@ -359,7 +352,8 @@ class AutoTokenizer:
         """
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
-            config = AutoConfig.from_pretrained(pretrained_model_name_or_path, **kwargs)
+            config = AutoConfig.from_pretrained(pretrained_model_name_or_path,
+                                                **kwargs)
 
         use_fast = kwargs.pop("use_fast", True)
 
@@ -367,16 +361,19 @@ class AutoTokenizer:
             tokenizer_class = None
             if use_fast and not config.tokenizer_class.endswith("Fast"):
                 tokenizer_class_candidate = f"{config.tokenizer_class}Fast"
-                tokenizer_class = tokenizer_class_from_name(tokenizer_class_candidate)
+                tokenizer_class = tokenizer_class_from_name(
+                    tokenizer_class_candidate)
             if tokenizer_class is None:
                 tokenizer_class_candidate = config.tokenizer_class
-                tokenizer_class = tokenizer_class_from_name(tokenizer_class_candidate)
+                tokenizer_class = tokenizer_class_from_name(
+                    tokenizer_class_candidate)
 
             if tokenizer_class is None:
                 raise ValueError(
-                    "Tokenizer class {} does not exist or is not currently imported.".format(tokenizer_class_candidate)
-                )
-            return tokenizer_class.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+                    "Tokenizer class {} does not exist or is not currently imported."
+                    .format(tokenizer_class_candidate))
+            return tokenizer_class.from_pretrained(
+                pretrained_model_name_or_path, *inputs, **kwargs)
 
         # if model is an encoder decoder, the encoder tokenizer class is used by default
         if isinstance(config, EncoderDecoderConfig):
@@ -385,26 +382,28 @@ class AutoTokenizer:
                     f"The encoder model config class: {config.encoder.__class__} is different from the decoder model "
                     f"config class: {config.decoder.__class}. It is not recommended to use the "
                     "`AutoTokenizer.from_pretrained()` method in this case. Please use the encoder and decoder "
-                    "specific tokenizer classes."
-                )
+                    "specific tokenizer classes.")
             config = config.encoder
 
         if type(config) in TOKENIZER_MAPPING.keys():
-            tokenizer_class_py, tokenizer_class_fast = TOKENIZER_MAPPING[type(config)]
-            if tokenizer_class_fast and (use_fast or tokenizer_class_py is None):
-                return tokenizer_class_fast.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+            tokenizer_class_py, tokenizer_class_fast = TOKENIZER_MAPPING[type(
+                config)]
+            if tokenizer_class_fast and (use_fast
+                                         or tokenizer_class_py is None):
+                return tokenizer_class_fast.from_pretrained(
+                    pretrained_model_name_or_path, *inputs, **kwargs)
             else:
                 if tokenizer_class_py is not None:
-                    return tokenizer_class_py.from_pretrained(pretrained_model_name_or_path, *inputs, **kwargs)
+                    return tokenizer_class_py.from_pretrained(
+                        pretrained_model_name_or_path, *inputs, **kwargs)
                 else:
                     raise ValueError(
                         "This tokenizer cannot be instantiated. Please make sure you have `sentencepiece` installed "
-                        "in order to use this tokenizer."
-                    )
+                        "in order to use this tokenizer.")
 
         raise ValueError(
             "Unrecognized configuration class {} to build an AutoTokenizer.\n"
             "Model type should be one of {}.".format(
-                config.__class__, ", ".join(c.__name__ for c in TOKENIZER_MAPPING.keys())
-            )
-        )
+                config.__class__,
+                ", ".join(c.__name__ for c in TOKENIZER_MAPPING.keys()),
+            ))

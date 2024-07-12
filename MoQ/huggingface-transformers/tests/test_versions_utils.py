@@ -18,8 +18,11 @@ import numpy
 
 import pkg_resources
 from transformers.testing_utils import TestCasePlus
-from transformers.utils.versions import require_version, require_version_core, require_version_examples
-
+from transformers.utils.versions import (
+    require_version,
+    require_version_core,
+    require_version_examples,
+)
 
 numpy_ver = numpy.__version__
 python_ver = ".".join([str(x) for x in sys.version_info[:3]])
@@ -66,7 +69,10 @@ class DependencyVersionCheckTest(TestCasePlus):
             try:
                 require_version_core(req)
             except pkg_resources.DistributionNotFound as e:
-                self.assertIn(f"The '{req}' distribution was not found and is required by this application", str(e))
+                self.assertIn(
+                    f"The '{req}' distribution was not found and is required by this application",
+                    str(e),
+                )
                 self.assertIn("Try: pip install transformers -U", str(e))
 
         # bogus requirements formats:
@@ -75,9 +81,17 @@ class DependencyVersionCheckTest(TestCasePlus):
             try:
                 require_version_core(req)
             except ValueError as e:
-                self.assertIn("requirement needs to be in the pip package format", str(e))
+                self.assertIn(
+                    "requirement needs to be in the pip package format",
+                    str(e))
         # 2. only operators
-        for req in ["numpy=1.0.0", "numpy == 1.00", "numpy<>1.0.0", "numpy><1.00", "numpy>>1.0.0"]:
+        for req in [
+                "numpy=1.0.0",
+                "numpy == 1.00",
+                "numpy<>1.0.0",
+                "numpy><1.00",
+                "numpy>>1.0.0",
+        ]:
             try:
                 require_version_core(req)
             except ValueError as e:

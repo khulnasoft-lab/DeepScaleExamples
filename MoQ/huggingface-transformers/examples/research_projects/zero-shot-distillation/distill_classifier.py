@@ -20,7 +20,6 @@ from transformers import (
 )
 from transformers.trainer_utils import get_last_checkpoint, is_main_process
 
-
 DESCRIPTION = """
 Distills an NLI-based zero-shot classifier to a smaller, more efficient model with a fixed set of candidate class
 names. Useful for speeding up zero-shot classification in cases where labeled training data is not available, but
@@ -35,48 +34,56 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TeacherModelArguments:
     teacher_name_or_path: Optional[str] = field(
-        default="roberta-large-mnli", metadata={"help": "The NLI/zero-shot teacher model to be distilled."}
+        default="roberta-large-mnli",
+        metadata={"help": "The NLI/zero-shot teacher model to be distilled."},
     )
     hypothesis_template: Optional[str] = field(
         default="This example is {}.",
         metadata={
-            "help": (
-                "Template used to turn class names into mock hypotheses for teacher NLI model. Must include {{}}"
-                "where class name is inserted."
-            )
+            "help":
+            ("Template used to turn class names into mock hypotheses for teacher NLI model. Must include {{}}"
+             "where class name is inserted.")
         },
     )
     teacher_batch_size: Optional[int] = field(
-        default=32, metadata={"help": "Batch size for generating teacher predictions."}
-    )
+        default=32,
+        metadata={"help": "Batch size for generating teacher predictions."})
     multi_class: Optional[bool] = field(
         default=False,
         metadata={
-            "help": (
-                "Allow multiple classes to be true rather than forcing them to sum to 1 (sometimes called"
-                "multi-class multi-label classification)."
-            )
+            "help":
+            ("Allow multiple classes to be true rather than forcing them to sum to 1 (sometimes called"
+             "multi-class multi-label classification).")
         },
     )
     temperature: Optional[float] = field(
-        default=1.0, metadata={"help": "Temperature applied to teacher softmax for distillation."}
+        default=1.0,
+        metadata={
+            "help": "Temperature applied to teacher softmax for distillation."
+        },
     )
 
 
 @dataclass
 class StudentModelArguments:
     student_name_or_path: Optional[str] = field(
-        default="distilbert-base-uncased", metadata={"help": "The NLI/zero-shot teacher model to be distilled."}
+        default="distilbert-base-uncased",
+        metadata={"help": "The NLI/zero-shot teacher model to be distilled."},
     )
 
 
 @dataclass
 class DataTrainingArguments:
-    data_file: str = field(metadata={"help": "Text file with one unlabeled instance per line."})
-    class_names_file: str = field(metadata={"help": "Text file with one class name per line."})
+    data_file: str = field(
+        metadata={"help": "Text file with one unlabeled instance per line."})
+    class_names_file: str = field(
+        metadata={"help": "Text file with one class name per line."})
     use_fast_tokenizer: bool = field(
         default=True,
-        metadata={"help": "Whether to use one of the fast tokenizer (backed by the Rust tokenizers library) or not."},
+        metadata={
+            "help":
+            "Whether to use one of the fast tokenizer (backed by the Rust tokenizers library) or not."
+        },
     )
 
 
@@ -84,32 +91,39 @@ class DataTrainingArguments:
 class DistillTrainingArguments(TrainingArguments):
     output_dir: Optional[str] = field(
         default=None,
-        metadata={"help": "The output directory where the model predictions and checkpoints will be written."},
+        metadata={
+            "help":
+            "The output directory where the model predictions and checkpoints will be written."
+        },
     )
     per_device_train_batch_size: int = field(
-        default=32, metadata={"help": "Batch size per GPU/TPU core/CPU for training."}
-    )
+        default=32,
+        metadata={"help": "Batch size per GPU/TPU core/CPU for training."})
     per_device_eval_batch_size: int = field(
-        default=128, metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."}
+        default=128,
+        metadata={"help": "Batch size per GPU/TPU core/CPU for evaluation."},
     )
-    num_train_epochs: float = field(default=1.0, metadata={"help": "Total number of training epochs to perform."})
-    do_train: bool = field(default=True, metadata={"help": "Whether to run training of student model."})
+    num_train_epochs: float = field(
+        default=1.0,
+        metadata={"help": "Total number of training epochs to perform."})
+    do_train: bool = field(
+        default=True,
+        metadata={"help": "Whether to run training of student model."})
     do_eval: bool = field(
         default=True,
         metadata={
-            "help": (
-                "Whether to evaluate the agreement of the final student predictions and the teacher predictions"
-                "after training."
-            )
+            "help":
+            ("Whether to evaluate the agreement of the final student predictions and the teacher predictions"
+             "after training.")
         },
     )
     save_total_limit: Optional[int] = field(
         default=0,
         metadata={
-            "help": (
-                "Limit the total amount of checkpoints."
-                "Deletes the older checkpoints in the output_dir. Default is 0 (no checkpoints)."
-            )
+            "help":
+            ("Limit the total amount of checkpoints."
+             "Deletes the older checkpoints in the output_dir. Default is 0 (no checkpoints)."
+             )
         },
     )
 
@@ -117,10 +131,12 @@ class DistillTrainingArguments(TrainingArguments):
 class DistillationTrainer(Trainer):
     def compute_loss(self, model, inputs, return_outputs=False):
         target_p = inputs["labels"]
-        outputs = model(inputs["input_ids"], attention_mask=inputs["attention_mask"])
+        outputs = model(inputs["input_ids"],
+                        attention_mask=inputs["attention_mask"])
         logits = outputs[0]
 
-        loss = -torch.sum(target_p * logits.log_softmax(dim=-1), axis=-1).mean()
+        loss = -torch.sum(target_p * logits.log_softmax(dim=-1),
+                          axis=-1).mean()
 
         if return_outputs:
             return loss, outputs
@@ -152,7 +168,9 @@ def get_entailment_id(config):
     for label, ind in config.label2id.items():
         if label.lower().startswith("entail"):
             return ind
-    logging.warning("Could not identify entailment dimension from teacher config label2id. Setting to -1.")
+    logging.warning(
+        "Could not identify entailment dimension from teacher config label2id. Setting to -1."
+    )
     return -1
 
 
@@ -176,14 +194,16 @@ def get_teacher_predictions(
     if not no_cuda and torch.cuda.is_available():
         model = nn.DataParallel(model.cuda())
         batch_size *= len(model.device_ids)
-    tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=use_fast_tokenizer)
+    tokenizer = AutoTokenizer.from_pretrained(model_path,
+                                              use_fast=use_fast_tokenizer)
 
-    premises, hypotheses = get_premise_hypothesis_pairs(examples, class_names, hypothesis_template)
+    premises, hypotheses = get_premise_hypothesis_pairs(
+        examples, class_names, hypothesis_template)
     logits = []
 
     for i in tqdm(range(0, len(premises), batch_size)):
-        batch_premises = premises[i : i + batch_size]
-        batch_hypotheses = hypotheses[i : i + batch_size]
+        batch_premises = premises[i:i + batch_size]
+        batch_hypotheses = hypotheses[i:i + batch_size]
 
         encodings = tokenizer(
             batch_premises,
@@ -201,7 +221,8 @@ def get_teacher_predictions(
     entail_id = get_entailment_id(model_config)
     contr_id = -1 if entail_id == 0 else 0
     logits = torch.cat(logits, dim=0)  # N*K x 3
-    nli_logits = logits.reshape(len(examples), len(class_names), -1)[..., [contr_id, entail_id]]  # N x K x 2
+    nli_logits = logits.reshape(len(examples), len(class_names),
+                                -1)[..., [contr_id, entail_id]]  # N x K x 2
 
     if multi_class:
         # softmax over (contr, entail) logits for each class independently
@@ -215,7 +236,12 @@ def get_teacher_predictions(
 
 def main():
     parser = HfArgumentParser(
-        (DataTrainingArguments, TeacherModelArguments, StudentModelArguments, DistillTrainingArguments),
+        (
+            DataTrainingArguments,
+            TeacherModelArguments,
+            StudentModelArguments,
+            DistillTrainingArguments,
+        ),
         description=DESCRIPTION,
     )
 
@@ -223,20 +249,21 @@ def main():
         # If we pass only one argument to the script and it's the path to a json file,
         # let's parse it to get our arguments.
         data_args, teacher_args, student_args, training_args = parser.parse_json_file(
-            json_file=os.path.abspath(sys.argv[1])
-        )
+            json_file=os.path.abspath(sys.argv[1]))
     else:
-        data_args, teacher_args, student_args, training_args = parser.parse_args_into_dataclasses()
+        data_args, teacher_args, student_args, training_args = (
+            parser.parse_args_into_dataclasses())
 
     # Detecting last checkpoint.
     last_checkpoint = None
-    if os.path.isdir(training_args.output_dir) and training_args.do_train and not training_args.overwrite_output_dir:
+    if (os.path.isdir(training_args.output_dir) and training_args.do_train
+            and not training_args.overwrite_output_dir):
         last_checkpoint = get_last_checkpoint(training_args.output_dir)
-        if last_checkpoint is None and len(os.listdir(training_args.output_dir)) > 0:
+        if last_checkpoint is None and len(os.listdir(
+                training_args.output_dir)) > 0:
             raise ValueError(
                 f"Output directory ({training_args.output_dir}) already exists and is not empty. "
-                "Use --overwrite_output_dir to overcome."
-            )
+                "Use --overwrite_output_dir to overcome.")
         elif last_checkpoint is not None:
             logger.info(
                 f"Checkpoint detected, resuming training at {last_checkpoint}. To avoid this behavior, change "
@@ -249,12 +276,14 @@ def main():
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
     )
-    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank) else logging.WARN)
+    logger.setLevel(logging.INFO if is_main_process(training_args.local_rank
+                                                    ) else logging.WARN)
 
     # Log on each process the small summary:
     logger.warning(
         f"Process rank: {training_args.local_rank}, device: {training_args.device}, n_gpu: {training_args.n_gpu}"
-        + f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
+        +
+        f"distributed training: {bool(training_args.local_rank != -1)}, 16-bits training: {training_args.fp16}"
     )
     # Set the verbosity to info of the Transformers logger (on main process only):
     if is_main_process(training_args.local_rank):
@@ -290,19 +319,18 @@ def main():
         training_args.no_cuda,
         training_args.fp16,
     )
-    dataset = Dataset.from_dict(
-        {
-            "text": examples,
-            "labels": teacher_soft_preds,
-        }
-    )
+    dataset = Dataset.from_dict({
+        "text": examples,
+        "labels": teacher_soft_preds,
+    })
 
     # 3. create student
     logger.info("Initializing student model")
     model = AutoModelForSequenceClassification.from_pretrained(
-        student_args.student_name_or_path, num_labels=len(class_names)
-    )
-    tokenizer = AutoTokenizer.from_pretrained(student_args.student_name_or_path, use_fast=data_args.use_fast_tokenizer)
+        student_args.student_name_or_path, num_labels=len(class_names))
+    tokenizer = AutoTokenizer.from_pretrained(
+        student_args.student_name_or_path,
+        use_fast=data_args.use_fast_tokenizer)
     model.config.id2label = {i: label for i, label in enumerate(class_names)}
     model.config.label2id = {label: i for i, label in enumerate(class_names)}
 
@@ -312,7 +340,8 @@ def main():
 
     def compute_metrics(p, return_outputs=False):
         preds = p.predictions.argmax(-1)
-        proxy_labels = p.label_ids.argmax(-1)  # "label_ids" are actually distributions
+        proxy_labels = p.label_ids.argmax(
+            -1)  # "label_ids" are actually distributions
         return {"agreement": (preds == proxy_labels).mean().item()}
 
     trainer = DistillationTrainer(
@@ -329,7 +358,9 @@ def main():
 
     if training_args.do_eval:
         agreement = trainer.evaluate(eval_dataset=dataset)["eval_agreement"]
-        logger.info(f"Agreement of student and teacher predictions: {agreement * 100:0.2f}%")
+        logger.info(
+            f"Agreement of student and teacher predictions: {agreement * 100:0.2f}%"
+        )
 
     trainer.save_model()
 

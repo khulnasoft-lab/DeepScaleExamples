@@ -14,7 +14,6 @@
 # limitations under the License.
 """ Auto Model class. """
 
-
 from collections import OrderedDict
 
 from ...configuration_utils import PretrainedConfig
@@ -23,16 +22,12 @@ from ..bert.modeling_flax_bert import FlaxBertModel
 from ..roberta.modeling_flax_roberta import FlaxRobertaModel
 from .configuration_auto import AutoConfig, BertConfig, RobertaConfig
 
-
 logger = logging.get_logger(__name__)
 
-
-FLAX_MODEL_MAPPING = OrderedDict(
-    [
-        (RobertaConfig, FlaxRobertaModel),
-        (BertConfig, FlaxBertModel),
-    ]
-)
+FLAX_MODEL_MAPPING = OrderedDict([
+    (RobertaConfig, FlaxRobertaModel),
+    (BertConfig, FlaxBertModel),
+])
 
 
 class FlaxAutoModel(object):
@@ -43,13 +38,11 @@ class FlaxAutoModel(object):
 
     This class cannot be instantiated using `__init__()` (throws an error).
     """
-
     def __init__(self):
         raise EnvironmentError(
             "FlaxAutoModel is designed to be instantiated "
             "using the `FlaxAutoModel.from_pretrained(pretrained_model_name_or_path)` or "
-            "`FlaxAutoModel.from_config(config)` methods."
-        )
+            "`FlaxAutoModel.from_config(config)` methods.")
 
     @classmethod
     def from_config(cls, config):
@@ -80,7 +73,8 @@ class FlaxAutoModel(object):
         )
 
     @classmethod
-    def from_pretrained(cls, pretrained_model_name_or_path, *model_args, **kwargs):
+    def from_pretrained(cls, pretrained_model_name_or_path, *model_args,
+                        **kwargs):
         r"""
         Instantiates one of the base model classes of the library from a pre-trained model configuration.
 
@@ -154,11 +148,16 @@ class FlaxAutoModel(object):
         """
         config = kwargs.pop("config", None)
         if not isinstance(config, PretrainedConfig):
-            config = AutoConfig.from_pretrained(pretrained_model_name_or_path, **kwargs)
+            config = AutoConfig.from_pretrained(pretrained_model_name_or_path,
+                                                **kwargs)
 
         for config_class, model_class in FLAX_MODEL_MAPPING.items():
             if isinstance(config, config_class):
-                return model_class.from_pretrained(pretrained_model_name_or_path, *model_args, config=config, **kwargs)
+                return model_class.from_pretrained(
+                    pretrained_model_name_or_path,
+                    *model_args,
+                    config=config,
+                    **kwargs)
         raise ValueError(
             f"Unrecognized configuration class {config.__class__} "
             f"for this kind of FlaxAutoModel: {cls.__name__}.\n"

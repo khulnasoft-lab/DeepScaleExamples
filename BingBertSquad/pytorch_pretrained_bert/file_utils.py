@@ -24,8 +24,8 @@ import requests
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 PYTORCH_PRETRAINED_BERT_CACHE = Path(
-    os.getenv('PYTORCH_PRETRAINED_BERT_CACHE',
-              Path.home() / '.pytorch_pretrained_bert'))
+    os.getenv("PYTORCH_PRETRAINED_BERT_CACHE",
+              Path.home() / ".pytorch_pretrained_bert"))
 
 
 def url_to_filename(url: str, etag: str = None) -> str:
@@ -34,14 +34,14 @@ def url_to_filename(url: str, etag: str = None) -> str:
     If `etag` is specified, append its hash to the url's, delimited
     by a period.
     """
-    url_bytes = url.encode('utf-8')
+    url_bytes = url.encode("utf-8")
     url_hash = sha256(url_bytes)
     filename = url_hash.hexdigest()
 
     if etag:
-        etag_bytes = etag.encode('utf-8')
+        etag_bytes = etag.encode("utf-8")
         etag_hash = sha256(etag_bytes)
-        filename += '.' + etag_hash.hexdigest()
+        filename += "." + etag_hash.hexdigest()
 
     return filename
 
@@ -61,14 +61,14 @@ def filename_to_url(filename: str,
     if not os.path.exists(cache_path):
         raise FileNotFoundError("file {} not found".format(cache_path))
 
-    meta_path = cache_path + '.json'
+    meta_path = cache_path + ".json"
     if not os.path.exists(meta_path):
         raise FileNotFoundError("file {} not found".format(meta_path))
 
     with open(meta_path) as meta_file:
         metadata = json.load(meta_file)
-    url = metadata['url']
-    etag = metadata['etag']
+    url = metadata["url"]
+    etag = metadata["etag"]
 
     return url, etag
 
@@ -90,13 +90,13 @@ def cached_path(url_or_filename: Union[str, Path],
 
     parsed = urlparse(url_or_filename)
 
-    if parsed.scheme in ('http', 'https', 's3'):
+    if parsed.scheme in ("http", "https", "s3"):
         # URL, so get it from the cache (downloading if necessary)
         return get_from_cache(url_or_filename, cache_dir)
     elif os.path.exists(url_or_filename):
         # File, and it exists.
         return url_or_filename
-    elif parsed.scheme == '':
+    elif parsed.scheme == "":
         # File, but it doesn't exist.
         raise FileNotFoundError("file {} not found".format(url_or_filename))
     else:
@@ -156,7 +156,7 @@ def s3_get(url: str, temp_file: IO) -> None:
 
 def http_get(url: str, temp_file: IO) -> None:
     req = requests.get(url, stream=True)
-    content_length = req.headers.get('Content-Length')
+    content_length = req.headers.get("Content-Length")
     total = int(content_length) if content_length is not None else None
     progress = tqdm(unit="B", total=total)
     for chunk in req.iter_content(chunk_size=1024):
@@ -214,13 +214,13 @@ def get_from_cache(url: str, cache_dir: Union[str, Path] = None) -> str:
 
             logger.info("copying %s to cache at %s", temp_file.name,
                         cache_path)
-            with open(cache_path, 'wb') as cache_file:
+            with open(cache_path, "wb") as cache_file:
                 shutil.copyfileobj(temp_file, cache_file)
 
             logger.info("creating metadata file for %s", cache_path)
-            meta = {'url': url, 'etag': etag}
-            meta_path = cache_path + '.json'
-            with open(meta_path, 'w') as meta_file:
+            meta = {"url": url, "etag": etag}
+            meta_path = cache_path + ".json"
+            with open(meta_path, "w") as meta_file:
                 json.dump(meta, meta_file)
 
             logger.info("removing temp file %s", temp_file.name)
@@ -229,12 +229,12 @@ def get_from_cache(url: str, cache_dir: Union[str, Path] = None) -> str:
 
 
 def read_set_from_file(filename: str) -> Set[str]:
-    '''
+    """
     Extract a de-duped collection (set) of text from a file.
     Expected file format is one item per line.
-    '''
+    """
     collection = set()
-    with open(filename, 'r', encoding='utf-8') as file_:
+    with open(filename, "r", encoding="utf-8") as file_:
         for line in file_:
             collection.add(line.rstrip())
     return collection

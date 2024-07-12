@@ -8,7 +8,6 @@ from ..models.bert.tokenization_bert import BasicTokenizer
 from ..tokenization_utils import PreTrainedTokenizer
 from .base import PIPELINE_INIT_ARGS, ArgumentHandler, Pipeline
 
-
 if TYPE_CHECKING:
     from ..modeling_tf_utils import TFPreTrainedModel
     from ..modeling_utils import PreTrainedModel
@@ -27,10 +26,10 @@ class TokenClassificationArgumentHandler(ArgumentHandler):
     """
     Handles arguments for token classification.
     """
-
     def __call__(self, inputs: Union[str, List[str]], **kwargs):
 
-        if inputs is not None and isinstance(inputs, (list, tuple)) and len(inputs) > 0:
+        if inputs is not None and isinstance(
+                inputs, (list, tuple)) and len(inputs) > 0:
             inputs = list(inputs)
             batch_size = len(inputs)
         elif isinstance(inputs, str):
@@ -41,10 +40,13 @@ class TokenClassificationArgumentHandler(ArgumentHandler):
 
         offset_mapping = kwargs.get("offset_mapping")
         if offset_mapping:
-            if isinstance(offset_mapping, list) and isinstance(offset_mapping[0], tuple):
+            if isinstance(offset_mapping, list) and isinstance(
+                    offset_mapping[0], tuple):
                 offset_mapping = [offset_mapping]
             if len(offset_mapping) != batch_size:
-                raise ValueError("offset_mapping should have the same batch size as the input")
+                raise ValueError(
+                    "offset_mapping should have the same batch size as the input"
+                )
         return inputs, offset_mapping
 
 
@@ -98,10 +100,8 @@ class TokenClassificationPipeline(Pipeline):
         )
 
         self.check_model_type(
-            TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING
-            if self.framework == "tf"
-            else MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING
-        )
+            TF_MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING if self.framework ==
+            "tf" else MODEL_FOR_TOKEN_CLASSIFICATION_MAPPING)
 
         self._basic_tokenizer = BasicTokenizer(do_lower_case=False)
         self._args_parser = args_parser
@@ -112,8 +112,7 @@ class TokenClassificationPipeline(Pipeline):
         if self.ignore_subwords and not self.tokenizer.is_fast:
             raise ValueError(
                 "Slow tokenizers cannot ignore subwords. Please set the `ignore_subwords` option"
-                "to `False` or use a fast tokenizer."
-            )
+                "to `False` or use a fast tokenizer.")
 
     def __call__(self, inputs: Union[str, List[str]], **kwargs):
         """
@@ -158,13 +157,15 @@ class TokenClassificationPipeline(Pipeline):
                     return_offsets_mapping=self.tokenizer.is_fast,
                 )
                 if self.tokenizer.is_fast:
-                    offset_mapping = tokens.pop("offset_mapping").cpu().numpy()[0]
+                    offset_mapping = tokens.pop(
+                        "offset_mapping").cpu().numpy()[0]
                 elif offset_mappings:
                     offset_mapping = offset_mappings[i]
                 else:
                     offset_mapping = None
 
-                special_tokens_mask = tokens.pop("special_tokens_mask").cpu().numpy()[0]
+                special_tokens_mask = tokens.pop(
+                    "special_tokens_mask").cpu().numpy()[0]
 
                 # Forward
                 if self.framework == "tf":
@@ -183,23 +184,25 @@ class TokenClassificationPipeline(Pipeline):
             # Filter to labels not in `self.ignore_labels`
             # Filter special_tokens
             filtered_labels_idx = [
-                (idx, label_idx)
-                for idx, label_idx in enumerate(labels_idx)
-                if (self.model.config.id2label[label_idx] not in self.ignore_labels) and not special_tokens_mask[idx]
+                (idx, label_idx) for idx, label_idx in enumerate(labels_idx)
+                if (self.model.config.id2label[label_idx] not in
+                    self.ignore_labels) and not special_tokens_mask[idx]
             ]
 
             for idx, label_idx in filtered_labels_idx:
                 if offset_mapping is not None:
                     start_ind, end_ind = offset_mapping[idx]
                     word_ref = sentence[start_ind:end_ind]
-                    word = self.tokenizer.convert_ids_to_tokens([int(input_ids[idx])])[0]
+                    word = self.tokenizer.convert_ids_to_tokens(
+                        [int(input_ids[idx])])[0]
                     is_subword = len(word_ref) != len(word)
 
                     if int(input_ids[idx]) == self.tokenizer.unk_token_id:
                         word = word_ref
                         is_subword = False
                 else:
-                    word = self.tokenizer.convert_ids_to_tokens(int(input_ids[idx]))
+                    word = self.tokenizer.convert_ids_to_tokens(
+                        int(input_ids[idx]))
 
                     start_ind = None
                     end_ind = None
@@ -270,35 +273,40 @@ class TokenClassificationPipeline(Pipeline):
             if not entity_group_disagg:
                 entity_group_disagg += [entity]
                 if is_last_idx:
-                    entity_groups += [self.group_sub_entities(entity_group_disagg)]
+                    entity_groups += [
+                        self.group_sub_entities(entity_group_disagg)
+                    ]
                 continue
 
             # If the current entity is similar and adjacent to the previous entity, append it to the disaggregated entity group
             # The split is meant to account for the "B" and "I" suffixes
             # Shouldn't merge if both entities are B-type
-            if (
-                (
-                    entity["entity"].split("-")[-1] == entity_group_disagg[-1]["entity"].split("-")[-1]
-                    and entity["entity"].split("-")[0] != "B"
-                )
-                and entity["index"] == entity_group_disagg[-1]["index"] + 1
-            ) or is_subword:
+            if ((entity["entity"].split("-")[-1]
+                 == entity_group_disagg[-1]["entity"].split("-")[-1]
+                 and entity["entity"].split("-")[0] != "B") and entity["index"]
+                    == entity_group_disagg[-1]["index"] + 1) or is_subword:
                 # Modify subword type to be previous_type
                 if is_subword:
-                    entity["entity"] = entity_group_disagg[-1]["entity"].split("-")[-1]
-                    entity["score"] = np.nan  # set ignored scores to nan and use np.nanmean
+                    entity["entity"] = entity_group_disagg[-1]["entity"].split(
+                        "-")[-1]
+                    entity["score"] = (
+                        np.nan)  # set ignored scores to nan and use np.nanmean
 
                 entity_group_disagg += [entity]
                 # Group the entities at the last entity
                 if is_last_idx:
-                    entity_groups += [self.group_sub_entities(entity_group_disagg)]
+                    entity_groups += [
+                        self.group_sub_entities(entity_group_disagg)
+                    ]
             # If the current entity is different from the previous entity, aggregate the disaggregated entity group
             else:
                 entity_groups += [self.group_sub_entities(entity_group_disagg)]
                 entity_group_disagg = [entity]
                 # If it's the last entity, add it to the entity groups
                 if is_last_idx:
-                    entity_groups += [self.group_sub_entities(entity_group_disagg)]
+                    entity_groups += [
+                        self.group_sub_entities(entity_group_disagg)
+                    ]
 
         return entity_groups
 

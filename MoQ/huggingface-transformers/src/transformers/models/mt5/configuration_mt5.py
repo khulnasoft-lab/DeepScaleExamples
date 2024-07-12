@@ -17,7 +17,6 @@
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 
@@ -63,32 +62,31 @@ class MT5Config(PretrainedConfig):
         use_cache (:obj:`bool`, `optional`, defaults to :obj:`True`):
             Whether or not the model should return the last key/values attentions (not used by all models).
     """
+
     model_type = "mt5"
     keys_to_ignore_at_inference = ["past_key_values"]
 
-    def __init__(
-        self,
-        vocab_size=250112,
-        d_model=512,
-        d_kv=64,
-        d_ff=1024,
-        num_layers=8,
-        num_decoder_layers=None,
-        num_heads=6,
-        relative_attention_num_buckets=32,
-        dropout_rate=0.1,
-        layer_norm_epsilon=1e-6,
-        initializer_factor=1.0,
-        feed_forward_proj="gated-gelu",
-        is_encoder_decoder=True,
-        use_cache=True,
-        tokenizer_class="T5Tokenizer",
-        tie_word_embeddings=False,
-        pad_token_id=0,
-        eos_token_id=1,
-        decoder_start_token_id=0,
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_size=250112,
+                 d_model=512,
+                 d_kv=64,
+                 d_ff=1024,
+                 num_layers=8,
+                 num_decoder_layers=None,
+                 num_heads=6,
+                 relative_attention_num_buckets=32,
+                 dropout_rate=0.1,
+                 layer_norm_epsilon=1e-6,
+                 initializer_factor=1.0,
+                 feed_forward_proj="gated-gelu",
+                 is_encoder_decoder=True,
+                 use_cache=True,
+                 tokenizer_class="T5Tokenizer",
+                 tie_word_embeddings=False,
+                 pad_token_id=0,
+                 eos_token_id=1,
+                 decoder_start_token_id=0,
+                 **kwargs):
         super().__init__(
             is_encoder_decoder=is_encoder_decoder,
             tokenizer_class=tokenizer_class,
@@ -103,9 +101,9 @@ class MT5Config(PretrainedConfig):
         self.d_kv = d_kv
         self.d_ff = d_ff
         self.num_layers = num_layers
-        self.num_decoder_layers = (
-            num_decoder_layers if num_decoder_layers is not None else self.num_layers
-        )  # default = symmetry
+        self.num_decoder_layers = (num_decoder_layers if num_decoder_layers
+                                   is not None else self.num_layers
+                                   )  # default = symmetry
         self.num_heads = num_heads
         self.relative_attention_num_buckets = relative_attention_num_buckets
         self.dropout_rate = dropout_rate

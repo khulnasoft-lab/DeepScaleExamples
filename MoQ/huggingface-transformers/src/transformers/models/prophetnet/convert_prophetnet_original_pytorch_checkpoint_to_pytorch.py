@@ -14,41 +14,44 @@
 # limitations under the License.
 """Convert ProphetNet checkpoint."""
 
-
 import argparse
 
 import torch
 
-from transformers import ProphetNetForConditionalGeneration, XLMProphetNetForConditionalGeneration, logging
+from transformers import (
+    ProphetNetForConditionalGeneration,
+    XLMProphetNetForConditionalGeneration,
+    logging,
+)
 
 # transformers_old should correspond to branch `save_old_prophetnet_model_structure` here
 # original prophetnet_checkpoints are saved under `patrickvonplaten/..._old` respectively
 from transformers_old.modeling_prophetnet import (
-    ProphetNetForConditionalGeneration as ProphetNetForConditionalGenerationOld,
-)
+    ProphetNetForConditionalGeneration as
+    ProphetNetForConditionalGenerationOld, )
 from transformers_old.modeling_xlm_prophetnet import (
-    XLMProphetNetForConditionalGeneration as XLMProphetNetForConditionalGenerationOld,
-)
-
+    XLMProphetNetForConditionalGeneration as
+    XLMProphetNetForConditionalGenerationOld, )
 
 logger = logging.get_logger(__name__)
 logging.set_verbosity_info()
 
 
-def convert_prophetnet_checkpoint_to_pytorch(prophetnet_checkpoint_path: str, pytorch_dump_folder_path: str):
+def convert_prophetnet_checkpoint_to_pytorch(prophetnet_checkpoint_path: str,
+                                             pytorch_dump_folder_path: str):
     """
     Copy/paste/tweak prohpetnet's weights to our prophetnet structure.
     """
     if "xprophetnet" in prophetnet_checkpoint_path:
-        prophet_old = XLMProphetNetForConditionalGenerationOld.from_pretrained(prophetnet_checkpoint_path)
+        prophet_old = XLMProphetNetForConditionalGenerationOld.from_pretrained(
+            prophetnet_checkpoint_path)
         prophet, loading_info = XLMProphetNetForConditionalGeneration.from_pretrained(
-            prophetnet_checkpoint_path, output_loading_info=True
-        )
+            prophetnet_checkpoint_path, output_loading_info=True)
     else:
-        prophet_old = ProphetNetForConditionalGenerationOld.from_pretrained(prophetnet_checkpoint_path)
+        prophet_old = ProphetNetForConditionalGenerationOld.from_pretrained(
+            prophetnet_checkpoint_path)
         prophet, loading_info = ProphetNetForConditionalGeneration.from_pretrained(
-            prophetnet_checkpoint_path, output_loading_info=True
-        )
+            prophetnet_checkpoint_path, output_loading_info=True)
 
     special_keys = ["key_proj", "value_proj", "query_proj"]
 
@@ -84,13 +87,15 @@ def convert_prophetnet_checkpoint_to_pytorch(prophetnet_checkpoint_path: str, py
         for attribute in attributes:
             if attribute in mapping:
                 old_attribute = mapping[attribute]
-                if not hasattr(old_model, old_attribute) and len(old_attribute) > 0:
+                if not hasattr(old_model,
+                               old_attribute) and len(old_attribute) > 0:
                     old_attribute = attribute
             elif hasattr(old_model, attribute):
                 old_attribute = attribute
 
             if attribute == "weight":
-                assert old_model.weight.shape == model.weight.shape, "Shapes have to match!"
+                assert (old_model.weight.shape == model.weight.shape
+                        ), "Shapes have to match!"
                 model.weight = old_model.weight
                 logger.info(f"{attribute} is initialized.")
                 is_key_init = True
@@ -101,29 +106,40 @@ def convert_prophetnet_checkpoint_to_pytorch(prophetnet_checkpoint_path: str, py
                 logger.info(f"{attribute} is initialized")
                 is_key_init = True
                 break
-            elif attribute in special_keys and hasattr(old_model, "in_proj_weight"):
+            elif attribute in special_keys and hasattr(old_model,
+                                                       "in_proj_weight"):
                 embed_dim = old_model.in_proj_weight.shape[0] // 3
                 param = getattr(model, attribute)
-                param.weight.shape == old_model.in_proj_weight[:embed_dim, :].shape, "Shapes have to match"
-                param.bias.shape == old_model.in_proj_bias[:embed_dim].shape, "Shapes have to match"
+                param.weight.shape == old_model.in_proj_weight[:
+                                                               embed_dim, :].shape, "Shapes have to match"
+                param.bias.shape == old_model.in_proj_bias[:
+                                                           embed_dim].shape, "Shapes have to match"
                 if attribute == "query_proj":
-                    model.query_proj.weight = torch.nn.Parameter(old_model.in_proj_weight[:embed_dim, :])
-                    model.query_proj.bias = torch.nn.Parameter(old_model.in_proj_bias[:embed_dim])
+                    model.query_proj.weight = torch.nn.Parameter(
+                        old_model.in_proj_weight[:embed_dim, :])
+                    model.query_proj.bias = torch.nn.Parameter(
+                        old_model.in_proj_bias[:embed_dim])
 
                 elif attribute == "key_proj":
-                    model.key_proj.weight = torch.nn.Parameter(old_model.in_proj_weight[embed_dim : 2 * embed_dim, :])
-                    model.key_proj.bias = torch.nn.Parameter(old_model.in_proj_bias[embed_dim : 2 * embed_dim])
+                    model.key_proj.weight = torch.nn.Parameter(
+                        old_model.in_proj_weight[embed_dim:2 * embed_dim, :])
+                    model.key_proj.bias = torch.nn.Parameter(
+                        old_model.in_proj_bias[embed_dim:2 * embed_dim])
                 elif attribute == "value_proj":
-                    model.value_proj.weight = torch.nn.Parameter(old_model.in_proj_weight[2 * embed_dim :, :])
-                    model.value_proj.bias = torch.nn.Parameter(old_model.in_proj_bias[2 * embed_dim :])
+                    model.value_proj.weight = torch.nn.Parameter(
+                        old_model.in_proj_weight[2 * embed_dim:, :])
+                    model.value_proj.bias = torch.nn.Parameter(
+                        old_model.in_proj_bias[2 * embed_dim:])
                 is_key_init = True
                 break
             elif attribute == "position_embeddings":
-                assert (
-                    model.position_embeddings.weight.shape[-1] == old_model.embed_positions.weight.shape[-1]
-                ), "Hidden size has to match"
-                assert model.position_embeddings.weight.shape[0] == 512, "We want 512 position_embeddings."
-                model.position_embeddings.weight = torch.nn.Parameter(old_model.embed_positions.weight[:512, :])
+                assert (model.position_embeddings.weight.shape[-1] ==
+                        old_model.embed_positions.weight.shape[-1]
+                        ), "Hidden size has to match"
+                assert (model.position_embeddings.weight.shape[0] == 512
+                        ), "We want 512 position_embeddings."
+                model.position_embeddings.weight = torch.nn.Parameter(
+                    old_model.embed_positions.weight[:512, :])
                 is_key_init = True
                 break
 
@@ -137,7 +153,8 @@ def convert_prophetnet_checkpoint_to_pytorch(prophetnet_checkpoint_path: str, py
                     old_model = old_model
                 else:
                     if not hasattr(old_model, old_attribute):
-                        raise ValueError(f"{old_model} does not have {old_attribute}")
+                        raise ValueError(
+                            f"{old_model} does not have {old_attribute}")
                     old_model = getattr(old_model, old_attribute)
 
         if not is_key_init:
@@ -151,10 +168,19 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     # Required parameters
     parser.add_argument(
-        "--prophetnet_checkpoint_path", default=None, type=str, required=True, help="Path the official PyTorch dump."
+        "--prophetnet_checkpoint_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path the official PyTorch dump.",
     )
     parser.add_argument(
-        "--pytorch_dump_folder_path", default=None, type=str, required=True, help="Path to the output PyTorch model."
+        "--pytorch_dump_folder_path",
+        default=None,
+        type=str,
+        required=True,
+        help="Path to the output PyTorch model.",
     )
     args = parser.parse_args()
-    convert_prophetnet_checkpoint_to_pytorch(args.prophetnet_checkpoint_path, args.pytorch_dump_folder_path)
+    convert_prophetnet_checkpoint_to_pytorch(args.prophetnet_checkpoint_path,
+                                             args.pytorch_dump_folder_path)

@@ -7,7 +7,6 @@ from ..tokenization_utils import TruncationStrategy
 from ..utils import logging
 from .base import PIPELINE_INIT_ARGS, ArgumentHandler, Pipeline
 
-
 logger = logging.get_logger(__name__)
 
 
@@ -16,7 +15,6 @@ class ZeroShotClassificationArgumentHandler(ArgumentHandler):
     Handles arguments for zero-shot for text classification by turning each possible label into an NLI
     premise/hypothesis pair.
     """
-
     def _parse_labels(self, labels):
         if isinstance(labels, str):
             labels = [label.strip() for label in labels.split(",")]
@@ -24,14 +22,14 @@ class ZeroShotClassificationArgumentHandler(ArgumentHandler):
 
     def __call__(self, sequences, labels, hypothesis_template):
         if len(labels) == 0 or len(sequences) == 0:
-            raise ValueError("You must include at least one label and at least one sequence.")
-        if hypothesis_template.format(labels[0]) == hypothesis_template:
             raise ValueError(
-                (
-                    'The provided hypothesis_template "{}" was not able to be formatted with the target labels. '
-                    "Make sure the passed template includes formatting syntax such as {{}} where the label should go."
-                ).format(hypothesis_template)
+                "You must include at least one label and at least one sequence."
             )
+        if hypothesis_template.format(labels[0]) == hypothesis_template:
+            raise ValueError((
+                'The provided hypothesis_template "{}" was not able to be formatted with the target labels. '
+                "Make sure the passed template includes formatting syntax such as {{}} where the label should go."
+            ).format(hypothesis_template))
 
         if isinstance(sequences, str):
             sequences = [sequences]
@@ -39,7 +37,9 @@ class ZeroShotClassificationArgumentHandler(ArgumentHandler):
 
         sequence_pairs = []
         for sequence in sequences:
-            sequence_pairs.extend([[sequence, hypothesis_template.format(label)] for label in labels])
+            sequence_pairs.extend(
+                [[sequence, hypothesis_template.format(label)]
+                 for label in labels])
 
         return sequence_pairs
 
@@ -61,8 +61,10 @@ class ZeroShotClassificationPipeline(Pipeline):
     The models that this pipeline can use are models that have been fine-tuned on an NLI task. See the up-to-date list
     of available models on `huggingface.co/models <https://huggingface.co/models?search=nli>`__.
     """
-
-    def __init__(self, args_parser=ZeroShotClassificationArgumentHandler(), *args, **kwargs):
+    def __init__(self,
+                 args_parser=ZeroShotClassificationArgumentHandler(),
+                 *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
         self._args_parser = args_parser
         if self.entailment_id == -1:
@@ -78,20 +80,19 @@ class ZeroShotClassificationPipeline(Pipeline):
                 return ind
         return -1
 
-    def _parse_and_tokenize(
-        self,
-        sequences,
-        candidate_labels,
-        hypothesis_template,
-        padding=True,
-        add_special_tokens=True,
-        truncation=TruncationStrategy.ONLY_FIRST,
-        **kwargs
-    ):
+    def _parse_and_tokenize(self,
+                            sequences,
+                            candidate_labels,
+                            hypothesis_template,
+                            padding=True,
+                            add_special_tokens=True,
+                            truncation=TruncationStrategy.ONLY_FIRST,
+                            **kwargs):
         """
         Parse arguments and tokenize only_first so that hypothesis (label) is not truncated
         """
-        sequence_pairs = self._args_parser(sequences, candidate_labels, hypothesis_template)
+        sequence_pairs = self._args_parser(sequences, candidate_labels,
+                                           hypothesis_template)
         inputs = self.tokenizer(
             sequence_pairs,
             add_special_tokens=add_special_tokens,
@@ -142,10 +143,12 @@ class ZeroShotClassificationPipeline(Pipeline):
         if sequences and isinstance(sequences, str):
             sequences = [sequences]
 
-        outputs = super().__call__(sequences, candidate_labels, hypothesis_template)
+        outputs = super().__call__(sequences, candidate_labels,
+                                   hypothesis_template)
         num_sequences = len(sequences)
         candidate_labels = self._args_parser._parse_labels(candidate_labels)
-        reshaped_outputs = outputs.reshape((num_sequences, len(candidate_labels), -1))
+        reshaped_outputs = outputs.reshape(
+            (num_sequences, len(candidate_labels), -1))
 
         if len(candidate_labels) == 1:
             multi_class = True
@@ -153,25 +156,28 @@ class ZeroShotClassificationPipeline(Pipeline):
         if not multi_class:
             # softmax the "entailment" logits over all candidate labels
             entail_logits = reshaped_outputs[..., self.entailment_id]
-            scores = np.exp(entail_logits) / np.exp(entail_logits).sum(-1, keepdims=True)
+            scores = np.exp(entail_logits) / np.exp(entail_logits).sum(
+                -1, keepdims=True)
         else:
             # softmax over the entailment vs. contradiction dim for each label independently
             entailment_id = self.entailment_id
             contradiction_id = -1 if entailment_id == 0 else 0
-            entail_contr_logits = reshaped_outputs[..., [contradiction_id, entailment_id]]
-            scores = np.exp(entail_contr_logits) / np.exp(entail_contr_logits).sum(-1, keepdims=True)
+            entail_contr_logits = reshaped_outputs[
+                ..., [contradiction_id, entailment_id]]
+            scores = np.exp(entail_contr_logits) / np.exp(
+                entail_contr_logits).sum(-1, keepdims=True)
             scores = scores[..., 1]
 
         result = []
         for iseq in range(num_sequences):
             top_inds = list(reversed(scores[iseq].argsort()))
-            result.append(
-                {
-                    "sequence": sequences if isinstance(sequences, str) else sequences[iseq],
-                    "labels": [candidate_labels[i] for i in top_inds],
-                    "scores": scores[iseq][top_inds].tolist(),
-                }
-            )
+            result.append({
+                "sequence":
+                (sequences if isinstance(sequences, str) else sequences[iseq]),
+                "labels": [candidate_labels[i] for i in top_inds],
+                "scores":
+                scores[iseq][top_inds].tolist(),
+            })
 
         if len(result) == 1:
             return result[0]

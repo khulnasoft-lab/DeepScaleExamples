@@ -14,7 +14,6 @@ from transformers.testing_utils import (
     require_torch_multi_gpu,
 )
 
-
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger()
 
@@ -27,7 +26,8 @@ class RagFinetuneExampleTests(TestCasePlus):
         for split in ["train", "test", "val"]:
             for field in ["source", "target"]:
                 content = "\n".join([contents[field]] * n_lines[split])
-                with open(os.path.join(data_dir, f"{split}.{field}"), "w") as f:
+                with open(os.path.join(data_dir, f"{split}.{field}"),
+                          "w") as f:
                     f.write(content)
 
     def _run_finetune(self, gpus: int, distributed_retriever: str = "pytorch"):
@@ -79,7 +79,8 @@ class RagFinetuneExampleTests(TestCasePlus):
             testargs.append("--distributed_backend=ddp_cpu")
             testargs.append("--num_processes=2")
 
-        cmd = [sys.executable, str(Path(finetune_rag.__file__).resolve())] + testargs
+        cmd = [sys.executable,
+               str(Path(finetune_rag.__file__).resolve())] + testargs
         execute_subprocess_async(cmd, env=self.get_env())
 
         metrics_save_path = os.path.join(output_dir, "metrics.json")

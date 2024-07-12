@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Zero-shot datasets."""
 
 import json
@@ -30,19 +29,25 @@ from .detokenizer import get_detokenizer
 def build_dataset(task):
     """Helper function to select and build dataset."""
 
-    if task == 'LAMBADA':
+    if task == "LAMBADA":
         return _build_lambada_dataset()
-    if task == 'WIKITEXT103':
+    if task == "WIKITEXT103":
         return _build_wikitext103_dataset()
 
-    raise NotImplementedError('dataset for {} task is not '
-                              'implemented.'.format(task))
+    raise NotImplementedError("dataset for {} task is not "
+                              "implemented.".format(task))
 
 
 class _LMDataset(torch.utils.data.Dataset):
-
-    def __init__(self, tokens, seq_len, pad_idx, num_original_tokens,
-                 num_tokenized_tokens, overalapping_eval=None):
+    def __init__(
+        self,
+        tokens,
+        seq_len,
+        pad_idx,
+        num_original_tokens,
+        num_tokenized_tokens,
+        overalapping_eval=None,
+    ):
         self.tokens = tokens
         self.seq_len = seq_len
         self.pad_idx = pad_idx
@@ -68,20 +73,19 @@ class _LMDataset(torch.utils.data.Dataset):
         num_tokens = len(tokens)
         pad_mask = [1] * num_tokens
         if num_tokens < self.seq_len + 1:
-            num_pad = (self.seq_len + 1 - num_tokens)
+            num_pad = self.seq_len + 1 - num_tokens
             pad_mask += [0] * (num_pad)
             tokens += [self.pad_idx] * num_pad
         pad_mask = np.array(pad_mask[1:])
         if self.overalapping_eval != self.seq_len and idx != 0:
             pad_mask[:-self.overalapping_eval] *= 0
 
-        return {'text': np.array(tokens), 'pad_mask': pad_mask}
+        return {"text": np.array(tokens), "pad_mask": pad_mask}
 
 
 class _LambadaDataset(torch.utils.data.Dataset):
-
     def __init__(self, path, pad_idx, tokenizer, seq_len, strict=False):
-        print_rank_0('> building lambada dataset from {} ...'.format(path))
+        print_rank_0("> building lambada dataset from {} ...".format(path))
         self.seq_len = seq_len
         self.pad_idx = pad_idx
         self.tokenizer = tokenizer
@@ -89,9 +93,9 @@ class _LambadaDataset(torch.utils.data.Dataset):
 
         self.tokens = []
         self.labels = []
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             for line in f.readlines():
-                text = json.loads(line)['text']
+                text = json.loads(line)["text"]
                 tokens, labels = self.get_tokens(text)
                 self.tokens.append(tokens)
                 self.labels.append(labels)
@@ -103,7 +107,7 @@ class _LambadaDataset(torch.utils.data.Dataset):
         last_token = text.split()[-1]
         start_idx = text.rfind(last_token)
         beginning_tokens = self.tokenizer.tokenize(text[:start_idx].strip())
-        last_token = self.tokenizer.tokenize(' ' + last_token)
+        last_token = self.tokenizer.tokenize(" " + last_token)
         return beginning_tokens, last_token
 
     def __len__(self):
@@ -118,12 +122,12 @@ class _LambadaDataset(torch.utils.data.Dataset):
         tokens = tokens + labels
         num_tokens = len(tokens)
         if num_tokens < self.seq_len + 1:
-            num_pad = (self.seq_len + 1 - num_tokens)
+            num_pad = self.seq_len + 1 - num_tokens
             pad_mask += [0] * (num_pad)
             tokens += [self.pad_idx] * num_pad
         pad_mask = np.array(pad_mask[1:])
 
-        return {'text': np.array(tokens), 'pad_mask': pad_mask}
+        return {"text": np.array(tokens), "pad_mask": pad_mask}
 
 
 def _build_lambada_dataset():
@@ -132,9 +136,14 @@ def _build_lambada_dataset():
     tokenizer = get_tokenizer()
 
     assert len(args.valid_data) == 1
-    val_dataset = _LambadaDataset(args.valid_data[0], tokenizer.eod, tokenizer,
-                                  args.seq_length, args.strict_lambada)
-    print_rank_0(' > found {} samples.'.format(len(val_dataset)))
+    val_dataset = _LambadaDataset(
+        args.valid_data[0],
+        tokenizer.eod,
+        tokenizer,
+        args.seq_length,
+        args.strict_lambada,
+    )
+    print_rank_0(" > found {} samples.".format(len(val_dataset)))
 
     return val_dataset
 
@@ -146,16 +155,22 @@ def _build_wikitext103_dataset():
 
     assert len(args.valid_data) == 1
     with open(args.valid_data[0], "rb") as reader:
-        entire_data = reader.read().decode('utf-8')
+        entire_data = reader.read().decode("utf-8")
     num_original_tokens = len(entire_data.strip().split(" "))
     entire_data = get_detokenizer(args.valid_data[0])(entire_data)
     tokenized_data = tokenizer.tokenize(entire_data)
     num_tokenized_tokens = len(tokenized_data)
 
-    val_dataset = _LMDataset(tokenized_data, args.seq_length, tokenizer.eod,
-                             num_original_tokens, num_tokenized_tokens,
-                             args.overlapping_eval)
-    print_rank_0(' > number of original tokens: {}, number of detokenized '
-                 'tokens: {}'.format(num_original_tokens, num_tokenized_tokens))
+    val_dataset = _LMDataset(
+        tokenized_data,
+        args.seq_length,
+        tokenizer.eod,
+        num_original_tokens,
+        num_tokenized_tokens,
+        args.overlapping_eval,
+    )
+    print_rank_0(" > number of original tokens: {}, number of detokenized "
+                 "tokens: {}".format(num_original_tokens,
+                                     num_tokenized_tokens))
 
     return val_dataset

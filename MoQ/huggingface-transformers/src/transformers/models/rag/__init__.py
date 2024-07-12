@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_torch_available
 
-
 _import_structure = {
     "configuration_rag": ["RagConfig"],
     "retrieval_rag": ["RagRetriever"],
@@ -28,8 +27,11 @@ _import_structure = {
 }
 
 if is_torch_available():
-    _import_structure["modeling_rag"] = ["RagModel", "RagSequenceForGeneration", "RagTokenForGeneration"]
-
+    _import_structure["modeling_rag"] = [
+        "RagModel",
+        "RagSequenceForGeneration",
+        "RagTokenForGeneration",
+    ]
 
 if TYPE_CHECKING:
     from .configuration_rag import RagConfig
@@ -37,7 +39,11 @@ if TYPE_CHECKING:
     from .tokenization_rag import RagTokenizer
 
     if is_torch_available():
-        from .modeling_rag import RagModel, RagSequenceForGeneration, RagTokenForGeneration
+        from .modeling_rag import (
+            RagModel,
+            RagSequenceForGeneration,
+            RagTokenForGeneration,
+        )
 
 else:
     import importlib

@@ -17,7 +17,6 @@ import unittest
 from transformers import is_tf_available
 from transformers.testing_utils import require_tf
 
-
 if is_tf_available():
     from transformers.activations_tf import get_tf_activation
 

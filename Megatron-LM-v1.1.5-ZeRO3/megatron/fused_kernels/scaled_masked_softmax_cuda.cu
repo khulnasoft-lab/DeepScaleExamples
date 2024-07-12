@@ -44,9 +44,9 @@ torch::Tensor fwd_cuda(
   TORCH_INTERNAL_ASSERT(mask.size(2) == seq_len);
   TORCH_INTERNAL_ASSERT(mask.size(3) == seq_len);
 
-  // Output 
+  // Output
   auto act_options = input.options().requires_grad(false);
-  torch::Tensor softmax_results = 
+  torch::Tensor softmax_results =
       torch::empty({batches, attn_heads, seq_len, seq_len}, act_options);
 
   // Softmax Intermediate Result Ptr
@@ -68,10 +68,10 @@ torch::Tensor fwd_cuda(
 }
 
 torch::Tensor bwd_cuda(
-    torch::Tensor const& output_grads_, 
-    torch::Tensor const& softmax_results_, 
+    torch::Tensor const& output_grads_,
+    torch::Tensor const& softmax_results_,
     float scale_factor)  {
-	
+
   auto output_grads = output_grads_.contiguous();
   auto softmax_results = softmax_results_.contiguous();
 
@@ -85,15 +85,15 @@ torch::Tensor bwd_cuda(
 
   //Softmax Grad
   dispatch_scaled_masked_softmax_backward<half, half, float>(
-      reinterpret_cast<half*>(output_grads_ptr), 
-      reinterpret_cast<half*>(output_grads_ptr), 
+      reinterpret_cast<half*>(output_grads_ptr),
+      reinterpret_cast<half*>(output_grads_ptr),
       reinterpret_cast<half const*>(softmax_results.data_ptr()),
       scale_factor,
       seq_len,
       seq_len,
       batches,
       attn_heads);
-  
+
   //backward pass is completely in-place
   return output_grads;
 }

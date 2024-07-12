@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import json
 import numpy as np
 import time
@@ -25,53 +24,54 @@ from tokenizer import Tokenizer
 
 def tokenize_corpus(filename, np_filename, print_interval=10000):
 
-    print(' > tokenizing {}'.format(filename))
+    print(" > tokenizing {}".format(filename))
 
-    tokenizer = Tokenizer(cache_dir='./cache')
+    tokenizer = Tokenizer(cache_dir="./cache")
 
     tokenized_docs = []
     num_docs = 0
     num_tokens = 0
     start_time = time.time()
-    with open(filename, 'r') as f:
+    with open(filename, "r") as f:
         for line in f:
             try:
                 myjson = json.loads(line)
-                url = myjson['url']
-                sample = myjson['text']
+                url = myjson["url"]
+                sample = myjson["text"]
                 tokens = tokenizer.tokenize_document(sample)
                 tokenized_docs.append(np.array(tokens, dtype=np.uint16))
                 num_docs += 1
                 num_tokens += len(tokens)
                 if num_docs % print_interval == 0:
-                    print('    processed {:9d} documents in {:.2f} (s) so far'.
-                          format(num_docs, time.time() - start_time),
-                          flush=True)
+                    print(
+                        "    processed {:9d} documents in {:.2f} (s) so far".
+                        format(num_docs,
+                               time.time() - start_time),
+                        flush=True,
+                    )
             except Exception as e:
-                print('    skipping ', line, e)
+                print("    skipping ", line, e)
 
-    print('  >> processed {} document with total of {} tokens ...'.format(
+    print("  >> processed {} document with total of {} tokens ...".format(
         num_docs, num_tokens))
 
     tokenized_docs = np.array(tokenized_docs, dtype=object)
     np.save(np_filename, tokenized_docs, allow_pickle=True)
-    print('  >> saved the tokenzed document to {} ...'.format(np_filename))
+    print("  >> saved the tokenzed document to {} ...".format(np_filename))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    print('building gpt2 dataset ...')
+    print("building gpt2 dataset ...")
 
     path = sys.argv[1]
     shard = sys.argv[2]
 
     input_filename = os.path.join(path,
-                                  'shards/shard_{:04d}'.format(int(shard)))
+                                  "shards/shard_{:04d}".format(int(shard)))
     output_filename = os.path.join(path,
-                                  'npys/shard_{:04d}.npy'.format(int(shard)))
-    print('will be reading {}'.format(input_filename))
-    print('and will write the results to {}'.format(output_filename))
+                                   "npys/shard_{:04d}.npy".format(int(shard)))
+    print("will be reading {}".format(input_filename))
+    print("and will write the results to {}".format(output_filename))
 
     tokenize_corpus(input_filename, output_filename)
-
-

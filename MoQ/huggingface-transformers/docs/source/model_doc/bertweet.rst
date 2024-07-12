@@ -1,4 +1,4 @@
-.. 
+..
     Copyright 2020 The HuggingFace Team. All rights reserved.
 
     Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
@@ -32,14 +32,14 @@ Example of use:
 .. code-block::
 
   import torch
-  from transformers import AutoModel, AutoTokenizer 
+  from transformers import AutoModel, AutoTokenizer
 
   bertweet = AutoModel.from_pretrained("vinai/bertweet-base")
 
-  # For transformers v4.x+: 
+  # For transformers v4.x+:
   tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base", use_fast=False)
 
-  # For transformers v3.x: 
+  # For transformers v3.x:
   # tokenizer = AutoTokenizer.from_pretrained("vinai/bertweet-base")
 
   # INPUT TWEET IS ALREADY NORMALIZED!
@@ -61,4 +61,4 @@ BertweetTokenizer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. autoclass:: transformers.BertweetTokenizer
-    :members: 
+    :members:

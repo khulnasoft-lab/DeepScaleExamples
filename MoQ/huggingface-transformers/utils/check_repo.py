@@ -19,7 +19,6 @@ import os
 import re
 from pathlib import Path
 
-
 # All paths are set with the intent you should run this script from the root of the repo with the command
 # python utils/check_repo.py
 PATH_TO_TRANSFORMERS = "src/transformers"
@@ -138,7 +137,7 @@ transformers = spec.loader.load_module()
 # If some modeling modules should be ignored for all checks, they should be added in the nested list
 # _ignore_modules of this function.
 def get_model_modules():
-    """ Get the model modules inside the transformers library. """
+    """Get the model modules inside the transformers library."""
     _ignore_modules = [
         "modeling_auto",
         "modeling_encoder_decoder",
@@ -162,7 +161,8 @@ def get_model_modules():
         if not model.startswith("__"):
             model_module = getattr(transformers.models, model)
             for submodule in dir(model_module):
-                if submodule.startswith("modeling") and submodule not in _ignore_modules:
+                if (submodule.startswith("modeling")
+                        and submodule not in _ignore_modules):
                     modeling_module = getattr(model_module, submodule)
                     if inspect.ismodule(modeling_module):
                         modules.append(modeling_module)
@@ -170,14 +170,16 @@ def get_model_modules():
 
 
 def get_models(module):
-    """ Get the objects in module that are models."""
+    """Get the objects in module that are models."""
     models = []
-    model_classes = (transformers.PreTrainedModel, transformers.TFPreTrainedModel)
+    model_classes = (transformers.PreTrainedModel,
+                     transformers.TFPreTrainedModel)
     for attr_name in dir(module):
         if "Pretrained" in attr_name or "PreTrained" in attr_name:
             continue
         attr = getattr(module, attr_name)
-        if isinstance(attr, type) and issubclass(attr, model_classes) and attr.__module__ == module.__name__:
+        if (isinstance(attr, type) and issubclass(attr, model_classes)
+                and attr.__module__ == module.__name__):
             models.append((attr_name, attr))
     return models
 
@@ -185,7 +187,7 @@ def get_models(module):
 # If some test_modeling files should be ignored when checking models are all tested, they should be added in the
 # nested list _ignore_files of this function.
 def get_model_test_files():
-    """ Get the model test files."""
+    """Get the model test files."""
     _ignore_files = [
         "test_modeling_common",
         "test_modeling_encoder_decoder",
@@ -194,11 +196,9 @@ def get_model_test_files():
     ]
     test_files = []
     for filename in os.listdir(PATH_TO_TESTS):
-        if (
-            os.path.isfile(f"{PATH_TO_TESTS}/{filename}")
-            and filename.startswith("test_modeling")
-            and not os.path.splitext(filename)[0] in _ignore_files
-        ):
+        if (os.path.isfile(f"{PATH_TO_TESTS}/{filename}")
+                and filename.startswith("test_modeling")
+                and not os.path.splitext(filename)[0] in _ignore_files):
             test_files.append(filename)
     return test_files
 
@@ -206,11 +206,15 @@ def get_model_test_files():
 # This is a bit hacky but I didn't find a way to import the test_file as a module and read inside the tester class
 # for the all_model_classes variable.
 def find_tested_models(test_file):
-    """ Parse the content of test_file to detect what's in all_model_classes"""
+    """Parse the content of test_file to detect what's in all_model_classes"""
     # This is a bit hacky but I didn't find a way to import the test_file as a module and read inside the class
-    with open(os.path.join(PATH_TO_TESTS, test_file), "r", encoding="utf-8", newline="\n") as f:
+    with open(os.path.join(PATH_TO_TESTS, test_file),
+              "r",
+              encoding="utf-8",
+              newline="\n") as f:
         content = f.read()
-    all_models = re.findall(r"all_model_classes\s+=\s+\(\s*\(([^\)]*)\)", content)
+    all_models = re.findall(r"all_model_classes\s+=\s+\(\s*\(([^\)]*)\)",
+                            content)
     # Check with one less parenthesis as well
     all_models += re.findall(r"all_model_classes\s+=\s+\(([^\)]*)\)", content)
     if len(all_models) > 0:
@@ -224,7 +228,7 @@ def find_tested_models(test_file):
 
 
 def check_models_are_tested(module, test_file):
-    """ Check models defined in module are tested in test_file."""
+    """Check models defined in module are tested in test_file."""
     defined_models = get_models(module)
     tested_models = find_tested_models(test_file)
     if tested_models is None:
@@ -232,7 +236,8 @@ def check_models_are_tested(module, test_file):
             return
         return [
             f"{test_file} should define `all_model_classes` to apply common tests to the models it tests. "
-            + "If this intentional, add the test filename to `TEST_FILES_WITH_NO_COMMON_TESTS` in the file "
+            +
+            "If this intentional, add the test filename to `TEST_FILES_WITH_NO_COMMON_TESTS` in the file "
             + "`utils/check_repo.py`."
         ]
     failures = []
@@ -240,73 +245,84 @@ def check_models_are_tested(module, test_file):
         if model_name not in tested_models and model_name not in IGNORE_NON_TESTED:
             failures.append(
                 f"{model_name} is defined in {module.__name__} but is not tested in "
-                + f"{os.path.join(PATH_TO_TESTS, test_file)}. Add it to the all_model_classes in that file."
-                + "If common tests should not applied to that model, add its name to `IGNORE_NON_TESTED`"
-                + "in the file `utils/check_repo.py`."
-            )
+                +
+                f"{os.path.join(PATH_TO_TESTS, test_file)}. Add it to the all_model_classes in that file."
+                +
+                "If common tests should not applied to that model, add its name to `IGNORE_NON_TESTED`"
+                + "in the file `utils/check_repo.py`.")
     return failures
 
 
 def check_all_models_are_tested():
-    """ Check all models are properly tested."""
+    """Check all models are properly tested."""
     modules = get_model_modules()
     test_files = get_model_test_files()
     failures = []
     for module in modules:
         test_file = f"test_{module.__name__.split('.')[-1]}.py"
         if test_file not in test_files:
-            failures.append(f"{module.__name__} does not have its corresponding test file {test_file}.")
+            failures.append(
+                f"{module.__name__} does not have its corresponding test file {test_file}."
+            )
         new_failures = check_models_are_tested(module, test_file)
         if new_failures is not None:
             failures += new_failures
     if len(failures) > 0:
-        raise Exception(f"There were {len(failures)} failures:\n" + "\n".join(failures))
+        raise Exception(f"There were {len(failures)} failures:\n" +
+                        "\n".join(failures))
 
 
 def get_all_auto_configured_models():
-    """ Return the list of all models in at least one auto class."""
-    result = set()  # To avoid duplicates we concatenate all model classes in a set.
+    """Return the list of all models in at least one auto class."""
+    result = set(
+    )  # To avoid duplicates we concatenate all model classes in a set.
     for attr_name in dir(transformers.models.auto.modeling_auto):
         if attr_name.startswith("MODEL_") and attr_name.endswith("MAPPING"):
-            result = result | set(getattr(transformers.models.auto.modeling_auto, attr_name).values())
+            result = result | set(
+                getattr(transformers.models.auto.modeling_auto,
+                        attr_name).values())
     for attr_name in dir(transformers.models.auto.modeling_tf_auto):
         if attr_name.startswith("TF_MODEL_") and attr_name.endswith("MAPPING"):
-            result = result | set(getattr(transformers.models.auto.modeling_tf_auto, attr_name).values())
+            result = result | set(
+                getattr(transformers.models.auto.modeling_tf_auto,
+                        attr_name).values())
     return [cls.__name__ for cls in result]
 
 
 def check_models_are_auto_configured(module, all_auto_models):
-    """ Check models defined in module are each in an auto class."""
+    """Check models defined in module are each in an auto class."""
     defined_models = get_models(module)
     failures = []
     for model_name, _ in defined_models:
-        if model_name not in all_auto_models and model_name not in IGNORE_NON_AUTO_CONFIGURED:
+        if (model_name not in all_auto_models
+                and model_name not in IGNORE_NON_AUTO_CONFIGURED):
             failures.append(
                 f"{model_name} is defined in {module.__name__} but is not present in any of the auto mapping. "
                 "If that is intended behavior, add its name to `IGNORE_NON_AUTO_CONFIGURED` in the file "
-                "`utils/check_repo.py`."
-            )
+                "`utils/check_repo.py`.")
     return failures
 
 
 def check_all_models_are_auto_configured():
-    """ Check all models are each in an auto class."""
+    """Check all models are each in an auto class."""
     modules = get_model_modules()
     all_auto_models = get_all_auto_configured_models()
     failures = []
     for module in modules:
-        new_failures = check_models_are_auto_configured(module, all_auto_models)
+        new_failures = check_models_are_auto_configured(
+            module, all_auto_models)
         if new_failures is not None:
             failures += new_failures
     if len(failures) > 0:
-        raise Exception(f"There were {len(failures)} failures:\n" + "\n".join(failures))
+        raise Exception(f"There were {len(failures)} failures:\n" +
+                        "\n".join(failures))
 
 
 _re_decorator = re.compile(r"^\s*@(\S+)\s+$")
 
 
 def check_decorator_order(filename):
-    """ Check that in the test file `filename` the slow decorator is always last."""
+    """Check that in the test file `filename` the slow decorator is always last."""
     with open(filename, "r", encoding="utf-8", newline="\n") as f:
         lines = f.readlines()
     decorator_before = None
@@ -315,7 +331,8 @@ def check_decorator_order(filename):
         search = _re_decorator.search(line)
         if search is not None:
             decorator_name = search.groups()[0]
-            if decorator_before is not None and decorator_name.startswith("parameterized"):
+            if decorator_before is not None and decorator_name.startswith(
+                    "parameterized"):
                 errors.append(i)
             decorator_before = decorator_name
         elif decorator_before is not None:
@@ -324,7 +341,7 @@ def check_decorator_order(filename):
 
 
 def check_all_decorator_order():
-    """ Check that in all test files, the slow decorator is always last."""
+    """Check that in all test files, the slow decorator is always last."""
     errors = []
     for fname in os.listdir(PATH_TO_TESTS):
         if fname.endswith(".py"):
@@ -339,12 +356,13 @@ def check_all_decorator_order():
 
 
 def find_all_documented_objects():
-    """ Parse the content of all doc files to detect which classes and functions it documents"""
+    """Parse the content of all doc files to detect which classes and functions it documents"""
     documented_obj = []
     for doc_file in Path(PATH_TO_DOC).glob("**/*.rst"):
         with open(doc_file, "r", encoding="utf-8", newline="\n") as f:
             content = f.read()
-        raw_doc_objs = re.findall(r"(?:autoclass|autofunction):: transformers.(\S+)\s+", content)
+        raw_doc_objs = re.findall(
+            r"(?:autoclass|autofunction):: transformers.(\S+)\s+", content)
         documented_obj += [obj.split(".")[-1] for obj in raw_doc_objs]
     return documented_obj
 
@@ -425,19 +443,14 @@ def ignore_undocumented(name):
     if name.isupper():
         return True
     # PreTrainedModels / Encoders / Decoders / Layers / Embeddings / Attention are not documented.
-    if (
-        name.endswith("PreTrainedModel")
-        or name.endswith("Decoder")
-        or name.endswith("Encoder")
-        or name.endswith("Layer")
-        or name.endswith("Embeddings")
-        or name.endswith("Attention")
-    ):
+    if (name.endswith("PreTrainedModel") or name.endswith("Decoder")
+            or name.endswith("Encoder") or name.endswith("Layer")
+            or name.endswith("Embeddings") or name.endswith("Attention")):
         return True
     # Submodules are not documented.
-    if os.path.isdir(os.path.join(PATH_TO_TRANSFORMERS, name)) or os.path.isfile(
-        os.path.join(PATH_TO_TRANSFORMERS, f"{name}.py")
-    ):
+    if os.path.isdir(os.path.join(
+            PATH_TO_TRANSFORMERS, name)) or os.path.isfile(
+                os.path.join(PATH_TO_TRANSFORMERS, f"{name}.py")):
         return True
     # All load functions are not documented.
     if name.startswith("load_tf") or name.startswith("load_pytorch"):
@@ -462,20 +475,25 @@ def ignore_undocumented(name):
 
 
 def check_all_objects_are_documented():
-    """ Check all models are properly documented."""
+    """Check all models are properly documented."""
     documented_objs = find_all_documented_objects()
     modules = transformers._modules
-    objects = [c for c in dir(transformers) if c not in modules and not c.startswith("_")]
-    undocumented_objs = [c for c in objects if c not in documented_objs and not ignore_undocumented(c)]
+    objects = [
+        c for c in dir(transformers)
+        if c not in modules and not c.startswith("_")
+    ]
+    undocumented_objs = [
+        c for c in objects
+        if c not in documented_objs and not ignore_undocumented(c)
+    ]
     if len(undocumented_objs) > 0:
         raise Exception(
             "The following objects are in the public init so should be documented:\n - "
-            + "\n - ".join(undocumented_objs)
-        )
+            + "\n - ".join(undocumented_objs))
 
 
 def check_repo_quality():
-    """ Check all models are properly tested and documented."""
+    """Check all models are properly tested and documented."""
     print("Checking all models are properly tested.")
     check_all_decorator_order()
     check_all_models_are_tested()

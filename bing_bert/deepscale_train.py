@@ -16,9 +16,19 @@ from turing.logger import Logger
 from turing.utils import get_sample_writer
 from turing.models import BertMultiTask
 from turing.dataset import PreTrainingDataset, PretrainBatch, PretrainDataType
-from turing.sources import PretrainingDataCreator, WikiPretrainingDataCreator, TokenInstance
+from turing.sources import (
+    PretrainingDataCreator,
+    WikiPretrainingDataCreator,
+    TokenInstance,
+)
 from pytorch_pretrained_bert.tokenization import BertTokenizer
-from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear, warmup_linear_decay_exp, warmup_exp_decay_exp, warmup_exp_decay_poly
+from pytorch_pretrained_bert.optimization import (
+    BertAdam,
+    warmup_linear,
+    warmup_linear_decay_exp,
+    warmup_exp_decay_exp,
+    warmup_exp_decay_poly,
+)
 from utils import get_argument_parser, is_time_to_exit
 
 from bing_bert_dataset_provider import BingBertDatasetProvider
@@ -35,19 +45,19 @@ all_step_time = 0.0
 def checkpoint_model(PATH, ckpt_id, model, epoch, last_global_step,
                      last_global_data_samples, **kwargs):
     """Utility function for checkpointing model + optimizer dictionaries
-       The main purpose for this is to be able to resume training from that instant again
+    The main purpose for this is to be able to resume training from that instant again
     """
     checkpoint_state_dict = {
-        'epoch': epoch,
-        'last_global_step': last_global_step,
-        'last_global_data_samples': last_global_data_samples
+        "epoch": epoch,
+        "last_global_step": last_global_step,
+        "last_global_data_samples": last_global_data_samples,
     }
     # Add extra kwargs too
     checkpoint_state_dict.update(kwargs)
 
     success = model.network.save_checkpoint(PATH, ckpt_id,
                                             checkpoint_state_dict)
-    status_msg = 'checkpointing: PATH={}, ckpt_id={}'.format(PATH, ckpt_id)
+    status_msg = "checkpointing: PATH={}, ckpt_id={}".format(PATH, ckpt_id)
     if success:
         logging.info(f"Success {status_msg}")
     else:
@@ -57,14 +67,14 @@ def checkpoint_model(PATH, ckpt_id, model, epoch, last_global_step,
 
 def load_training_checkpoint(args, model, PATH, ckpt_id):
     """Utility function for checkpointing model + optimizer dictionaries
-       The main purpose for this is to be able to resume training from that instant again
+    The main purpose for this is to be able to resume training from that instant again
     """
     logger = args.logger
     _, checkpoint_state_dict = model.network.load_checkpoint(PATH, ckpt_id)
-    epoch = checkpoint_state_dict['epoch']
-    last_global_step = checkpoint_state_dict['last_global_step']
+    epoch = checkpoint_state_dict["epoch"]
+    last_global_step = checkpoint_state_dict["last_global_step"]
     last_global_data_samples = checkpoint_state_dict[
-        'last_global_data_samples']
+        "last_global_data_samples"]
     del checkpoint_state_dict
     return (epoch, last_global_step, last_global_data_samples)
 
@@ -74,12 +84,13 @@ def get_dataloader(args, dataset: Dataset, eval_set=False):
         train_sampler = RandomSampler(dataset)
     else:
         train_sampler = DistributedSampler(dataset)
-    return (x for x in
-            DataLoader(dataset,
-                       batch_size=args.train_micro_batch_size_per_gpu //
-                       2 if eval_set else args.train_micro_batch_size_per_gpu,
-                       sampler=train_sampler,
-                       num_workers=args.config['training']['num_workers']))
+    return (x for x in DataLoader(
+        dataset,
+        batch_size=(args.train_micro_batch_size_per_gpu //
+                    2 if eval_set else args.train_micro_batch_size_per_gpu),
+        sampler=train_sampler,
+        num_workers=args.config["training"]["num_workers"],
+    ))
 
 
 def pretrain_validation(args, index, model):
@@ -96,9 +107,13 @@ def pretrain_validation(args, index, model):
     dataset = PreTrainingDataset(
         args.tokenizer,
         os.path.join(args.validation_data_path_prefix,
-                     config['validation']['path']), args.logger,
-        args.max_seq_length, index, PretrainDataType.VALIDATION,
-        args.max_predictions_per_seq)
+                     config["validation"]["path"]),
+        args.logger,
+        args.max_seq_length,
+        index,
+        PretrainDataType.VALIDATION,
+        args.max_predictions_per_seq,
+    )
     data_batches = get_dataloader(args, dataset, eval_set=True)
     eval_loss = 0
     nb_eval_steps = 0
@@ -115,7 +130,7 @@ def pretrain_validation(args, index, model):
     if (not args.no_cuda
             and dist.get_rank() == 0) or (args.no_cuda
                                           and args.local_rank == -1):
-        args.summary_writer.add_scalar(f'Validation/Loss', eval_loss,
+        args.summary_writer.add_scalar(f"Validation/Loss", eval_loss,
                                        index + 1)
     return
 
@@ -146,7 +161,7 @@ def train(args,
     config = args.config
     logger = args.logger
     logger.info(
-        f'worker-{dist.get_rank()}: begin epoch {index+1} current_sample_count {current_data_sample_count} shard_length {total_length} global_data_samples {global_data_samples}'
+        f"worker-{dist.get_rank()}: begin epoch {index+1} current_sample_count {current_data_sample_count} shard_length {total_length} global_data_samples {global_data_samples}"
     )
 
     pretrain_dataset_provider.prefetch_shard(index + 1)
@@ -183,8 +198,13 @@ def train(args,
                     lr_this_step = update_learning_rate(
                         args, config, global_step, optimizer)
 
-                report_step_metrics(args, lr_this_step, unscaled_loss,
-                                    global_step, current_data_sample_count)
+                report_step_metrics(
+                    args,
+                    lr_this_step,
+                    unscaled_loss,
+                    global_step,
+                    current_data_sample_count,
+                )
 
                 model.network.step()
 
@@ -203,19 +223,24 @@ def train(args,
                            epoch_steps=epoch_step,
                            global_steps=current_global_step):
             print(
-                f'Warning: Early epoch termination due to max steps limit, epoch step ={epoch_step}, global step = {current_global_step}, epoch = {index+1}'
+                f"Warning: Early epoch termination due to max steps limit, epoch step ={epoch_step}, global step = {current_global_step}, epoch = {index+1}"
             )
             break
         step_time = time.time() - step_start
         all_step_time += step_time
-        if global_step % rounds == 0 and global_step != 0 and model.network.is_gradient_accumulation_boundary(
-        ) and dist.get_rank() == 0:
-            one_step_bs = args.train_micro_batch_size_per_gpu * args.gradient_accumulation_steps * dist.get_world_size(
-            ) * rounds
-            print(' At step {}, the throughput is {:2f} Samples/s'.format(
-                global_step * args.gradient_accumulation_steps,
-                one_step_bs / all_step_time),
-                  flush=True)
+        if (global_step % rounds == 0 and global_step != 0
+                and model.network.is_gradient_accumulation_boundary()
+                and dist.get_rank() == 0):
+            one_step_bs = (args.train_micro_batch_size_per_gpu *
+                           args.gradient_accumulation_steps *
+                           dist.get_world_size() * rounds)
+            print(
+                " At step {}, the throughput is {:2f} Samples/s".format(
+                    global_step * args.gradient_accumulation_steps,
+                    one_step_bs / all_step_time,
+                ),
+                flush=True,
+            )
             all_step_time = 0.0
 
     pretrain_dataset_provider.release_shard(index)
@@ -233,30 +258,36 @@ def update_learning_rate(args, config, current_global_step, optimizer):
     global_step_for_lr = current_global_step - last_global_step_from_restore
 
     if args.lr_schedule == "EE":
-        #print(f'LR Schedule is {args.lr_schedule} EE')
+        # print(f'LR Schedule is {args.lr_schedule} EE')
         lr_this_step = config["training"][
             "learning_rate"] * warmup_exp_decay_exp(
-                global_step_for_lr, config["training"]["decay_rate"],
+                global_step_for_lr,
+                config["training"]["decay_rate"],
                 config["training"]["decay_step"],
                 config["training"]["total_training_steps"],
-                config["training"]["warmup_proportion"])
+                config["training"]["warmup_proportion"],
+            )
     elif args.lr_schedule == "EP":
-        print(f'LR Schedule is {args.lr_schedule} EP')
+        print(f"LR Schedule is {args.lr_schedule} EP")
         lr_this_step = config["training"][
             "learning_rate"] * warmup_exp_decay_poly(
-                global_step_for_lr, config["training"]["total_training_steps"],
-                config["training"]["warmup_proportion"])
+                global_step_for_lr,
+                config["training"]["total_training_steps"],
+                config["training"]["warmup_proportion"],
+            )
     else:
         lr_this_step = config["training"][
             "learning_rate"] * warmup_linear_decay_exp(
-                global_step_for_lr, config["training"]["decay_rate"],
+                global_step_for_lr,
+                config["training"]["decay_rate"],
                 config["training"]["decay_step"],
                 config["training"]["total_training_steps"],
-                config["training"]["warmup_proportion"])
+                config["training"]["warmup_proportion"],
+            )
     lr_this_step += args.lr_offset
 
     for param_group in optimizer.param_groups:
-        param_group['lr'] = lr_this_step
+        param_group["lr"] = lr_this_step
 
     return lr_this_step
 
@@ -266,28 +297,28 @@ def report_step_metrics(args, lr, loss, step, data_sample_count):
     if (not args.no_cuda
             and dist.get_rank() == 0) or (args.no_cuda
                                           and args.local_rank == -1):
-        args.summary_writer.add_scalar(f'Train/lr', lr, step)
+        args.summary_writer.add_scalar(f"Train/lr", lr, step)
 
-        args.summary_writer.add_scalar(f'Train/Samples/train_loss', loss,
+        args.summary_writer.add_scalar(f"Train/Samples/train_loss", loss,
                                        data_sample_count)
 
-        args.summary_writer.add_scalar(f'Train/Samples/lr', lr,
+        args.summary_writer.add_scalar(f"Train/Samples/lr", lr,
                                        data_sample_count)
     ##### Recording  done. #####
 
     if (step + 1) % args.print_steps == 0 and master_process(args):
-        print('bing_bert_progress: step={}, loss={}, lr={}, sample_count={}'.
+        print("bing_bert_progress: step={}, loss={}, lr={}, sample_count={}".
               format(step + 1, loss, lr, data_sample_count))
 
 
 def report_lamb_coefficients(args, optimizer):
     if master_process(args):
-        if (args.fp16 and args.use_lamb):
-            #print("Lamb Coeffs", optimizer.optimizer.get_lamb_coeffs())
+        if args.fp16 and args.use_lamb:
+            # print("Lamb Coeffs", optimizer.optimizer.get_lamb_coeffs())
             lamb_coeffs = optimizer.optimizer.get_lamb_coeffs()
             lamb_coeffs = np.array(lamb_coeffs)
             if lamb_coeffs.size > 0:
-                args.summary_writer.add_histogram(f'Train/lamb_coeffs',
+                args.summary_writer.add_histogram(f"Train/lamb_coeffs",
                                                   lamb_coeffs, global_step)
 
 
@@ -310,7 +341,7 @@ def construct_arguments():
     # Prepare Logger
     logger = Logger(cuda=torch.cuda.is_available() and not args.no_cuda)
     args.logger = logger
-    config = json.load(open(args.config_file, 'r', encoding='utf-8'))
+    config = json.load(open(args.config_file, "r", encoding="utf-8"))
 
     # choose dataset and training config based on the given sequence length
     seq_len = str(args.max_seq_length)
@@ -323,7 +354,7 @@ def construct_arguments():
     config["training"] = training
     args.config = config
 
-    args.job_name = config['name'] if args.job_name is None else args.job_name
+    args.job_name = config["name"] if args.job_name is None else args.job_name
     print("Running Config File: ", args.job_name)
     # Setting the distributed variables
     print("Args = {}".format(args))
@@ -347,17 +378,17 @@ def construct_arguments():
     # Set validation dataset path
     if args.validation_data_path_prefix is None:
         logging.warning(
-            'Skipping validation because validation_data_path_prefix is unspecified'
+            "Skipping validation because validation_data_path_prefix is unspecified"
         )
 
     # Issue warning if early exit from epoch is configured
     if args.max_steps < sys.maxsize:
         logging.warning(
-            'Early training exit is set after {} global steps'.format(
+            "Early training exit is set after {} global steps".format(
                 args.max_steps))
 
     if args.max_steps_per_epoch < sys.maxsize:
-        logging.warning('Early epoch exit is set after {} global steps'.format(
+        logging.warning("Early epoch exit is set after {} global steps".format(
             args.max_steps_per_epoch))
 
     return args
@@ -366,15 +397,21 @@ def construct_arguments():
 def prepare_optimizer_parameters(args, model):
     config = args.config
     deepscale_config = json.load(
-        open(args.deepscale_config, 'r', encoding='utf-8'))
+        open(args.deepscale_config, "r", encoding="utf-8"))
 
     param_optimizer = list(model.network.named_parameters())
-    param_optimizer = [n for n in param_optimizer if 'pooler' not in n[0]]
-    no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
+    param_optimizer = [n for n in param_optimizer if "pooler" not in n[0]]
+    no_decay = ["bias", "LayerNorm.bias", "LayerNorm.weight"]
     if args.deepscale_transformer_kernel:
         no_decay = no_decay + [
-            'attn_nw', 'attn_nb', 'norm_w', 'norm_b', 'attn_qkvb', 'attn_ob',
-            'inter_b', 'output_b'
+            "attn_nw",
+            "attn_nb",
+            "norm_w",
+            "norm_b",
+            "attn_qkvb",
+            "attn_ob",
+            "inter_b",
+            "output_b",
         ]
     if "weight_decay" in config["training"].keys():
         weight_decay = config["training"]["weight_decay"]
@@ -384,19 +421,24 @@ def prepare_optimizer_parameters(args, model):
     if deepscale_config["optimizer"]["type"] not in [
             "OneBitAdam", "OneBitLamb"
     ]:
-        optimizer_grouped_parameters = [{
-            'params': [
-                p for n, p in param_optimizer
-                if not any(nd in n for nd in no_decay)
-            ],
-            'weight_decay':
-            weight_decay
-        }, {
-            'params':
-            [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-            'weight_decay':
-            0.0
-        }]
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in param_optimizer
+                    if not any(nd in n for nd in no_decay)
+                ],
+                "weight_decay":
+                weight_decay,
+            },
+            {
+                "params": [
+                    p for n, p in param_optimizer
+                    if any(nd in n for nd in no_decay)
+                ],
+                "weight_decay":
+                0.0,
+            },
+        ]
     else:
         # Because 1-bit compression cannot represent exact zero, it is required to
         # provide a momentum mask for those params that have constant exact zeros in their
@@ -404,7 +446,7 @@ def prepare_optimizer_parameters(args, model):
         # For example, for bert pre-training seq 128, bert.embeddings.position_embeddings.weight
         # always have exact zeros in its momentum for row 129 to 512, because it only
         # learns up to seq length 128 while the model supports up to 512 seq length.
-        need_mask = ['position_embeddings.weight']
+        need_mask = ["position_embeddings.weight"]
         need_mask_p = []
         need_mask_decay = []
         masks = []
@@ -423,31 +465,34 @@ def prepare_optimizer_parameters(args, model):
                 else:
                     need_mask_decay.append(weight_decay)
 
-        optimizer_grouped_parameters = [{
-            'params': [
-                p for n, p in param_optimizer
-                if not any(nd in n for nd in no_decay + need_mask)
-            ],
-            'weight_decay':
-            weight_decay
-        }, {
-            'params': [
-                p for n, p in param_optimizer
-                if (any(nd in n
+        optimizer_grouped_parameters = [
+            {
+                "params": [
+                    p for n, p in param_optimizer
+                    if not any(nd in n for nd in no_decay + need_mask)
+                ],
+                "weight_decay":
+                weight_decay,
+            },
+            {
+                "params": [
+                    p for n, p in param_optimizer if (any(
+                        nd in n
                         for nd in no_decay) and not any(nd in n
                                                         for nd in need_mask))
-            ],
-            'weight_decay':
-            0.0
-        }]
+                ],
+                "weight_decay":
+                0.0,
+            },
+        ]
 
         for i_mask in range(len(need_mask_p)):
             optimizer_grouped_parameters.append({
-                'params': [need_mask_p[i_mask]],
-                'weight_decay':
+                "params": [need_mask_p[i_mask]],
+                "weight_decay":
                 need_mask_decay[i_mask],
-                'exp_avg_mask':
-                masks[i_mask]
+                "exp_avg_mask":
+                masks[i_mask],
             })
 
     return optimizer_grouped_parameters
@@ -455,8 +500,8 @@ def prepare_optimizer_parameters(args, model):
 
 def prepare_model_optimizer(args):
     # Initialize torch distributed
-    deepscale.init_distributed(dist_backend='nccl')
-    args.local_rank = int(os.environ['LOCAL_RANK'])
+    deepscale.init_distributed(dist_backend="nccl")
+    args.local_rank = int(os.environ["LOCAL_RANK"])
 
     # Loading Model
     model = BertMultiTask(args)
@@ -481,10 +526,10 @@ def prepare_model_optimizer(args):
     args.device = model.network.device
     model.set_device(args.device)
     args.fp16 = model.network.fp16_enabled()
-    args.use_lamb = (model.network.optimizer_name() ==
-                     deepscale.runtime.config.LAMB_OPTIMIZER
-                     or model.network.optimizer_name() ==
-                     deepscale.runtime.config.ONEBIT_LAMB_OPTIMIZER)
+    args.use_lamb = (model.network.optimizer_name()
+                     == deepscale.runtime.config.LAMB_OPTIMIZER
+                     or model.network.optimizer_name()
+                     == deepscale.runtime.config.ONEBIT_LAMB_OPTIMIZER)
 
     # Prepare Summary Writer and saved_models path
     if dist.get_rank() == 0:
@@ -511,7 +556,8 @@ def load_checkpoint(args, model):
         args=args,
         model=model,
         PATH=args.load_training_checkpoint,
-        ckpt_id=args.load_checkpoint_id)
+        ckpt_id=args.load_checkpoint_id,
+    )
     logger.info(
         f"The model is loaded from last checkpoint at epoch {start_epoch} when the global steps were at {global_step} and global data samples at {global_data_samples}"
     )
@@ -524,10 +570,12 @@ def load_checkpoint(args, model):
 
     lr_this_step = config["training"][
         "learning_rate"] * warmup_linear_decay_exp(
-            global_step, config["training"]["decay_rate"],
+            global_step,
+            config["training"]["decay_rate"],
             config["training"]["decay_step"],
             config["training"]["total_training_steps"],
-            config["training"]["warmup_proportion"])
+            config["training"]["warmup_proportion"],
+        )
     logger.info(f"Restart training with lr = {lr_this_step}")
 
     # Run validation for checkpoint before training
@@ -564,13 +612,14 @@ def run(args, model, optimizer, start_epoch):
             logger.info(
                 f"Saving a checkpointing of the model for epoch: {index+1}")
 
-            checkpoint_model(PATH=args.saved_model_path,
-                             ckpt_id='epoch{}_step{}'.format(
-                                 index + 1, global_step),
-                             model=model,
-                             epoch=index + 1,
-                             last_global_step=global_step,
-                             last_global_data_samples=global_data_samples)
+            checkpoint_model(
+                PATH=args.saved_model_path,
+                ckpt_id="epoch{}_step{}".format(index + 1, global_step),
+                model=model,
+                epoch=index + 1,
+                last_global_step=global_step,
+                last_global_data_samples=global_data_samples,
+            )
 
         post = time.time()
         logger.info(f"Time for shard {index + 1}: {post-pre} seconds")
@@ -578,7 +627,7 @@ def run(args, model, optimizer, start_epoch):
         current_global_step = global_step - last_global_step_from_restore
         if is_time_to_exit(args=args, global_steps=current_global_step):
             print(
-                f'Warning: Early training termination due to max steps limit, epoch={index+1}, global_step={current_global_step}'
+                f"Warning: Early training termination due to max steps limit, epoch={index+1}, global_step={current_global_step}"
             )
             break
 

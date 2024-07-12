@@ -21,7 +21,6 @@ from typing import List, Optional, Tuple
 from ...tokenization_utils import PreTrainedTokenizer
 from ...utils import logging
 
-
 logger = logging.get_logger(__name__)
 
 SPIECE_UNDERLINE = "▁"
@@ -30,12 +29,15 @@ VOCAB_FILES_NAMES = {"vocab_file": "prophetnet.tokenizer"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "microsoft/xprophetnet-large-wiki100-cased": "https://cdn.huggingface.co/microsoft/xprophetnet-large-wiki100-cased/prophetnet.tokenizer",
+        "microsoft/xprophetnet-large-wiki100-cased":
+        "https://cdn.huggingface.co/microsoft/xprophetnet-large-wiki100-cased/prophetnet.tokenizer",
     }
 }
 
 PRETRAINED_INIT_CONFIGURATION = {
-    "microsoft/xprophetnet-large-wiki100-cased": {"do_lower_case": False},
+    "microsoft/xprophetnet-large-wiki100-cased": {
+        "do_lower_case": False
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
@@ -107,18 +109,16 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     model_input_names = ["input_ids", "attention_mask"]
 
-    def __init__(
-        self,
-        vocab_file,
-        bos_token="[SEP]",
-        eos_token="[SEP]",
-        sep_token="[SEP]",
-        unk_token="[UNK]",
-        pad_token="[PAD]",
-        cls_token="[CLS]",
-        mask_token="[MASK]",
-        **kwargs
-    ):
+    def __init__(self,
+                 vocab_file,
+                 bos_token="[SEP]",
+                 eos_token="[SEP]",
+                 sep_token="[SEP]",
+                 unk_token="[UNK]",
+                 pad_token="[PAD]",
+                 cls_token="[CLS]",
+                 mask_token="[MASK]",
+                 **kwargs):
         super().__init__(
             bos_token=bos_token,
             eos_token=eos_token,
@@ -135,8 +135,7 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         except ImportError:
             logger.warning(
                 "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece"
-                "pip install sentencepiece"
-            )
+                "pip install sentencepiece")
             raise
 
         self.sp_model = spm.SentencePieceProcessor()
@@ -150,7 +149,13 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         # spm      | '<unk>' | '<s>'   | '</s>' | ','     | '.' | '▁' | 's' | '▁de' | '-'   | '▁a'
 
         # put special tokens and [unused] tokens into the vocab
-        self.fairseq_tokens_to_ids = {"[PAD]": 0, "[CLS]": 1, "[SEP]": 2, "[UNK]": 3, "[MASK]": 4}
+        self.fairseq_tokens_to_ids = {
+            "[PAD]": 0,
+            "[CLS]": 1,
+            "[SEP]": 2,
+            "[UNK]": 3,
+            "[MASK]": 4,
+        }
 
         for i in range(10):
             tok = "[unused{}]".format(i)
@@ -158,7 +163,10 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
 
         # The first "real" token "," has position 15 in the embedding vocab and position 3 in the spm vocab
         self.fairseq_offset = 12
-        self.fairseq_ids_to_tokens = {v: k for k, v in self.fairseq_tokens_to_ids.items()}
+        self.fairseq_ids_to_tokens = {
+            v: k
+            for k, v in self.fairseq_tokens_to_ids.items()
+        }
         for k in self.fairseq_tokens_to_ids.keys():
             self.unique_no_split_tokens.append(k)
 
@@ -174,14 +182,16 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         except ImportError:
             logger.warning(
                 "You need to install SentencePiece to use XLMRobertaTokenizer: https://github.com/google/sentencepiece"
-                "pip install sentencepiece"
-            )
+                "pip install sentencepiece")
             raise
         self.sp_model = spm.SentencePieceProcessor()
         self.sp_model.Load(self.vocab_file)
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieve sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -205,15 +215,21 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formatted with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1
+                    if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                ))
 
         if token_ids_1 is None:
             return ([0] * len(token_ids_0)) + [1]
         return ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
 
     def create_token_type_ids_from_sequences(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Create a mask from the two sequences passed to be used in a sequence-pair classification task. XLMProphetNet
         does not make use of token type ids, therefore a list of zeros is returned.
@@ -240,7 +256,10 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         return len(self.sp_model) + self.fairseq_offset
 
     def get_vocab(self):
-        vocab = {self.convert_ids_to_tokens(i): i for i in range(self.vocab_size)}
+        vocab = {
+            self.convert_ids_to_tokens(i): i
+            for i in range(self.vocab_size)
+        }
         vocab.update(self.added_tokens_encoder)
         return vocab
 
@@ -248,7 +267,7 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         return self.sp_model.EncodeAsPieces(text)
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         if token in self.fairseq_tokens_to_ids:
             return self.fairseq_tokens_to_ids[token]
         spm_id = self.sp_model.PieceToId(token)
@@ -267,22 +286,28 @@ class XLMProphetNetTokenizer(PreTrainedTokenizer):
         out_string = "".join(tokens).replace(SPIECE_UNDERLINE, " ").strip()
         return out_string
 
-    def save_vocabulary(self, save_directory: str, filename_prefix: Optional[str] = None) -> Tuple[str]:
+    def save_vocabulary(self,
+                        save_directory: str,
+                        filename_prefix: Optional[str] = None) -> Tuple[str]:
         if not os.path.isdir(save_directory):
-            logger.error("Vocabulary path ({}) should be a directory".format(save_directory))
+            logger.error("Vocabulary path ({}) should be a directory".format(
+                save_directory))
             return
         out_vocab_file = os.path.join(
-            save_directory, (filename_prefix + "-" if filename_prefix else "") + VOCAB_FILES_NAMES["vocab_file"]
+            save_directory,
+            (filename_prefix + "-" if filename_prefix else "") +
+            VOCAB_FILES_NAMES["vocab_file"],
         )
 
         if os.path.abspath(self.vocab_file) != os.path.abspath(out_vocab_file):
             copyfile(self.vocab_file, out_vocab_file)
 
-        return (out_vocab_file,)
+        return (out_vocab_file, )
 
     def build_inputs_with_special_tokens(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None
-    ) -> List[int]:
+            self,
+            token_ids_0: List[int],
+            token_ids_1: Optional[List[int]] = None) -> List[int]:
         """
         Build model inputs from a sequence or a pair of sequence for sequence classification tasks by concatenating and
         adding special tokens. A XLMProphetNet sequence has the following format:

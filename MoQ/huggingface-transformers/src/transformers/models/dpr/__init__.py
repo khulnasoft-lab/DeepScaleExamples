@@ -18,8 +18,12 @@
 
 from typing import TYPE_CHECKING
 
-from ...file_utils import _BaseLazyModule, is_tf_available, is_tokenizers_available, is_torch_available
-
+from ...file_utils import (
+    _BaseLazyModule,
+    is_tf_available,
+    is_tokenizers_available,
+    is_torch_available,
+)
 
 _import_structure = {
     "configuration_dpr": ["DPR_PRETRAINED_CONFIG_ARCHIVE_MAP", "DPRConfig"],
@@ -30,7 +34,6 @@ _import_structure = {
         "DPRReaderTokenizer",
     ],
 }
-
 
 if is_tokenizers_available():
     _import_structure["tokenization_dpr_fast"] = [
@@ -64,7 +67,6 @@ if is_tf_available():
         "TFDPRQuestionEncoder",
         "TFDPRReader",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_dpr import DPR_PRETRAINED_CONFIG_ARCHIVE_MAP, DPRConfig

@@ -14,10 +14,8 @@
 # limitations under the License.
 """ LXMERT model configuration """
 
-
 from ...configuration_utils import PretrainedConfig
 from ...utils import logging
-
 
 logger = logging.get_logger(__name__)
 
@@ -180,4 +178,8 @@ class LxmertConfig(PretrainedConfig):
         self.visual_feat_loss = visual_feat_loss
         self.output_hidden_states = output_hidden_states
         self.output_attentions = self.output_attentions
-        self.num_hidden_layers = {"vision": r_layers, "cross_encoder": x_layers, "language": l_layers}
+        self.num_hidden_layers = {
+            "vision": r_layers,
+            "cross_encoder": x_layers,
+            "language": l_layers,
+        }

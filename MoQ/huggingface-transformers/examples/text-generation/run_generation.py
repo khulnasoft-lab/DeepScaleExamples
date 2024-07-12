@@ -17,7 +17,6 @@
 """ Conditional text generation with the auto-regressive models of the library (GPT/GPT-2/CTRL/Transformer-XL/XLNet)
 """
 
-
 import argparse
 import logging
 
@@ -38,7 +37,6 @@ from transformers import (
     XLNetLMHeadModel,
     XLNetTokenizer,
 )
-
 
 logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(name)s -   %(message)s",
@@ -87,11 +85,16 @@ def set_seed(args):
 
 def prepare_ctrl_input(args, _, tokenizer, prompt_text):
     if args.temperature > 0.7:
-        logger.info("CTRL typically works better with lower temperatures (and lower top_k).")
+        logger.info(
+            "CTRL typically works better with lower temperatures (and lower top_k)."
+        )
 
     encoded_prompt = tokenizer.encode(prompt_text, add_special_tokens=False)
-    if not any(encoded_prompt[0] == x for x in tokenizer.control_codes.values()):
-        logger.info("WARNING! You are not starting your generation from a control code so you won't get good results")
+    if not any(encoded_prompt[0] == x
+               for x in tokenizer.control_codes.values()):
+        logger.info(
+            "WARNING! You are not starting your generation from a control code so you won't get good results"
+        )
     return prompt_text
 
 
@@ -99,7 +102,8 @@ def prepare_xlm_input(args, model, tokenizer, prompt_text):
     # kwargs = {"language": None, "mask_token_id": None}
 
     # Set the language
-    use_lang_emb = hasattr(model.config, "use_lang_emb") and model.config.use_lang_emb
+    use_lang_emb = hasattr(model.config,
+                           "use_lang_emb") and model.config.use_lang_emb
     if hasattr(model.config, "lang2id") and use_lang_emb:
         available_languages = model.config.lang2id.keys()
         if args.xlm_language in available_languages:
@@ -107,7 +111,8 @@ def prepare_xlm_input(args, model, tokenizer, prompt_text):
         else:
             language = None
             while language not in available_languages:
-                language = input("Using XLM. Select language in " + str(list(available_languages)) + " >>> ")
+                language = input("Using XLM. Select language in " +
+                                 str(list(available_languages)) + " >>> ")
 
         model.config.lang_id = model.config.lang2id[language]
         # kwargs["language"] = tokenizer.lang2id[language]
@@ -122,13 +127,15 @@ def prepare_xlm_input(args, model, tokenizer, prompt_text):
 
 
 def prepare_xlnet_input(args, _, tokenizer, prompt_text):
-    prefix = args.prefix if args.prefix else args.padding_text if args.padding_text else PREFIX
+    prefix = (args.prefix if args.prefix else
+              args.padding_text if args.padding_text else PREFIX)
     prompt_text = prefix + prompt_text
     return prompt_text
 
 
 def prepare_transfoxl_input(args, _, tokenizer, prompt_text):
-    prefix = args.prefix if args.prefix else args.padding_text if args.padding_text else PREFIX
+    prefix = (args.prefix if args.prefix else
+              args.padding_text if args.padding_text else PREFIX)
     prompt_text = prefix + prompt_text
     return prompt_text
 
@@ -158,47 +165,83 @@ def main():
         default=None,
         type=str,
         required=True,
-        help="Model type selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
+        help="Model type selected in the list: " +
+        ", ".join(MODEL_CLASSES.keys()),
     )
     parser.add_argument(
         "--model_name_or_path",
         default=None,
         type=str,
         required=True,
-        help="Path to pre-trained model or shortcut name selected in the list: " + ", ".join(MODEL_CLASSES.keys()),
+        help="Path to pre-trained model or shortcut name selected in the list: "
+        + ", ".join(MODEL_CLASSES.keys()),
     )
 
     parser.add_argument("--prompt", type=str, default="")
     parser.add_argument("--length", type=int, default=20)
-    parser.add_argument("--stop_token", type=str, default=None, help="Token at which text generation is stopped")
+    parser.add_argument(
+        "--stop_token",
+        type=str,
+        default=None,
+        help="Token at which text generation is stopped",
+    )
 
     parser.add_argument(
         "--temperature",
         type=float,
         default=1.0,
-        help="temperature of 1.0 has no effect, lower tend toward greedy sampling",
+        help=
+        "temperature of 1.0 has no effect, lower tend toward greedy sampling",
     )
     parser.add_argument(
-        "--repetition_penalty", type=float, default=1.0, help="primarily useful for CTRL model; in that case, use 1.2"
+        "--repetition_penalty",
+        type=float,
+        default=1.0,
+        help="primarily useful for CTRL model; in that case, use 1.2",
     )
     parser.add_argument("--k", type=int, default=0)
     parser.add_argument("--p", type=float, default=0.9)
 
-    parser.add_argument("--prefix", type=str, default="", help="Text added prior to input.")
-    parser.add_argument("--padding_text", type=str, default="", help="Deprecated, the use of `--prefix` is preferred.")
-    parser.add_argument("--xlm_language", type=str, default="", help="Optional language when used with the XLM model.")
+    parser.add_argument("--prefix",
+                        type=str,
+                        default="",
+                        help="Text added prior to input.")
+    parser.add_argument(
+        "--padding_text",
+        type=str,
+        default="",
+        help="Deprecated, the use of `--prefix` is preferred.",
+    )
+    parser.add_argument(
+        "--xlm_language",
+        type=str,
+        default="",
+        help="Optional language when used with the XLM model.",
+    )
 
-    parser.add_argument("--seed", type=int, default=42, help="random seed for initialization")
-    parser.add_argument("--no_cuda", action="store_true", help="Avoid using CUDA when available")
-    parser.add_argument("--num_return_sequences", type=int, default=1, help="The number of samples to generate.")
+    parser.add_argument("--seed",
+                        type=int,
+                        default=42,
+                        help="random seed for initialization")
+    parser.add_argument("--no_cuda",
+                        action="store_true",
+                        help="Avoid using CUDA when available")
+    parser.add_argument(
+        "--num_return_sequences",
+        type=int,
+        default=1,
+        help="The number of samples to generate.",
+    )
     parser.add_argument(
         "--fp16",
         action="store_true",
-        help="Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
+        help=
+        "Whether to use 16-bit (mixed) precision (through NVIDIA apex) instead of 32-bit",
     )
     args = parser.parse_args()
 
-    args.device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+    args.device = torch.device(
+        "cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
     args.n_gpu = 0 if args.no_cuda else torch.cuda.device_count()
 
     logger.warning(
@@ -215,7 +258,9 @@ def main():
         args.model_type = args.model_type.lower()
         model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
     except KeyError:
-        raise KeyError("the model {} you specified is not supported. You are welcome to add it and open a PR :)")
+        raise KeyError(
+            "the model {} you specified is not supported. You are welcome to add it and open a PR :)"
+        )
 
     tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path)
     model = model_class.from_pretrained(args.model_name_or_path)
@@ -224,7 +269,8 @@ def main():
     if args.fp16:
         model.half()
 
-    args.length = adjust_length_to_model(args.length, max_sequence_length=model.config.max_position_embeddings)
+    args.length = adjust_length_to_model(
+        args.length, max_sequence_length=model.config.max_position_embeddings)
     logger.info(args)
 
     prompt_text = args.prompt if args.prompt else input("Model prompt >>> ")
@@ -233,19 +279,23 @@ def main():
     requires_preprocessing = args.model_type in PREPROCESSING_FUNCTIONS.keys()
     if requires_preprocessing:
         prepare_input = PREPROCESSING_FUNCTIONS.get(args.model_type)
-        preprocessed_prompt_text = prepare_input(args, model, tokenizer, prompt_text)
+        preprocessed_prompt_text = prepare_input(args, model, tokenizer,
+                                                 prompt_text)
 
         if model.__class__.__name__ in ["TransfoXLLMHeadModel"]:
             tokenizer_kwargs = {"add_space_before_punct_symbol": True}
         else:
             tokenizer_kwargs = {}
 
-        encoded_prompt = tokenizer.encode(
-            preprocessed_prompt_text, add_special_tokens=False, return_tensors="pt", **tokenizer_kwargs
-        )
+        encoded_prompt = tokenizer.encode(preprocessed_prompt_text,
+                                          add_special_tokens=False,
+                                          return_tensors="pt",
+                                          **tokenizer_kwargs)
     else:
         prefix = args.prefix if args.prefix else args.padding_text
-        encoded_prompt = tokenizer.encode(prefix + prompt_text, add_special_tokens=False, return_tensors="pt")
+        encoded_prompt = tokenizer.encode(prefix + prompt_text,
+                                          add_special_tokens=False,
+                                          return_tensors="pt")
     encoded_prompt = encoded_prompt.to(args.device)
 
     if encoded_prompt.size()[-1] == 0:
@@ -270,20 +320,23 @@ def main():
 
     generated_sequences = []
 
-    for generated_sequence_idx, generated_sequence in enumerate(output_sequences):
-        print("=== GENERATED SEQUENCE {} ===".format(generated_sequence_idx + 1))
+    for generated_sequence_idx, generated_sequence in enumerate(
+            output_sequences):
+        print("=== GENERATED SEQUENCE {} ===".format(generated_sequence_idx +
+                                                     1))
         generated_sequence = generated_sequence.tolist()
 
         # Decode text
-        text = tokenizer.decode(generated_sequence, clean_up_tokenization_spaces=True)
+        text = tokenizer.decode(generated_sequence,
+                                clean_up_tokenization_spaces=True)
 
         # Remove all text after the stop token
-        text = text[: text.find(args.stop_token) if args.stop_token else None]
+        text = text[:text.find(args.stop_token) if args.stop_token else None]
 
         # Add the prompt at the beginning of the sequence. Remove the excess text that was used for pre-processing
-        total_sequence = (
-            prompt_text + text[len(tokenizer.decode(encoded_prompt[0], clean_up_tokenization_spaces=True)) :]
-        )
+        total_sequence = (prompt_text + text[len(
+            tokenizer.
+            decode(encoded_prompt[0], clean_up_tokenization_spaces=True)):])
 
         generated_sequences.append(total_sequence)
         print(total_sequence)

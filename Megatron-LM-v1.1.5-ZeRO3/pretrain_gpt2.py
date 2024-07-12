@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Pretrain GPT2"""
 
 import torch
@@ -28,28 +27,33 @@ from megatron.training import pretrain
 from megatron.utils import get_ltor_masks_and_position_ids
 from megatron.utils import reduce_losses, get_parameters_in_billions
 
-
 import deepscale
 from deepscale.runtime.utils import see_memory_usage
+
 
 def model_provider():
     """Build the model."""
 
-    print_rank_0('building GPT2 model ...')
+    print_rank_0("building GPT2 model ...")
     see_memory_usage(f"Before Building Model", force=True)
     args = get_args()
-    with deepscale.zero.Init(data_parallel_group=mpu.get_data_parallel_group(),
-                             remote_device=None if args.remote_device=='none' else args.remote_device,
-                             config=args.deepscale_config,
-                             enabled=args.zero_stage==3):
+    with deepscale.zero.Init(
+            data_parallel_group=mpu.get_data_parallel_group(),
+            remote_device=None
+            if args.remote_device == "none" else args.remote_device,
+            config=args.deepscale_config,
+            enabled=args.zero_stage == 3,
+    ):
         model = GPT2Model(num_tokentypes=0, parallel_output=True)
     see_memory_usage(f"After Building Model", force=True)
 
     if mpu.get_data_parallel_rank() == 0:
         billion_params = get_parameters_in_billions(model)
-        print(f' > number of parameters on model parallel rank {mpu.get_model_parallel_rank()}\
-            {round(billion_params, 3)} Billion',
-            flush=True)
+        print(
+            f" > number of parameters on model parallel rank {mpu.get_model_parallel_rank()}\
+            {round(billion_params, 3)} Billion",
+            flush=True,
+        )
 
     return model
 
@@ -60,7 +64,7 @@ def get_batch(data_iterator):
     tokenizer = get_tokenizer()
 
     # Items and their type.
-    keys = ['text']
+    keys = ["text"]
     datatype = torch.int64
 
     # Broadcast data.
@@ -71,7 +75,7 @@ def get_batch(data_iterator):
     data_b = mpu.broadcast_data(keys, data, datatype)
 
     # Unpack.
-    tokens_ = data_b['text'].long()
+    tokens_ = data_b["text"].long()
     labels = tokens_[:, 1:].contiguous()
     tokens = tokens_[:, :-1].contiguous()
 
@@ -81,7 +85,8 @@ def get_batch(data_iterator):
         tokenizer.eod,
         args.reset_position_ids,
         args.reset_attention_mask,
-        args.eod_mask_loss)
+        args.eod_mask_loss,
+    )
 
     return tokens, labels, loss_mask, attention_mask, position_ids
 
@@ -92,10 +97,10 @@ def forward_step(data_iterator, model):
     timers = get_timers()
 
     # Get the batch.
-    timers('batch generator').start()
+    timers("batch generator").start()
     tokens, labels, loss_mask, attention_mask, position_ids = get_batch(
         data_iterator)
-    timers('batch generator').stop()
+    timers("batch generator").stop()
     # Forward model.
     losses = model(tokens, position_ids, attention_mask, labels=labels)
     loss_mask = loss_mask.view(-1)
@@ -104,15 +109,15 @@ def forward_step(data_iterator, model):
     # Reduce loss for logging.
     reduced_loss = reduce_losses([loss])
 
-    return loss, {'lm loss': reduced_loss[0]}
+    return loss, {"lm loss": reduced_loss[0]}
 
 
 def train_valid_test_datasets_provider(train_val_test_num_samples):
     """Build train, valid, and test datasets."""
     args = get_args()
 
-    print_rank_0('> building train, validation, and test datasets '
-                 'for GPT2 ...')
+    print_rank_0("> building train, validation, and test datasets "
+                 "for GPT2 ...")
     train_ds, valid_ds, test_ds = build_train_valid_test_datasets(
         data_prefix=args.data_path,
         data_impl=args.data_impl,
@@ -120,7 +125,8 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
         train_valid_test_num_samples=train_val_test_num_samples,
         seq_length=args.seq_length,
         seed=args.seed,
-        skip_warmup=(not args.mmap_warmup))
+        skip_warmup=(not args.mmap_warmup),
+    )
     print_rank_0("> finished creating GPT2 datasets ...")
 
     return train_ds, valid_ds, test_ds
@@ -128,5 +134,9 @@ def train_valid_test_datasets_provider(train_val_test_num_samples):
 
 if __name__ == "__main__":
 
-    pretrain(train_valid_test_datasets_provider, model_provider, forward_step,
-             args_defaults={'tokenizer_type': 'GPT2BPETokenizer'})
+    pretrain(
+        train_valid_test_datasets_provider,
+        model_provider,
+        forward_step,
+        args_defaults={"tokenizer_type": "GPT2BPETokenizer"},
+    )

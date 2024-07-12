@@ -34,11 +34,16 @@ class IndexBuilder(object):
 
     def load_attributes(self):
         """Load the necessary attributes: model, dataloader and empty BlockData"""
-        model = get_model(lambda: general_ict_model_provider(only_block_model=True))
-        self.model = load_ict_checkpoint(model, only_block_model=True, from_realm_chkpt=self.using_realm_chkpt)
+        model = get_model(
+            lambda: general_ict_model_provider(only_block_model=True))
+        self.model = load_ict_checkpoint(
+            model,
+            only_block_model=True,
+            from_realm_chkpt=self.using_realm_chkpt)
         self.model.eval()
         self.dataset = get_ict_dataset()
-        self.dataloader = iter(get_one_epoch_dataloader(self.dataset, self.batch_size))
+        self.dataloader = iter(
+            get_one_epoch_dataloader(self.dataset, self.batch_size))
         self.block_data = BlockData(load_from_path=False)
 
     def track_and_report_progress(self, batch_size):
@@ -46,7 +51,11 @@ class IndexBuilder(object):
         self.iteration += 1
         self.total_processed += batch_size * self.num_total_builders
         if self.is_main_builder and self.iteration % self.log_interval == 0:
-            print('Batch {:10d} | Total {:10d}'.format(self.iteration, self.total_processed), flush=True)
+            print(
+                "Batch {:10d} | Total {:10d}".format(self.iteration,
+                                                     self.total_processed),
+                flush=True,
+            )
 
     def build_and_save_index(self):
         """Goes through one epoch of the dataloader and adds all data to this instance's BlockData.
@@ -58,16 +67,18 @@ class IndexBuilder(object):
         while True:
             try:
                 # batch also has query_tokens and query_pad_data
-                _, _, block_tokens, block_pad_mask, block_sample_data = get_ict_batch(self.dataloader)
+                _, _, block_tokens, block_pad_mask, block_sample_data = get_ict_batch(
+                    self.dataloader)
             except (StopIteration, IndexError):
                 break
 
             unwrapped_model = self.model
-            while not hasattr(unwrapped_model, 'embed_block'):
+            while not hasattr(unwrapped_model, "embed_block"):
                 unwrapped_model = unwrapped_model.module
 
             # detach, separate fields and add to BlockData
-            block_logits = detach(unwrapped_model.embed_block(block_tokens, block_pad_mask))
+            block_logits = detach(
+                unwrapped_model.embed_block(block_tokens, block_pad_mask))
             detached_data = detach(block_sample_data)
 
             # block_sample_data is a 2D array [batch x 4]
@@ -75,7 +86,8 @@ class IndexBuilder(object):
             block_indices = detached_data[:, 3]
             block_metas = detached_data[:, :3]
 
-            self.block_data.add_block_data(block_indices, block_logits, block_metas)
+            self.block_data.add_block_data(block_indices, block_logits,
+                                           block_metas)
             self.track_and_report_progress(batch_size=block_tokens.shape[0])
 
         # This process signals to finalize its shard and then synchronize with the other processes

@@ -40,4 +40,3 @@ python -m torch.distributed.launch $DISTRIBUTED_ARGS \
        --fp16 \
        --fp32-layernorm \
        --fp32-embedding
-

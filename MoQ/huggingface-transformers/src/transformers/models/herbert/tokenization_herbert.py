@@ -17,7 +17,6 @@ from ...utils import logging
 from ..bert.tokenization_bert import BasicTokenizer
 from ..xlm.tokenization_xlm import XLMTokenizer
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {
@@ -26,8 +25,14 @@ VOCAB_FILES_NAMES = {
 }
 
 PRETRAINED_VOCAB_FILES_MAP = {
-    "vocab_file": {"allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/vocab.json"},
-    "merges_file": {"allegro/herbert-base-cased": "https://cdn.huggingface.co/allegro/herbert-base-cased/merges.txt"},
+    "vocab_file": {
+        "allegro/herbert-base-cased":
+        "https://cdn.huggingface.co/allegro/herbert-base-cased/vocab.json"
+    },
+    "merges_file": {
+        "allegro/herbert-base-cased":
+        "https://cdn.huggingface.co/allegro/herbert-base-cased/merges.txt"
+    },
 }
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {"allegro/herbert-base-cased": 514}
@@ -66,7 +71,10 @@ class HerbertTokenizer(XLMTokenizer):
 
         super().__init__(**kwargs)
         self.bert_pre_tokenizer = BasicTokenizer(
-            do_lower_case=False, never_split=self.all_special_tokens, tokenize_chinese_chars=False, strip_accents=False
+            do_lower_case=False,
+            never_split=self.all_special_tokens,
+            tokenize_chinese_chars=False,
+            strip_accents=False,
         )
 
     def _tokenize(self, text):

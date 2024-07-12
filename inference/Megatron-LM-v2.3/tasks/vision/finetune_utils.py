@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Finetune utilities."""
 
 import torch
@@ -71,8 +70,7 @@ def build_data_loader(dataset, micro_batch_size, num_workers, drop_last):
     world_size = mpu.get_data_parallel_world_size()
     rank = mpu.get_data_parallel_rank()
     sampler = torch.utils.data.distributed.DistributedSampler(
-        dataset, num_replicas=world_size, rank=rank
-    )
+        dataset, num_replicas=world_size, rank=rank)
 
     # Data loader. Note that batch size is the per GPU batch size.
     data_loader = torch.utils.data.DataLoader(
@@ -105,17 +103,15 @@ def _build_train_valid_dataloaders(train_dataset, valid_dataset):
 
     print_rank_0("building train and validation dataloaders ...")
     # Training dataset.
-    train_dataloader = build_data_loader(
-        train_dataset, args.micro_batch_size, args.num_workers, not args.keep_last
-    )
+    train_dataloader = build_data_loader(train_dataset, args.micro_batch_size,
+                                         args.num_workers, not args.keep_last)
     # Set the training iterations.
     args.train_iters_per_epoch = len(train_dataloader)
     args.train_iters = args.epochs * args.train_iters_per_epoch
     # Validation dataset. For this dataset, we do not need to set up
     # shuffling so we can just use a simple infinite loop.
-    valid_dataloader_ = build_data_loader(
-        valid_dataset, args.micro_batch_size, args.num_workers, not args.keep_last
-    )
+    valid_dataloader_ = build_data_loader(valid_dataset, args.micro_batch_size,
+                                          args.num_workers, not args.keep_last)
     valid_dataloader = _build_infinite_size_dataloader(valid_dataloader_)
 
     return train_dataloader, valid_dataloader
@@ -166,9 +162,8 @@ def _train(
             start_iteration = 0
 
             # Train for one step.
-            losses_dict, skipped_iter = train_step(
-                forward_step, batch, model, optimizer, lr_scheduler
-            )
+            losses_dict, skipped_iter = train_step(forward_step, batch, model,
+                                                   optimizer, lr_scheduler)
             iteration += 1
 
             # Logging.
@@ -183,19 +178,13 @@ def _train(
             )
 
             # Autoresume
-            if args.adlr_autoresume and (
-                iteration % args.adlr_autoresume_interval == 0
-            ):
-                check_adlr_autoresume_termination(
-                    iteration, model, optimizer, lr_scheduler
-                )
+            if args.adlr_autoresume and (iteration %
+                                         args.adlr_autoresume_interval == 0):
+                check_adlr_autoresume_termination(iteration, model, optimizer,
+                                                  lr_scheduler)
 
             # Checkpointing
-            if (
-                args.save
-                and args.save_interval
-                and iteration % args.save_interval == 0
-            ):
+            if args.save and args.save_interval and iteration % args.save_interval == 0:
                 save_checkpoint(iteration, model, optimizer, lr_scheduler)
 
             # Evaluation
@@ -234,8 +223,7 @@ def finetune(
     if args.epochs > 0:
         train_dataset, valid_dataset = train_valid_datasets_provider()
         train_dataloader, valid_dataloader = _build_train_valid_dataloaders(
-            train_dataset, valid_dataset
-        )
+            train_dataset, valid_dataset)
     timers("train/valid/test dataset/dataloder").stop()
 
     # Build calback function.
@@ -266,14 +254,12 @@ def finetune(
 
     # Print setup timing.
     print_rank_0("done with setups ...")
-    timers.log(
-        [
-            "train/valid/test dataset/dataloder",
-            "callback function",
-            "model and optimizer",
-            "pretrained checkpoint",
-        ]
-    )
+    timers.log([
+        "train/valid/test dataset/dataloder",
+        "callback function",
+        "model and optimizer",
+        "pretrained checkpoint",
+    ])
     print_rank_0("training ...")
 
     # Finetune the model.

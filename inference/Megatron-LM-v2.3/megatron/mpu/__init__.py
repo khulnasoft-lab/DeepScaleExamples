@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Model parallel utility interface."""
 
 from .cross_entropy import vocab_parallel_cross_entropy
@@ -29,26 +28,40 @@ from .initialize import get_model_parallel_group
 from .initialize import get_tensor_model_parallel_group
 from .initialize import get_pipeline_model_parallel_group
 from .initialize import get_tensor_model_parallel_rank, set_tensor_model_parallel_rank
-from .initialize import get_pipeline_model_parallel_rank, set_pipeline_model_parallel_rank
+from .initialize import (
+    get_pipeline_model_parallel_rank,
+    set_pipeline_model_parallel_rank,
+)
 from .initialize import is_pipeline_first_stage, is_pipeline_last_stage
 from .initialize import get_tensor_model_parallel_src_rank
 from .initialize import get_pipeline_model_parallel_first_rank
 from .initialize import get_pipeline_model_parallel_last_rank
 from .initialize import get_pipeline_model_parallel_next_rank
 from .initialize import get_pipeline_model_parallel_prev_rank
-from .initialize import get_tensor_model_parallel_world_size, set_tensor_model_parallel_world_size
-from .initialize import get_pipeline_model_parallel_world_size, set_pipeline_model_parallel_world_size
-from .initialize import get_virtual_pipeline_model_parallel_rank, set_virtual_pipeline_model_parallel_rank
+from .initialize import (
+    get_tensor_model_parallel_world_size,
+    set_tensor_model_parallel_world_size,
+)
+from .initialize import (
+    get_pipeline_model_parallel_world_size,
+    set_pipeline_model_parallel_world_size,
+)
+from .initialize import (
+    get_virtual_pipeline_model_parallel_rank,
+    set_virtual_pipeline_model_parallel_rank,
+)
 from .initialize import initialize_model_parallel
 from .initialize import model_parallel_is_initialized
 
 from .layers import ColumnParallelLinear
 from .layers import RowParallelLinear
 from .layers import VocabParallelEmbedding
-from .layers import (set_tensor_model_parallel_attributes,
-                     set_defaults_if_not_set_tensor_model_parallel_attributes,
-                     copy_tensor_model_parallel_attributes)
-                     
+from .layers import (
+    set_tensor_model_parallel_attributes,
+    set_defaults_if_not_set_tensor_model_parallel_attributes,
+    copy_tensor_model_parallel_attributes,
+)
+
 from .mappings import copy_to_tensor_model_parallel_region
 from .mappings import gather_from_tensor_model_parallel_region
 from .mappings import reduce_from_tensor_model_parallel_region

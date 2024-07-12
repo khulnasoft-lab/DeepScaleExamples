@@ -15,7 +15,6 @@
 
 from ..bert.tokenization_bert import BertTokenizer
 
-
 ####################################################
 # Mapping from the keyword arguments names of Tokenizer `__init__`
 # to file names for serializing Tokenizer instances
@@ -28,7 +27,8 @@ VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 ####################################################
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "unc-nlp/lxmert-base-uncased": "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
+        "unc-nlp/lxmert-base-uncased":
+        "https://huggingface.co/bert-base-uncased/resolve/main/vocab.txt",
     }
 }
 
@@ -44,7 +44,9 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
 # To be used for checkpoint specific configurations.
 ####################################################
 PRETRAINED_INIT_CONFIGURATION = {
-    "unc-nlp/lxmert-base-uncased": {"do_lower_case": True},
+    "unc-nlp/lxmert-base-uncased": {
+        "do_lower_case": True
+    },
 }
 
 

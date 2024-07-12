@@ -16,16 +16,18 @@
 from ...utils import logging
 from ..bert.tokenization_bert import BertTokenizer
 
-
 logger = logging.get_logger(__name__)
 
 VOCAB_FILES_NAMES = {"vocab_file": "vocab.txt"}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
-        "YituTech/conv-bert-base": "https://huggingface.co/YituTech/conv-bert-base/resolve/main/vocab.txt",
-        "YituTech/conv-bert-medium-small": "https://huggingface.co/YituTech/conv-bert-medium-small/resolve/main/vocab.txt",
-        "YituTech/conv-bert-small": "https://huggingface.co/YituTech/conv-bert-small/resolve/main/vocab.txt",
+        "YituTech/conv-bert-base":
+        "https://huggingface.co/YituTech/conv-bert-base/resolve/main/vocab.txt",
+        "YituTech/conv-bert-medium-small":
+        "https://huggingface.co/YituTech/conv-bert-medium-small/resolve/main/vocab.txt",
+        "YituTech/conv-bert-small":
+        "https://huggingface.co/YituTech/conv-bert-small/resolve/main/vocab.txt",
     }
 }
 
@@ -35,11 +37,16 @@ PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "YituTech/conv-bert-small": 512,
 }
 
-
 PRETRAINED_INIT_CONFIGURATION = {
-    "YituTech/conv-bert-base": {"do_lower_case": True},
-    "YituTech/conv-bert-medium-small": {"do_lower_case": True},
-    "YituTech/conv-bert-small": {"do_lower_case": True},
+    "YituTech/conv-bert-base": {
+        "do_lower_case": True
+    },
+    "YituTech/conv-bert-medium-small": {
+        "do_lower_case": True
+    },
+    "YituTech/conv-bert-small": {
+        "do_lower_case": True
+    },
 }
 
 

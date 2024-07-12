@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Megatron Module"""
 
 import torch
@@ -20,11 +19,12 @@ import torch
 
 class MegatronModule(torch.nn.Module):
     """Megatron specific extentions of torch Module."""
-
     def __init__(self):
         super(MegatronModule, self).__init__()
 
-    def state_dict_for_save_checkpoint(self, destination=None, prefix='',
+    def state_dict_for_save_checkpoint(self,
+                                       destination=None,
+                                       prefix="",
                                        keep_vars=False):
         """Use this function to override the state dict for
         saving checkpoints."""

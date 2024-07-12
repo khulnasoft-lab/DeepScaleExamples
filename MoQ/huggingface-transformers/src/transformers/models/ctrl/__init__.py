@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tf_available, is_torch_available
 
-
 _import_structure = {
     "configuration_ctrl": ["CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP", "CTRLConfig"],
     "tokenization_ctrl": ["CTRLTokenizer"],
@@ -43,7 +42,6 @@ if is_tf_available():
         "TFCTRLModel",
         "TFCTRLPreTrainedModel",
     ]
-
 
 if TYPE_CHECKING:
     from .configuration_ctrl import CTRL_PRETRAINED_CONFIG_ARCHIVE_MAP, CTRLConfig

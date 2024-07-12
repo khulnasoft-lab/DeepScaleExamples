@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Main tasks functionality."""
 
 import os
@@ -23,9 +22,7 @@ sys.path.append(
         os.path.join(
             os.path.join(os.path.dirname(__file__), os.path.pardir),
             os.path.pardir,
-        )
-    )
-)
+        )))
 from megatron import get_args
 from megatron.initialize import initialize_megatron
 from classification import main
@@ -51,7 +48,8 @@ def get_tasks_args(parser):
     group.add_argument(
         "--keep-last",
         action="store_true",
-        help="Keep the last batch (maybe incomplete) in" "the data loader",
+        help="Keep the last batch (maybe incomplete) in"
+        "the data loader",
     )
 
     return parser

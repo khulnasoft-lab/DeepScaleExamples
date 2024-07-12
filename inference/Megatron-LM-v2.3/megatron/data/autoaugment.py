@@ -58,7 +58,6 @@ class ImageNetPolicy:
     >>>                               ImageNetPolicy(),
     >>>                               transforms.ToTensor()])
     """
-
     def __init__(self, fillcolor=(128, 128, 128)):
         """Initialize an ImageNetPolicy.
 
@@ -117,7 +116,6 @@ class SubPolicy:
     each of those parametrized as operation, probability, magnitude.
     The two operations are applied sequentially on the image upon call.
     """
-
     def __init__(
         self,
         operation1,
@@ -169,9 +167,8 @@ class SubPolicy:
             operation2 in supported_ops
         ), "SubPolicy:one of oper1 or oper2 refers to an unsupported operation."
 
-        assert (
-            0.0 <= probability1 <= 1.0 and 0.0 <= probability2 <= 1.0
-        ), "SubPolicy: prob1 and prob2 should be within [0., 1.]."
+        assert (0.0 <= probability1 <= 1.0 and 0.0 <= probability2 <= 1.0
+                ), "SubPolicy: prob1 and prob2 should be within [0., 1.]."
 
         assert (
             isinstance(magnitude_idx1, int) and 0 <= magnitude_idx1 <= 10
@@ -192,19 +189,18 @@ class SubPolicy:
             "translateY": np.linspace(0, 150 / 331, num_levels),
             "rotate": np.linspace(0, 30, num_levels),
             "color": np.linspace(0.0, 0.9, num_levels),
-            "posterize": np.round(np.linspace(8, 4, num_levels), 0).astype(
-                np.int
-            ),
+            "posterize": np.round(np.linspace(8, 4, num_levels),
+                                  0).astype(np.int),
             "solarize": np.linspace(256, 0, num_levels),  # range [0, 256]
             "contrast": np.linspace(0.0, 0.9, num_levels),
             "sharpness": np.linspace(0.0, 0.9, num_levels),
             "brightness": np.linspace(0.0, 0.9, num_levels),
-            "autocontrast": [0]
-            * num_levels,  # This augmentation doesn't use magnitude parameter.
-            "equalize": [0]
-            * num_levels,  # This augmentation doesn't use magnitude parameter.
-            "invert": [0]
-            * num_levels,  # This augmentation doesn't use magnitude parameter.
+            "autocontrast": [0] *
+            num_levels,  # This augmentation doesn't use magnitude parameter.
+            "equalize": [0] *
+            num_levels,  # This augmentation doesn't use magnitude parameter.
+            "invert": [0] *
+            num_levels,  # This augmentation doesn't use magnitude parameter.
         }
 
         def rotate_with_fill(img, magnitude):
@@ -222,8 +218,7 @@ class SubPolicy:
             """
             rotated = img.convert("RGBA").rotate(magnitude)
             rotated_filled = Image.composite(
-                rotated, Image.new("RGBA", rotated.size, (128,) * 4), rotated
-            )
+                rotated, Image.new("RGBA", rotated.size, (128, ) * 4), rotated)
             return rotated_filled.convert(img.mode)
 
         # Define a dictionary of augmentation functions where each key refers
@@ -231,21 +226,24 @@ class SubPolicy:
         # the augmentation itself using a lambda function.
         # pylint: disable=unnecessary-lambda
         func_dict = {
-            "shearX": lambda img, magnitude: img.transform(
+            "shearX":
+            lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
                 (1, magnitude * random.choice([-1, 1]), 0, 0, 1, 0),
                 Image.BICUBIC,
                 fillcolor=fillcolor,
             ),
-            "shearY": lambda img, magnitude: img.transform(
+            "shearY":
+            lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
                 (1, 0, 0, magnitude * random.choice([-1, 1]), 1, 0),
                 Image.BICUBIC,
                 fillcolor=fillcolor,
             ),
-            "translateX": lambda img, magnitude: img.transform(
+            "translateX":
+            lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
                 (
@@ -258,7 +256,8 @@ class SubPolicy:
                 ),
                 fillcolor=fillcolor,
             ),
-            "translateY": lambda img, magnitude: img.transform(
+            "translateY":
+            lambda img, magnitude: img.transform(
                 img.size,
                 Image.AFFINE,
                 (
@@ -271,28 +270,30 @@ class SubPolicy:
                 ),
                 fillcolor=fillcolor,
             ),
-            "rotate": lambda img, magnitude: rotate_with_fill(img, magnitude),
-            "color": lambda img, magnitude: ImageEnhance.Color(img).enhance(
-                1 + magnitude * random.choice([-1, 1])
-            ),
-            "posterize": lambda img, magnitude: ImageOps.posterize(
-                img, magnitude
-            ),
-            "solarize": lambda img, magnitude: ImageOps.solarize(
-                img, magnitude
-            ),
-            "contrast": lambda img, magnitude: ImageEnhance.Contrast(
-                img
-            ).enhance(1 + magnitude * random.choice([-1, 1])),
-            "sharpness": lambda img, magnitude: ImageEnhance.Sharpness(
-                img
-            ).enhance(1 + magnitude * random.choice([-1, 1])),
-            "brightness": lambda img, magnitude: ImageEnhance.Brightness(
-                img
-            ).enhance(1 + magnitude * random.choice([-1, 1])),
-            "autocontrast": lambda img, magnitude: ImageOps.autocontrast(img),
-            "equalize": lambda img, magnitude: ImageOps.equalize(img),
-            "invert": lambda img, magnitude: ImageOps.invert(img),
+            "rotate":
+            lambda img, magnitude: rotate_with_fill(img, magnitude),
+            "color":
+            lambda img, magnitude: ImageEnhance.Color(img).enhance(
+                1 + magnitude * random.choice([-1, 1])),
+            "posterize":
+            lambda img, magnitude: ImageOps.posterize(img, magnitude),
+            "solarize":
+            lambda img, magnitude: ImageOps.solarize(img, magnitude),
+            "contrast":
+            lambda img, magnitude: ImageEnhance.Contrast(img).enhance(
+                1 + magnitude * random.choice([-1, 1])),
+            "sharpness":
+            lambda img, magnitude: ImageEnhance.Sharpness(img).enhance(
+                1 + magnitude * random.choice([-1, 1])),
+            "brightness":
+            lambda img, magnitude: ImageEnhance.Brightness(img).enhance(
+                1 + magnitude * random.choice([-1, 1])),
+            "autocontrast":
+            lambda img, magnitude: ImageOps.autocontrast(img),
+            "equalize":
+            lambda img, magnitude: ImageOps.equalize(img),
+            "invert":
+            lambda img, magnitude: ImageOps.invert(img),
         }
 
         # Store probability, function and magnitude of the first augmentation

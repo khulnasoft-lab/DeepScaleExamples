@@ -92,13 +92,16 @@ _re_checkpoint = re.compile(r"^" + PREFIX_CHECKPOINT_DIR + r"\-(\d+)$")
 def get_last_checkpoint(folder):
     content = os.listdir(folder)
     checkpoints = [
-        path
-        for path in content
-        if _re_checkpoint.search(path) is not None and os.path.isdir(os.path.join(folder, path))
+        path for path in content if _re_checkpoint.search(path) is not None
+        and os.path.isdir(os.path.join(folder, path))
     ]
     if len(checkpoints) == 0:
         return
-    return os.path.join(folder, max(checkpoints, key=lambda x: int(_re_checkpoint.search(x).groups()[0])))
+    return os.path.join(
+        folder,
+        max(checkpoints,
+            key=lambda x: int(_re_checkpoint.search(x).groups()[0])),
+    )
 
 
 class EvaluationStrategy(ExplicitEnum):
@@ -147,7 +150,10 @@ def default_compute_objective(metrics: Dict[str, float]) -> float:
     loss = metrics.pop("eval_loss", None)
     _ = metrics.pop("epoch", None)
     # Remove speed metrics
-    speed_metrics = [m for m in metrics.keys() if m.endswith("_runtime") or m.endswith("_samples_per_second")]
+    speed_metrics = [
+        m for m in metrics.keys()
+        if m.endswith("_runtime") or m.endswith("_samples_per_second")
+    ]
     for sm in speed_metrics:
         _ = metrics.pop(sm, None)
     return loss if len(metrics) == 0 else sum(metrics.values())
@@ -156,19 +162,26 @@ def default_compute_objective(metrics: Dict[str, float]) -> float:
 def default_hp_space_optuna(trial) -> Dict[str, float]:
     from .integrations import is_optuna_available
 
-    assert is_optuna_available(), "This function needs Optuna installed: `pip install optuna`"
+    assert (is_optuna_available()
+            ), "This function needs Optuna installed: `pip install optuna`"
     return {
-        "learning_rate": trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
-        "num_train_epochs": trial.suggest_int("num_train_epochs", 1, 5),
-        "seed": trial.suggest_int("seed", 1, 40),
-        "per_device_train_batch_size": trial.suggest_categorical("per_device_train_batch_size", [4, 8, 16, 32, 64]),
+        "learning_rate":
+        trial.suggest_float("learning_rate", 1e-6, 1e-4, log=True),
+        "num_train_epochs":
+        trial.suggest_int("num_train_epochs", 1, 5),
+        "seed":
+        trial.suggest_int("seed", 1, 40),
+        "per_device_train_batch_size":
+        trial.suggest_categorical("per_device_train_batch_size",
+                                  [4, 8, 16, 32, 64]),
     }
 
 
 def default_hp_space_ray(trial) -> Dict[str, float]:
     from .integrations import is_ray_tune_available
 
-    assert is_ray_tune_available(), "This function needs ray installed: `pip " "install ray[tune]`"
+    assert is_ray_tune_available(), ("This function needs ray installed: `pip "
+                                     "install ray[tune]`")
     from ray import tune
 
     return {
@@ -322,7 +335,7 @@ class TrainerMemoryTracker:
         self.skip_memory_metrics = skip_memory_metrics
 
     def derive_stage(self):
-        """ derives the stage/caller name automatically """
+        """derives the stage/caller name automatically"""
         caller = inspect.currentframe().f_back.f_back.f_code.co_name
         if caller in self.stages:
             return self.stages[caller]
@@ -332,7 +345,7 @@ class TrainerMemoryTracker:
             )
 
     def start(self):
-        """ start tracking for the caller's stage """
+        """start tracking for the caller's stage"""
         if self.skip_memory_metrics:
             return
 
@@ -352,7 +365,8 @@ class TrainerMemoryTracker:
         # gpu
         if self.torch is not None:
             self.gpu[self.cur_stage] = {}
-            self.gpu[self.cur_stage]["alloc"] = self.torch.cuda.memory_allocated()
+            self.gpu[
+                self.cur_stage]["alloc"] = self.torch.cuda.memory_allocated()
             self.gpu[self.cur_stage]["peaked"] = 0
 
         # cpu
@@ -360,7 +374,7 @@ class TrainerMemoryTracker:
         tracemalloc.start()
 
     def stop(self, stage):
-        """ stop tracking for the passed stage """
+        """stop tracking for the passed stage"""
 
         # deal with nested calls of eval during train - simply ignore those
         if self.cur_stage is not None and self.cur_stage != stage:
@@ -375,21 +389,26 @@ class TrainerMemoryTracker:
         if self.torch is not None:
             mem_cur = self.torch.cuda.memory_allocated()
             # this is the difference between the start and the end allocated memory
-            self.gpu[self.cur_stage]["alloc"] = mem_cur - self.gpu[self.cur_stage]["alloc"]  # can be negative
+            self.gpu[self.cur_stage]["alloc"] = (
+                mem_cur - self.gpu[self.cur_stage]["alloc"])  # can be negative
             # this is the difference if any between the start and the peak
-            self.gpu[self.cur_stage]["peaked"] = max(0, self.torch.cuda.max_memory_allocated() - mem_cur)
+            self.gpu[self.cur_stage]["peaked"] = max(
+                0,
+                self.torch.cuda.max_memory_allocated() - mem_cur)
 
         # cpu
         cpu_mem_used_delta, cpu_mem_used_peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()  # reset accounting
-        self.cpu[self.cur_stage]["alloc"] = cpu_mem_used_delta  # can be negative
-        self.cpu[self.cur_stage]["peaked"] = max(0, cpu_mem_used_peak - cpu_mem_used_delta)
+        self.cpu[
+            self.cur_stage]["alloc"] = cpu_mem_used_delta  # can be negative
+        self.cpu[self.cur_stage]["peaked"] = max(
+            0, cpu_mem_used_peak - cpu_mem_used_delta)
 
         # reset - cycle finished
         self.cur_stage = None
 
     def update_metrics(self, stage, metrics):
-        """ stop tracking for the passed stage """
+        """stop tracking for the passed stage"""
         if self.skip_memory_metrics:
             return
 
@@ -407,11 +426,12 @@ class TrainerMemoryTracker:
             for t in ["alloc", "peaked"]:
                 if stage in self.cpu and t in self.cpu[stage]:
                     metrics[f"{stage}_mem_cpu_{t}_delta"] = self.cpu[stage][t]
-                if self.torch is not None and stage in self.gpu and t in self.gpu[stage]:
+                if (self.torch is not None and stage in self.gpu
+                        and t in self.gpu[stage]):
                     metrics[f"{stage}_mem_gpu_{t}_delta"] = self.gpu[stage][t]
 
     def stop_and_update_metrics(self, metrics=None):
-        """ combine stop + update in one call for simpler code """
+        """combine stop + update in one call for simpler code"""
         if self.skip_memory_metrics:
             return
 

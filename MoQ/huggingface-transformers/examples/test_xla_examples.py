@@ -13,15 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 import logging
 import sys
 import unittest
 from time import time
 from unittest.mock import patch
 
-from transformers.testing_utils import require_torch_non_multi_gpu_but_fix_me, require_torch_tpu
-
+from transformers.testing_utils import (
+    require_torch_non_multi_gpu_but_fix_me,
+    require_torch_tpu,
+)
 
 logging.basicConfig(level=logging.DEBUG)
 

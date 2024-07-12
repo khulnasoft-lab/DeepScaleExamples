@@ -5,7 +5,6 @@
 # Taken from torchvision.models.alexnet:
 # https://pytorch.org/docs/1.6.0/_modules/torchvision/models/alexnet.html#alexnet
 
-
 import torch
 import torch.nn as nn
 

@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """Vision Transformer(VIT) model."""
 
 import math
@@ -40,7 +39,6 @@ class VitMlpHead(MegatronModule):
         init_method: weight initialization method for the linear layer.
             bias is set to zero.
     """
-
     def __init__(self, hidden_size, num_classes):
         super(VitMlpHead, self).__init__()
         self.dense_in = torch.nn.Linear(hidden_size, hidden_size)
@@ -69,7 +67,7 @@ def twod_interpolate_position_embeddings_hook(
 
     args = get_args()
     num_patches_per_dim = args.img_dim // args.patch_dim
-    num_patches = num_patches_per_dim ** 2
+    num_patches = num_patches_per_dim**2
     seq_length = num_patches + 1
     hidden_size = args.hidden_size
 
@@ -96,14 +94,13 @@ def twod_interpolate_position_embeddings_hook(
 
             input_param_grid = input_param_grid.transpose(0, 1).contiguous()
             input_param_grid = input_param_grid.reshape(
-                (1, -1, gs_input, gs_input)
-            )
+                (1, -1, gs_input, gs_input))
             input_param_grid = input_param_grid.float()
             scale_factor = gs_new / gs_input
 
-            input_param_grid = F.interpolate(
-                input_param_grid, scale_factor=scale_factor, mode="bilinear"
-            )
+            input_param_grid = F.interpolate(input_param_grid,
+                                             scale_factor=scale_factor,
+                                             mode="bilinear")
 
             input_param_grid = input_param_grid.half()
             input_param_grid = input_param_grid.reshape((-1, gs_new * gs_new))
@@ -111,17 +108,14 @@ def twod_interpolate_position_embeddings_hook(
 
             assert input_param_grid.shape[1] == hidden_size
             input_param = torch.cat((input_param_tok, input_param_grid), dim=0)
-            assert (
-                input_param.shape[0] == seq_length
-                and input_param.shape[1] == hidden_size
-            )
+            assert (input_param.shape[0] == seq_length
+                    and input_param.shape[1] == hidden_size)
 
             state_dict[key] = input_param
 
 
 class VitModel(MegatronModule):
     """Vision Transformer Model."""
-
     def __init__(self, num_classes, finetune=False):
         super(VitModel, self).__init__()
         args = get_args()
@@ -133,8 +127,7 @@ class VitModel(MegatronModule):
         else:
             self.init_method = init_method_normal(args.init_method_std)
             self.scaled_init_method = scaled_init_method_normal(
-                args.init_method_std, args.num_layers
-            )
+                args.init_method_std, args.num_layers)
 
         self.hidden_size = args.hidden_size
         self.num_classes = num_classes
@@ -144,46 +137,41 @@ class VitModel(MegatronModule):
 
         assert self.img_dim % self.patch_dim == 0
         self.num_patches_per_dim = self.img_dim // self.patch_dim
-        self.num_patches = self.num_patches_per_dim ** 2
+        self.num_patches = self.num_patches_per_dim**2
         self.seq_length = self.num_patches + 1
         self.flatten_dim = self.patch_dim * self.patch_dim * args.num_channels
 
         # cls_token
-        self.cls_token = torch.nn.Parameter(torch.randn(1, 1, self.hidden_size))
+        self.cls_token = torch.nn.Parameter(torch.randn(
+            1, 1, self.hidden_size))
         torch.nn.init.zeros_(self.cls_token)
 
         # Linear encoder
-        self.linear_encoder = torch.nn.Linear(
-            self.flatten_dim, self.hidden_size
-        )
+        self.linear_encoder = torch.nn.Linear(self.flatten_dim,
+                                              self.hidden_size)
 
         # embedding
-        self.position_embeddings = torch.nn.Embedding(
-            self.seq_length, self.hidden_size
-        )
+        self.position_embeddings = torch.nn.Embedding(self.seq_length,
+                                                      self.hidden_size)
         init_method_normal(args.init_method_std)(
-            self.position_embeddings.weight
-        )
+            self.position_embeddings.weight)
         self.position_ids = torch.arange(self.seq_length).expand(1, -1).cuda()
 
         self.position_embeddings._register_load_state_dict_pre_hook(
-            twod_interpolate_position_embeddings_hook
-        )
+            twod_interpolate_position_embeddings_hook)
 
         self.embedding_dropout = torch.nn.Dropout(args.hidden_dropout)
 
         # Transformer
-        self.transformer = ParallelTransformer(
-            self.init_method, self.scaled_init_method
-        )
+        self.transformer = ParallelTransformer(self.init_method,
+                                               self.scaled_init_method)
 
         # MLP head
         if not self.finetune:
             self.mlp_head = VitMlpHead(self.hidden_size, self.num_classes)
         else:
-            self.class_head = get_linear_layer(
-                self.hidden_size, num_classes, torch.nn.init.zeros_
-            )
+            self.class_head = get_linear_layer(self.hidden_size, num_classes,
+                                               torch.nn.init.zeros_)
 
     def forward(self, x):
         x = einops.rearrange(

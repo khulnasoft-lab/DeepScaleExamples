@@ -20,7 +20,6 @@ from pathlib import Path
 from transformers import AutoConfig, is_torch_available
 from transformers.testing_utils import require_torch, torch_device
 
-
 if is_torch_available():
     from transformers import PyTorchBenchmark, PyTorchBenchmarkArguments
 
@@ -29,7 +28,8 @@ if is_torch_available():
 class BenchmarkTest(unittest.TestCase):
     def check_results_dict_not_empty(self, results):
         for model_result in results.values():
-            for batch_size, sequence_length in zip(model_result["bs"], model_result["ss"]):
+            for batch_size, sequence_length in zip(model_result["bs"],
+                                                   model_result["ss"]):
                 result = model_result["result"][batch_size][sequence_length]
                 self.assertIsNotNone(result)
 
@@ -230,10 +230,14 @@ class BenchmarkTest(unittest.TestCase):
             )
             benchmark = PyTorchBenchmark(benchmark_args)
             benchmark.run()
-            self.assertTrue(Path(os.path.join(tmp_dir, "inf_time.csv")).exists())
-            self.assertTrue(Path(os.path.join(tmp_dir, "train_time.csv")).exists())
-            self.assertTrue(Path(os.path.join(tmp_dir, "inf_mem.csv")).exists())
-            self.assertTrue(Path(os.path.join(tmp_dir, "train_mem.csv")).exists())
+            self.assertTrue(
+                Path(os.path.join(tmp_dir, "inf_time.csv")).exists())
+            self.assertTrue(
+                Path(os.path.join(tmp_dir, "train_time.csv")).exists())
+            self.assertTrue(
+                Path(os.path.join(tmp_dir, "inf_mem.csv")).exists())
+            self.assertTrue(
+                Path(os.path.join(tmp_dir, "train_mem.csv")).exists())
             self.assertTrue(Path(os.path.join(tmp_dir, "env.csv")).exists())
 
     def test_trace_memory(self):

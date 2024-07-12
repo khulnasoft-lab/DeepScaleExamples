@@ -5,8 +5,13 @@ from torch.nn import CrossEntropyLoss, MSELoss
 from turing.utils import TorchTuple
 
 from pytorch_pretrained_bert.modeling import BertModel
-from pytorch_pretrained_bert.modeling import BertPreTrainingHeads, PreTrainedBertModel, BertPreTrainingHeads
+from pytorch_pretrained_bert.modeling import (
+    BertPreTrainingHeads,
+    PreTrainedBertModel,
+    BertPreTrainingHeads,
+)
 from pytorch_pretrained_bert.file_utils import PYTORCH_PRETRAINED_BERT_CACHE
+
 
 class BertPretrainingLoss(PreTrainedBertModel):
     def __init__(self, bert_encoder, config):
@@ -16,12 +21,14 @@ class BertPretrainingLoss(PreTrainedBertModel):
             config, self.bert.embeddings.word_embeddings.weight)
         self.cls.apply(self.init_bert_weights)
 
-    def forward(self,
-                input_ids,
-                token_type_ids=None,
-                attention_mask=None,
-                masked_lm_labels=None,
-                next_sentence_label=None):
+    def forward(
+        self,
+        input_ids,
+        token_type_ids=None,
+        attention_mask=None,
+        masked_lm_labels=None,
+        next_sentence_label=None,
+    ):
         sequence_output, pooled_output = self.bert(
             input_ids,
             token_type_ids,
@@ -36,7 +43,8 @@ class BertPretrainingLoss(PreTrainedBertModel):
                                           next_sentence_label.view(-1))
             masked_lm_loss = loss_fct(
                 prediction_scores.view(-1, self.config.vocab_size),
-                masked_lm_labels.view(-1))
+                masked_lm_labels.view(-1),
+            )
             total_loss = masked_lm_loss + next_sentence_loss
             return total_loss
         else:
@@ -108,7 +116,10 @@ class BertMultiTask:
 
             if args.progressive_layer_drop:
                 print("BertConfigPreLnLayerDrop")
-                from nvidia.modelingpreln_layerdrop import BertForPreTrainingPreLN, BertConfig
+                from nvidia.modelingpreln_layerdrop import (
+                    BertForPreTrainingPreLN,
+                    BertConfig,
+                )
             else:
                 from nvidia.modelingpreln import BertForPreTrainingPreLN, BertConfig
 
@@ -124,9 +135,10 @@ class BertMultiTask:
         # Use pretrained bert weights
         else:
             self.bert_encoder = BertModel.from_pretrained(
-                self.config['bert_model_file'],
+                self.config["bert_model_file"],
                 cache_dir=PYTORCH_PRETRAINED_BERT_CACHE /
-                'distributed_{}'.format(args.local_rank))
+                "distributed_{}".format(args.local_rank),
+            )
             bert_config = self.bert_encoder.config
 
         self.device = None

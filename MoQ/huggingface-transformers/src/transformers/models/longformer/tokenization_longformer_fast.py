@@ -17,9 +17,7 @@ from ...utils import logging
 from ..roberta.tokenization_roberta_fast import RobertaTokenizerFast
 from .tokenization_longformer import LongformerTokenizer
 
-
 logger = logging.get_logger(__name__)
-
 
 # vocab and merges same as roberta
 vocab_url = "https://huggingface.co/roberta-large/resolve/main/vocab.json"
@@ -32,7 +30,6 @@ _all_longformer_models = [
     "allenai/longformer-base-4096-extra.pos.embd.only",
     "allenai/longformer-large-4096-extra.pos.embd.only",
 ]
-
 
 PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES = {
     "allenai/longformer-base-4096": 4096,
@@ -50,11 +47,15 @@ class LongformerTokenizerFast(RobertaTokenizerFast):
     :class:`~transformers.LongformerTokenizerFast` is identical to :class:`~transformers.RobertaTokenizerFast`. Refer
     to the superclass for usage examples and documentation concerning parameters.
     """
+
     # merges and vocab same as Roberta
     max_model_input_sizes = PRETRAINED_POSITIONAL_EMBEDDINGS_SIZES
     pretrained_vocab_files_map = {
-        "vocab_file": {m: vocab_url for m in _all_longformer_models},
-        "merges_file": {m: merges_url for m in _all_longformer_models},
-        "tokenizer_file": {m: tokenizer_url for m in _all_longformer_models},
+        "vocab_file": {m: vocab_url
+                       for m in _all_longformer_models},
+        "merges_file": {m: merges_url
+                        for m in _all_longformer_models},
+        "tokenizer_file": {m: tokenizer_url
+                           for m in _all_longformer_models},
     }
     slow_tokenizer_class = LongformerTokenizer

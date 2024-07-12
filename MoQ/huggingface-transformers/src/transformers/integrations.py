@@ -28,28 +28,33 @@ from types import SimpleNamespace
 from .trainer_utils import SchedulerType
 from .utils import logging
 
-
 logger = logging.get_logger(__name__)
 
-
 # comet_ml requires to be imported before any ML frameworks
-_has_comet = importlib.util.find_spec("comet_ml") is not None and os.getenv("COMET_MODE", "").upper() != "DISABLED"
+_has_comet = (importlib.util.find_spec("comet_ml") is not None
+              and os.getenv("COMET_MODE", "").upper() != "DISABLED")
 if _has_comet:
     try:
         import comet_ml  # noqa: F401
 
-        if hasattr(comet_ml, "config") and comet_ml.config.get_config("comet.api_key"):
+        if hasattr(comet_ml,
+                   "config") and comet_ml.config.get_config("comet.api_key"):
             _has_comet = True
         else:
             if os.getenv("COMET_MODE", "").upper() != "DISABLED":
-                logger.warning("comet_ml is installed but `COMET_API_KEY` is not set.")
+                logger.warning(
+                    "comet_ml is installed but `COMET_API_KEY` is not set.")
             _has_comet = False
     except (ImportError, ValueError):
         _has_comet = False
 
 from .file_utils import ENV_VARS_TRUE_VALUES, is_torch_tpu_available  # noqa: E402
 from .trainer_callback import TrainerCallback  # noqa: E402
-from .trainer_utils import PREFIX_CHECKPOINT_DIR, BestRun, EvaluationStrategy  # noqa: E402
+from .trainer_utils import (
+    PREFIX_CHECKPOINT_DIR,
+    BestRun,
+    EvaluationStrategy,
+)  # noqa: E402
 
 
 # Integration functions:
@@ -69,7 +74,8 @@ def is_comet_available():
 
 
 def is_tensorboard_available():
-    return importlib.util.find_spec("tensorboard") is not None or importlib.util.find_spec("tensorboardX") is not None
+    return (importlib.util.find_spec("tensorboard") is not None
+            or importlib.util.find_spec("tensorboardX") is not None)
 
 
 def is_optuna_available():
@@ -126,7 +132,8 @@ def default_hp_search_backend():
         return "ray"
 
 
-def run_hp_search_optuna(trainer, n_trials: int, direction: str, **kwargs) -> BestRun:
+def run_hp_search_optuna(trainer, n_trials: int, direction: str,
+                         **kwargs) -> BestRun:
     import optuna
 
     def _objective(trial, checkpoint_dir=None):
@@ -146,12 +153,16 @@ def run_hp_search_optuna(trainer, n_trials: int, direction: str, **kwargs) -> Be
     timeout = kwargs.pop("timeout", None)
     n_jobs = kwargs.pop("n_jobs", 1)
     study = optuna.create_study(direction=direction, **kwargs)
-    study.optimize(_objective, n_trials=n_trials, timeout=timeout, n_jobs=n_jobs)
+    study.optimize(_objective,
+                   n_trials=n_trials,
+                   timeout=timeout,
+                   n_jobs=n_jobs)
     best_trial = study.best_trial
     return BestRun(str(best_trial.number), best_trial.value, best_trial.params)
 
 
-def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestRun:
+def run_hp_search_ray(trainer, n_trials: int, direction: str,
+                      **kwargs) -> BestRun:
     import ray
 
     def _objective(trial, local_trainer, checkpoint_dir=None):
@@ -167,7 +178,9 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
             metrics = local_trainer.evaluate()
             local_trainer.objective = local_trainer.compute_objective(metrics)
             local_trainer._tune_save_checkpoint()
-            ray.tune.report(objective=local_trainer.objective, **metrics, done=True)
+            ray.tune.report(objective=local_trainer.objective,
+                            **metrics,
+                            done=True)
 
     # The model and TensorBoard writer do not pickle so we have to remove them (if they exists)
     # while doing the ray hp search.
@@ -194,10 +207,14 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
         if kwargs["keep_checkpoints_num"] > 1:
             logger.warning(
                 "Currently keeping {} checkpoints for each trial. Checkpoints are usually huge, "
-                "consider setting `keep_checkpoints_num=1`."
-            )
+                "consider setting `keep_checkpoints_num=1`.")
     if "scheduler" in kwargs:
-        from ray.tune.schedulers import ASHAScheduler, HyperBandForBOHB, MedianStoppingRule, PopulationBasedTraining
+        from ray.tune.schedulers import (
+            ASHAScheduler,
+            HyperBandForBOHB,
+            MedianStoppingRule,
+            PopulationBasedTraining,
+        )
 
         # Check if checkpointing is enabled for PopulationBasedTraining
         if isinstance(kwargs["scheduler"], PopulationBasedTraining):
@@ -211,16 +228,23 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
 
         # Check for `do_eval` and `eval_during_training` for schedulers that require intermediate reporting.
         if isinstance(
-            kwargs["scheduler"], (ASHAScheduler, MedianStoppingRule, HyperBandForBOHB, PopulationBasedTraining)
-        ) and (not trainer.args.do_eval or trainer.args.evaluation_strategy == EvaluationStrategy.NO):
+                kwargs["scheduler"],
+            (
+                ASHAScheduler,
+                MedianStoppingRule,
+                HyperBandForBOHB,
+                PopulationBasedTraining,
+            ),
+        ) and (not trainer.args.do_eval
+               or trainer.args.evaluation_strategy == EvaluationStrategy.NO):
             raise RuntimeError(
                 "You are using {cls} as a scheduler but you haven't enabled evaluation during training. "
                 "This means your trials will not report intermediate results to Ray Tune, and "
                 "can thus not be stopped early or used to exploit other trials parameters. "
                 "If this is what you want, do not use {cls}. If you would like to use {cls}, "
                 "make sure you pass `do_eval=True` and `evaluation_strategy='steps'` in the "
-                "Trainer `args`.".format(cls=type(kwargs["scheduler"]).__name__)
-            )
+                "Trainer `args`.".format(
+                    cls=type(kwargs["scheduler"]).__name__))
 
     analysis = ray.tune.run(
         ray.tune.with_parameters(_objective, local_trainer=trainer),
@@ -228,8 +252,10 @@ def run_hp_search_ray(trainer, n_trials: int, direction: str, **kwargs) -> BestR
         num_samples=n_trials,
         **kwargs,
     )
-    best_trial = analysis.get_best_trial(metric="objective", mode=direction[:3])
-    best_run = BestRun(best_trial.trial_id, best_trial.last_result["objective"], best_trial.config)
+    best_trial = analysis.get_best_trial(metric="objective",
+                                         mode=direction[:3])
+    best_run = BestRun(best_trial.trial_id,
+                       best_trial.last_result["objective"], best_trial.config)
     if _tb_writer is not None:
         trainer.add_callback(_tb_writer)
     return best_run
@@ -262,7 +288,10 @@ def rewrite_logs(d):
     return new_d
 
 
-def init_deepscale(trainer, num_training_steps, clt_optimizer=None, clt_lr_scheduler=None):
+def init_deepscale(trainer,
+                   num_training_steps,
+                   clt_optimizer=None,
+                   clt_lr_scheduler=None):
     """
     Init DeepScale, after converting any relevant Trainer's args into DeepScale configuration
 
@@ -374,7 +403,9 @@ def init_deepscale(trainer, num_training_steps, clt_optimizer=None, clt_lr_sched
                 "warmup_num_steps": args.warmup_steps,
             }
         else:
-            raise ValueError(f"{args.lr_scheduler_type} scheduler type is not supported by DeepScale")
+            raise ValueError(
+                f"{args.lr_scheduler_type} scheduler type is not supported by DeepScale"
+            )
 
         config["scheduler"] = {
             "type": scheduler,
@@ -432,7 +463,6 @@ class TensorBoardCallback(TrainerCallback):
         tb_writer (:obj:`SummaryWriter`, `optional`):
             The writer to use. Will instantiate one if not set.
     """
-
     def __init__(self, tb_writer=None):
         has_tensorboard = is_tensorboard_available()
         assert (
@@ -481,7 +511,8 @@ class TensorBoardCallback(TrainerCallback):
                     self.tb_writer.add_text("model_config", model_config_json)
             # Version of TensorBoard coming from tensorboardX does not have this method.
             if hasattr(self.tb_writer, "add_hparams"):
-                self.tb_writer.add_hparams(args.to_sanitized_dict(), metric_dict={})
+                self.tb_writer.add_hparams(args.to_sanitized_dict(),
+                                           metric_dict={})
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if state.is_world_process_zero:
@@ -514,10 +545,11 @@ class WandbCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Weight and Biases <https://www.wandb.com/>`__.
     """
-
     def __init__(self):
         has_wandb = is_wandb_available()
-        assert has_wandb, "WandbCallback requires wandb to be installed. Run `pip install wandb`."
+        assert (
+            has_wandb
+        ), "WandbCallback requires wandb to be installed. Run `pip install wandb`."
         if has_wandb:
             import wandb
 
@@ -532,7 +564,9 @@ class WandbCallback(TrainerCallback):
                 self._wandb = wandb
         self._initialized = False
         # log outputs
-        self._log_model = os.getenv("WANDB_LOG_MODEL", "FALSE").upper() in ENV_VARS_TRUE_VALUES.union({"TRUE"})
+        self._log_model = os.getenv(
+            "WANDB_LOG_MODEL",
+            "FALSE").upper() in ENV_VARS_TRUE_VALUES.union({"TRUE"})
 
     def setup(self, args, state, model, reinit, **kwargs):
         """
@@ -581,9 +615,12 @@ class WandbCallback(TrainerCallback):
             )
 
             # keep track of model topology and gradients, unsupported on TPU
-            if not is_torch_tpu_available() and os.getenv("WANDB_WATCH") != "false":
+            if not is_torch_tpu_available() and os.getenv(
+                    "WANDB_WATCH") != "false":
                 self._wandb.watch(
-                    model, log=os.getenv("WANDB_WATCH", "gradients"), log_freq=max(100, args.logging_steps)
+                    model,
+                    log=os.getenv("WANDB_WATCH", "gradients"),
+                    log_freq=max(100, args.logging_steps),
                 )
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):
@@ -593,7 +630,13 @@ class WandbCallback(TrainerCallback):
         if not self._initialized or hp_search:
             self.setup(args, state, model, reinit=hp_search, **kwargs)
 
-    def on_train_end(self, args, state, control, model=None, tokenizer=None, **kwargs):
+    def on_train_end(self,
+                     args,
+                     state,
+                     control,
+                     model=None,
+                     tokenizer=None,
+                     **kwargs):
         if self._wandb is None:
             return
         # commit last step
@@ -606,20 +649,19 @@ class WandbCallback(TrainerCallback):
             with tempfile.TemporaryDirectory() as temp_dir:
                 fake_trainer.save_model(temp_dir)
                 # use run name and ensure it's a valid Artifact name
-                artifact_name = re.sub(r"[^a-zA-Z0-9_\.\-]", "", self._wandb.run.name)
-                metadata = (
-                    {
-                        k: v
-                        for k, v in dict(self._wandb.summary).items()
-                        if isinstance(v, numbers.Number) and not k.startswith("_")
-                    }
-                    if not args.load_best_model_at_end
-                    else {
-                        f"eval/{args.metric_for_best_model}": state.best_metric,
-                        "train/total_floss": state.total_flos,
-                    }
-                )
-                artifact = self._wandb.Artifact(name=f"run-{artifact_name}", type="model", metadata=metadata)
+                artifact_name = re.sub(r"[^a-zA-Z0-9_\.\-]", "",
+                                       self._wandb.run.name)
+                metadata = ({
+                    k: v
+                    for k, v in dict(self._wandb.summary).items()
+                    if isinstance(v, numbers.Number) and not k.startswith("_")
+                } if not args.load_best_model_at_end else {
+                    f"eval/{args.metric_for_best_model}": state.best_metric,
+                    "train/total_floss": state.total_flos,
+                })
+                artifact = self._wandb.Artifact(name=f"run-{artifact_name}",
+                                                type="model",
+                                                metadata=metadata)
                 for f in Path(temp_dir).glob("*"):
                     if f.is_file():
                         with artifact.new_file(f.name, mode="wb") as fa:
@@ -640,9 +682,10 @@ class CometCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `Comet ML <https://www.comet.ml/site/>`__.
     """
-
     def __init__(self):
-        assert _has_comet, "CometCallback requires comet-ml to be installed. Run `pip install comet-ml`."
+        assert (
+            _has_comet
+        ), "CometCallback requires comet-ml to be installed. Run `pip install comet-ml`."
         self._initialized = False
 
     def setup(self, args, state, model):
@@ -663,20 +706,29 @@ class CometCallback(TrainerCallback):
         self._initialized = True
         if state.is_world_process_zero:
             comet_mode = os.getenv("COMET_MODE", "ONLINE").upper()
-            args = {"project_name": os.getenv("COMET_PROJECT_NAME", "huggingface")}
+            args = {
+                "project_name": os.getenv("COMET_PROJECT_NAME", "huggingface")
+            }
             experiment = None
             if comet_mode == "ONLINE":
                 experiment = comet_ml.Experiment(**args)
                 logger.info("Automatic Comet.ml online logging enabled")
             elif comet_mode == "OFFLINE":
-                args["offline_directory"] = os.getenv("COMET_OFFLINE_DIRECTORY", "./")
+                args["offline_directory"] = os.getenv(
+                    "COMET_OFFLINE_DIRECTORY", "./")
                 experiment = comet_ml.OfflineExperiment(**args)
-                logger.info("Automatic Comet.ml offline logging enabled; use `comet upload` when finished")
+                logger.info(
+                    "Automatic Comet.ml offline logging enabled; use `comet upload` when finished"
+                )
             if experiment is not None:
                 experiment._set_model_graph(model, framework="transformers")
-                experiment._log_parameters(args, prefix="args/", framework="transformers")
+                experiment._log_parameters(args,
+                                           prefix="args/",
+                                           framework="transformers")
                 if hasattr(model, "config"):
-                    experiment._log_parameters(model.config, prefix="config/", framework="transformers")
+                    experiment._log_parameters(model.config,
+                                               prefix="config/",
+                                               framework="transformers")
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):
         if not self._initialized:
@@ -688,7 +740,12 @@ class CometCallback(TrainerCallback):
         if state.is_world_process_zero:
             experiment = comet_ml.config.get_global_experiment()
             if experiment is not None:
-                experiment._log_metrics(logs, step=state.global_step, epoch=state.epoch, framework="transformers")
+                experiment._log_metrics(
+                    logs,
+                    step=state.global_step,
+                    epoch=state.epoch,
+                    framework="transformers",
+                )
 
 
 class AzureMLCallback(TrainerCallback):
@@ -696,7 +753,6 @@ class AzureMLCallback(TrainerCallback):
     A :class:`~transformers.TrainerCallback` that sends the logs to `AzureML
     <https://pypi.org/project/azureml-sdk/>`__.
     """
-
     def __init__(self, azureml_run=None):
         assert (
             is_azureml_available()
@@ -720,13 +776,15 @@ class MLflowCallback(TrainerCallback):
     """
     A :class:`~transformers.TrainerCallback` that sends the logs to `MLflow <https://www.mlflow.org/>`__.
     """
-
     def __init__(self):
-        assert is_mlflow_available(), "MLflowCallback requires mlflow to be installed. Run `pip install mlflow`."
+        assert (
+            is_mlflow_available()
+        ), "MLflowCallback requires mlflow to be installed. Run `pip install mlflow`."
         import mlflow
 
         self._MAX_PARAM_VAL_LENGTH = mlflow.utils.validation.MAX_PARAM_VAL_LENGTH
-        self._MAX_PARAMS_TAGS_PER_BATCH = mlflow.utils.validation.MAX_PARAMS_TAGS_PER_BATCH
+        self._MAX_PARAMS_TAGS_PER_BATCH = (
+            mlflow.utils.validation.MAX_PARAMS_TAGS_PER_BATCH)
 
         self._initialized = False
         self._log_artifacts = False
@@ -761,13 +819,15 @@ class MLflowCallback(TrainerCallback):
                         f"Trainer is attempting to log a value of "
                         f'"{value}" for key "{name}" as a parameter. '
                         f"MLflow's log_param() only accepts values no longer than "
-                        f"250 characters so we dropped this attribute."
-                    )
+                        f"250 characters so we dropped this attribute.")
                     del combined_dict[name]
             # MLflow cannot log more than 100 values in one go, so we have to split it
             combined_dict_items = list(combined_dict.items())
-            for i in range(0, len(combined_dict_items), self._MAX_PARAMS_TAGS_PER_BATCH):
-                self._ml_flow.log_params(dict(combined_dict_items[i : i + self._MAX_PARAMS_TAGS_PER_BATCH]))
+            for i in range(0, len(combined_dict_items),
+                           self._MAX_PARAMS_TAGS_PER_BATCH):
+                self._ml_flow.log_params(
+                    dict(combined_dict_items[i:i +
+                                             self._MAX_PARAMS_TAGS_PER_BATCH]))
         self._initialized = True
 
     def on_train_begin(self, args, state, control, model=None, **kwargs):
@@ -786,8 +846,7 @@ class MLflowCallback(TrainerCallback):
                         f"Trainer is attempting to log a value of "
                         f'"{v}" of type {type(v)} for key "{k}" as a metric. '
                         f"MLflow's log_metric() only accepts float and "
-                        f"int types so we dropped this attribute."
-                    )
+                        f"int types so we dropped this attribute.")
 
     def on_train_end(self, args, state, control, **kwargs):
         if self._initialized and state.is_world_process_zero:

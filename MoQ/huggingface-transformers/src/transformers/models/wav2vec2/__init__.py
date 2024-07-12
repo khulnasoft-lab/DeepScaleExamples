@@ -19,9 +19,11 @@ from typing import TYPE_CHECKING
 
 from ...file_utils import _BaseLazyModule, is_tokenizers_available, is_torch_available
 
-
 _import_structure = {
-    "configuration_wav2vec2": ["WAV_2_VEC_2_PRETRAINED_CONFIG_ARCHIVE_MAP", "Wav2Vec2Config"],
+    "configuration_wav2vec2": [
+        "WAV_2_VEC_2_PRETRAINED_CONFIG_ARCHIVE_MAP",
+        "Wav2Vec2Config",
+    ],
     "tokenization_wav2vec2": ["Wav2Vec2Tokenizer"],
 }
 
@@ -34,9 +36,11 @@ if is_torch_available():
         "Wav2Vec2PreTrainedModel",
     ]
 
-
 if TYPE_CHECKING:
-    from .configuration_wav2vec2 import WAV_2_VEC_2_PRETRAINED_CONFIG_ARCHIVE_MAP, Wav2Vec2Config
+    from .configuration_wav2vec2 import (
+        WAV_2_VEC_2_PRETRAINED_CONFIG_ARCHIVE_MAP,
+        Wav2Vec2Config,
+    )
     from .tokenization_wav2vec2 import Wav2Vec2Tokenizer
 
     if is_torch_available():
@@ -47,7 +51,6 @@ if TYPE_CHECKING:
             Wav2Vec2Model,
             Wav2Vec2PreTrainedModel,
         )
-
 
 else:
     import importlib
